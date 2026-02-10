@@ -1,0 +1,3 @@
+packages:
+  - 'meal-management/apps/*'
+  - 'packages/*'

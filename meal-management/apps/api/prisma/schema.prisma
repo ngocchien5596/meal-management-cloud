@@ -1,0 +1,207 @@
+// Prisma schema for Meal Management System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS ====================
+
+enum Role {
+  EMPLOYEE
+  ADMIN_KITCHEN
+  ADMIN_SYSTEM
+  HR
+}
+
+enum MealType {
+  LUNCH
+  DINNER
+}
+
+enum MealStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum CheckinMethod {
+  QR_SCAN
+  MANUAL
+  SELF_SCAN
+}
+
+// ==================== MODELS ====================
+
+model Department {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  employees Employee[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Position {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  employees Employee[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Employee {
+  id            String         @id @default(cuid())
+  employeeCode  String         @unique
+  fullName      String
+  email         String?        @unique
+  department    Department     @relation(fields: [departmentId], references: [id])
+  departmentId  String
+  position      Position       @relation(fields: [positionId], references: [id])
+  positionId    String
+  account       Account?
+  registrations Registration[]
+  checkins      CheckinLog[]
+  reviews       MealReview[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Account {
+  id                  String    @id @default(cuid())
+  employee            Employee  @relation(fields: [employeeId], references: [id])
+  employeeId          String    @unique
+  passwordHash        String
+  secretCode          String    @db.VarChar(50)
+  role                Role      @default(EMPLOYEE)
+  isActive            Boolean   @default(true)
+  lastLogin           DateTime?
+  passwordChangedAt   DateTime?
+  secretCodeChangedAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model MealEvent {
+  id            String         @id @default(cuid())
+  mealDate      DateTime       @db.Date
+  mealType      MealType
+  status        MealStatus     @default(DRAFT)
+  qrToken       String?        @unique
+  qrGeneratedAt DateTime?
+  startedAt     DateTime?
+  endedAt       DateTime?
+  registrations Registration[]
+  checkins      CheckinLog[]
+  guests        Guest[]
+  ingredients   Ingredient[]
+  menuItems     MenuItem[]
+  reviews       MealReview[]
+  createdBy     String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@unique([mealDate, mealType])
+}
+
+model Registration {
+  id          String    @id @default(cuid())
+  mealEvent   MealEvent @relation(fields: [mealEventId], references: [id])
+  mealEventId String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  employeeId  String
+  isCancelled Boolean   @default(false)
+  cancelledBy String?   // Admin có thể hủy khi thiếu suất
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([mealEventId, employeeId])
+}
+
+model CheckinLog {
+  id          String        @id @default(cuid())
+  mealEvent   MealEvent     @relation(fields: [mealEventId], references: [id])
+  mealEventId String
+  employee    Employee?     @relation(fields: [employeeId], references: [id])
+  employeeId  String?
+  guest       Guest?        @relation(fields: [guestId], references: [id])
+  guestId     String?
+  checkinTime DateTime      @default(now())
+  method      CheckinMethod
+
+  @@unique([mealEventId, employeeId])
+  @@unique([mealEventId, guestId])
+}
+
+model Guest {
+  id          String       @id @default(cuid())
+  mealEvent   MealEvent    @relation(fields: [mealEventId], references: [id])
+  mealEventId String
+  fullName    String
+  note        String?
+  qrToken     String       @unique
+  checkins    CheckinLog[]
+  createdAt   DateTime     @default(now())
+}
+
+model Ingredient {
+  id          String    @id @default(cuid())
+  mealEvent   MealEvent @relation(fields: [mealEventId], references: [id])
+  mealEventId String
+  name        String
+  quantity    Float
+  unit        String
+  unitPrice   Float
+  totalPrice  Float
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model MenuItem {
+  id          String    @id @default(cuid())
+  mealEvent   MealEvent @relation(fields: [mealEventId], references: [id])
+  mealEventId String
+  name        String
+  createdAt   DateTime  @default(now())
+}
+
+model SystemConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RegistrationPreset {
+  id       String @id @default(cuid())
+  name     String @unique
+  mealType String // "LUNCH" or "LUNCH,DINNER"
+  weekdays String // "1,2,3,4,5" for Mon-Fri
+}
+
+model MealReview {
+  id          String    @id @default(cuid())
+  mealEvent   MealEvent @relation(fields: [mealEventId], references: [id])
+  mealEventId String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  employeeId  String
+  comment     String    @db.Text
+  images      String[]
+  isAnonymous Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+}
+
+model MealPriceConfig {
+  id        String    @id @default(cuid())
+  price     Float
+  startDate DateTime  @db.Date
+  endDate   DateTime? @db.Date
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}

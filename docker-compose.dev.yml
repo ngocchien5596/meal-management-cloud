@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: meal-db
+    environment:
+      POSTGRES_USER: meal_user
+      POSTGRES_PASSWORD: dev123456
+      POSTGRES_DB: meal_management
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meal_user -d meal_management"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for sessions + realtime
+  redis:
+    image: redis:7-alpine
+    container_name: meal-redis
+    command: redis-server --requirepass dev123456
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "dev123456", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Adminer - Database UI (optional, for development)
+  adminer:
+    image: adminer:latest
+    container_name: meal-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
