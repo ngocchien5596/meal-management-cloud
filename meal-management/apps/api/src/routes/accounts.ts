@@ -206,21 +206,17 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM', 'HR'), upload.sin
                     }
 
                     // 4. Upsert Account
-                    let mappedRole = row.roleStr?.toUpperCase() || '';
-                    console.log(`[Import] Row ${row.rowNumber}: Raw role from Excel: "${mappedRole}"`);
+                    const rawRole = row.roleStr?.trim().toUpperCase() || '';
+                    console.log(`[Import] Row ${row.rowNumber}: Raw role string: "${rawRole}"`);
 
-                    if (mappedRole.includes('ADMIN_SYSTEM') || mappedRole === 'ADMIN' || mappedRole.includes('HỆ THỐNG') || mappedRole.includes('QUẢN TRỊ VIÊN')) {
-                        mappedRole = Role.ADMIN_SYSTEM;
-                    } else if (mappedRole.includes('ADMIN_KITCHEN') || mappedRole.includes('BẾP')) {
-                        mappedRole = Role.ADMIN_KITCHEN;
-                    } else if (mappedRole.includes('HR') || mappedRole.includes('NHÂN SỰ')) {
-                        mappedRole = Role.HR;
-                    } else if (mappedRole.includes('EMPLOYEE') || mappedRole.includes('NHÂN VIÊN')) {
-                        mappedRole = Role.EMPLOYEE;
+                    let role: Role = Role.EMPLOYEE;
+                    if (Object.values(Role).includes(rawRole as any)) {
+                        role = rawRole as Role;
+                    } else if (rawRole === 'ADMIN') {
+                        role = Role.ADMIN_SYSTEM;
                     }
 
-                    const role = (Object.values(Role) as string[]).includes(mappedRole) ? mappedRole as Role : Role.EMPLOYEE;
-                    console.log(`[Import] Row ${row.rowNumber}: Final mapped role: "${role}"`);
+                    console.log(`[Import] Row ${row.rowNumber}: Resolved Role: "${role}"`);
 
                     const existingAccount = await tx.account.findUnique({ where: { employeeId: employee.id } });
                     if (!existingAccount) {
