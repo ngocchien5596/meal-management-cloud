@@ -87,30 +87,31 @@ const prisma = new PrismaClient().$extends({
 
                         // Handle models with createdAt/updatedAt
                         if (model && ['Department', 'Position', 'Employee', 'Account', 'MealEvent', 'Registration', 'Guest', 'Ingredient', 'MenuItem', 'SystemConfig', 'MealReview'].includes(model)) {
-                            if (operation === 'create' || (operation === 'upsert' && obj === (args as any).create)) {
-                                if (newObj.createdAt === undefined) newObj.createdAt = now;
+                            if (operation === 'create' || (operation === 'upsert' && obj === (args as any)?.create)) {
+                                if ((newObj as any).createdAt === undefined) (newObj as any).createdAt = now;
                             }
                         }
                         if (model && ['Department', 'Position', 'Employee', 'Account', 'MealEvent', 'Registration', 'Ingredient', 'MenuItem', 'SystemConfig', 'MealReview', 'MealPriceConfig', 'RegistrationPreset'].includes(model)) {
-                            if (newObj.updatedAt === undefined) newObj.updatedAt = now;
+                            if ((newObj as any).updatedAt === undefined) (newObj as any).updatedAt = now;
                         }
 
                         // Special case: CheckinLog
                         if (model === 'CheckinLog') {
-                            if (newObj.checkinTime === undefined) newObj.checkinTime = now;
+                            if ((newObj as any).checkinTime === undefined) (newObj as any).checkinTime = now;
                         }
                         return newObj;
                     };
 
                     if (operation === 'upsert') {
                         const _args = args as any;
-                        newArgs.create = inject(_args.create);
-                        newArgs.update = inject(_args.update);
-                    } else if ((args as any).data) {
-                        if (Array.isArray((args as any).data)) {
-                            newArgs.data = (args as any).data.map(inject);
+                        if (_args.create) (newArgs as any).create = inject(_args.create);
+                        if (_args.update) (newArgs as any).update = inject(_args.update);
+                    } else if ((args as any)?.data) {
+                        const _args = args as any;
+                        if (Array.isArray(_args.data)) {
+                            (newArgs as any).data = _args.data.map(inject);
                         } else {
-                            newArgs.data = inject((args as any).data);
+                            (newArgs as any).data = inject(_args.data);
                         }
                     }
                 }

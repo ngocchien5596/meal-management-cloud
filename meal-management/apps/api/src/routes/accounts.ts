@@ -7,7 +7,7 @@ import ExcelJS from 'exceljs';
 import { upload } from '../middleware/upload.js';
 import prisma from '../lib/prisma.js';
 
-const router = Router();
+const router: Router = Router();
 
 // GET /api/accounts/template - Download Excel Template
 router.get('/template', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req, res, next) => {

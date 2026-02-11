@@ -1,9 +1,9 @@
-import express from 'express';
+import express, { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-const router = express.Router();
+const router: Router = Router();
 
 // Configuration for Multer
 const storage = multer.diskStorage({
