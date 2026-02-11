@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { mealsApi } from './api';
+import { mealsApi, MealDetail } from './api';
 
 export const useMeals = (startDate?: string, endDate?: string) => {
     return useQuery({
@@ -30,7 +30,7 @@ export const useUpdateMeal = () => {
 };
 
 export const useMealDetail = (id: string, options?: any) => {
-    return useQuery({
+    return useQuery<MealDetail>({
         queryKey: ['meal', id],
         queryFn: () => mealsApi.getMealDetail(id),
         enabled: !!id,
@@ -39,7 +39,7 @@ export const useMealDetail = (id: string, options?: any) => {
 };
 
 export const useCurrentMeal = (options?: any) => {
-    return useQuery({
+    return useQuery<MealDetail | null>({
         queryKey: ['meal', 'current'],
         queryFn: () => mealsApi.getCurrentMeal(),
         ...options

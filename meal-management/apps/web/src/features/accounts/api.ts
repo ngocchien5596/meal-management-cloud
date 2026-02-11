@@ -1,11 +1,5 @@
-import { api } from '@/lib/api';
+import { api, APIResponse } from '@/lib/api';
 import type { Account, CreateAccountRequest, UpdateAccountRequest } from './types';
-
-interface ApiResponse<T> {
-    success: boolean;
-    data: T;
-    message?: string;
-}
 
 export const accountApi = {
     getAccounts: async () => {

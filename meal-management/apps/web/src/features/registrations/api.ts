@@ -1,10 +1,4 @@
-import { api } from '@/lib/api';
-
-export interface ApiResponse<T> {
-    success: boolean;
-    data: T;
-    error?: { message: string; code: string };
-}
+import { api, APIResponse } from '@/lib/api';
 
 export interface MealEvent {
     id: string;
@@ -21,15 +15,15 @@ export const registrationApi = {
         return response.data;
     },
 
-    async toggleRegistration(date: string, mealType: 'LUNCH' | 'DINNER'): Promise<ApiResponse<any>> {
+    async toggleRegistration(date: string, mealType: 'LUNCH' | 'DINNER'): Promise<APIResponse<any>> {
         return api.post<any>('/registrations', { date, mealType });
     },
 
-    async applyPreset(presetId: string, year: number, month: number): Promise<ApiResponse<any>> {
+    async applyPreset(presetId: string, year: number, month: number): Promise<APIResponse<any>> {
         return api.post<any>('/registrations/preset', { presetId, year, month });
     },
 
-    async getServerTime(): Promise<ApiResponse<{ serverTime: string; timezone: string }>> {
+    async getServerTime(): Promise<APIResponse<{ serverTime: string; timezone: string }>> {
         return api.get<{ serverTime: string; timezone: string }>('/config/server-time');
     }
 };
