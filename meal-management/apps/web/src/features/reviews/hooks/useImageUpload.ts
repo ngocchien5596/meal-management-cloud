@@ -34,11 +34,7 @@ export const useImageUpload = (): UseImageUploadResult => {
             // Access API URL from environment or default
             const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
-            const response = await axios.post(`${API_URL}/upload/image`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            const response = await axios.post(`${API_URL}/upload/image`, formData);
 
             setIsUploading(false);
 

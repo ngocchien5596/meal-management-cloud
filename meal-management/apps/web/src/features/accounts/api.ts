@@ -20,11 +20,7 @@ export const accountApi = {
     importAccounts: (file: File) => {
         const formData = new FormData();
         formData.append('file', file);
-        return api.post<any>('/accounts/import', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
+        return api.post<any>('/accounts/import', formData);
     },
 
     downloadTemplate: async () => {
