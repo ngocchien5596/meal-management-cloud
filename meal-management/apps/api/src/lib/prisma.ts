@@ -91,7 +91,7 @@ const prisma = new PrismaClient().$extends({
                                 if ((newObj as any).createdAt === undefined) (newObj as any).createdAt = now;
                             }
                         }
-                        if (model && ['Department', 'Position', 'Employee', 'Account', 'MealEvent', 'Registration', 'Ingredient', 'MenuItem', 'SystemConfig', 'MealReview', 'MealPriceConfig', 'RegistrationPreset'].includes(model)) {
+                        if (model && ['Department', 'Position', 'Employee', 'Account', 'MealEvent', 'Registration', 'Ingredient', 'SystemConfig', 'MealReview', 'MealPriceConfig'].includes(model)) {
                             if ((newObj as any).updatedAt === undefined) (newObj as any).updatedAt = now;
                         }
 
