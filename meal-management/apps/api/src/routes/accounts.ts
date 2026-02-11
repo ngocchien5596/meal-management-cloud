@@ -206,7 +206,9 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM', 'HR'), upload.sin
                     }
 
                     // 4. Upsert Account
-                    const role = (Object.values(Role) as string[]).includes(row.roleStr) ? row.roleStr as Role : Role.EMPLOYEE;
+                    let mappedRole = row.roleStr;
+                    if (mappedRole === 'ADMIN') mappedRole = Role.ADMIN_SYSTEM;
+                    const role = (Object.values(Role) as string[]).includes(mappedRole) ? mappedRole as Role : Role.EMPLOYEE;
 
                     const existingAccount = await tx.account.findUnique({ where: { employeeId: employee.id } });
                     if (!existingAccount) {
@@ -220,6 +222,11 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM', 'HR'), upload.sin
                                 secretCode,
                                 isActive: true
                             }
+                        });
+                    } else {
+                        await tx.account.update({
+                            where: { id: existingAccount.id },
+                            data: { role }
                         });
                     }
                 });
