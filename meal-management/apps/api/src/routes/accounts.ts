@@ -206,12 +206,25 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM', 'HR'), upload.sin
                     }
 
                     // 4. Upsert Account
-                    let mappedRole = row.roleStr;
-                    if (mappedRole === 'ADMIN') mappedRole = Role.ADMIN_SYSTEM;
+                    let mappedRole = row.roleStr?.toUpperCase() || '';
+                    console.log(`[Import] Row ${row.rowNumber}: Raw role from Excel: "${mappedRole}"`);
+
+                    if (mappedRole.includes('ADMIN_SYSTEM') || mappedRole === 'ADMIN' || mappedRole.includes('HỆ THỐNG') || mappedRole.includes('QUẢN TRỊ VIÊN')) {
+                        mappedRole = Role.ADMIN_SYSTEM;
+                    } else if (mappedRole.includes('ADMIN_KITCHEN') || mappedRole.includes('BẾP')) {
+                        mappedRole = Role.ADMIN_KITCHEN;
+                    } else if (mappedRole.includes('HR') || mappedRole.includes('NHÂN SỰ')) {
+                        mappedRole = Role.HR;
+                    } else if (mappedRole.includes('EMPLOYEE') || mappedRole.includes('NHÂN VIÊN')) {
+                        mappedRole = Role.EMPLOYEE;
+                    }
+
                     const role = (Object.values(Role) as string[]).includes(mappedRole) ? mappedRole as Role : Role.EMPLOYEE;
+                    console.log(`[Import] Row ${row.rowNumber}: Final mapped role: "${role}"`);
 
                     const existingAccount = await tx.account.findUnique({ where: { employeeId: employee.id } });
                     if (!existingAccount) {
+                        console.log(`[Import] Row ${row.rowNumber}: Creating new account with role ${role}`);
                         const passwordHash = await bcrypt.hash(row.employeeCode, 10);
                         const secretCode = Math.floor(100000 + Math.random() * 900000).toString();
                         await tx.account.create({
@@ -224,6 +237,7 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM', 'HR'), upload.sin
                             }
                         });
                     } else {
+                        console.log(`[Import] Row ${row.rowNumber}: Updating existing account role from ${existingAccount.role} to ${role}`);
                         await tx.account.update({
                             where: { id: existingAccount.id },
                             data: { role }
