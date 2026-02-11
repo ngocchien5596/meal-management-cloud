@@ -1,0 +1,5 @@
+{
+    "buildCommand": "pnpm --filter @meal/web build",
+    "outputDirectory": "meal-management/apps/web/.next",
+    "installCommand": "pnpm install"
+}
