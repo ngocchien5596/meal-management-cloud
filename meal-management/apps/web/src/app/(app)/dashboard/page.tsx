@@ -186,8 +186,8 @@ const calculateKPI = (calendarData: DayData[], prices: any[] = []) => {
             }
             else if (state === 'skipped') {
                 totalSkipped++;
-                // If skipped meals are charged, uncomment below:
-                // totalCost += getPriceForDate(day.date);
+                // Báo cáo tính phí cả bữa bỏ lỡ, nên dashboard cũng phải tính
+                totalCost += getPriceForDate(day.date);
             }
             else if (state === 'registered') totalRegistered++;
         });
