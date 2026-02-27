@@ -39,7 +39,7 @@ async function main() {
         console.log(`  Created At (ISO): ${r.createdAt.toISOString()}`);
         console.log(`  Meal Date: ${r.mealEvent.mealDate}`);
         console.log(`  Meal Type: ${r.mealEvent.mealType}`);
-        console.log(`  Meal Event ID: ${r.mealEvent.mealEventId || r.mealEvent.id}`); // Check ID
+        console.log(`  Meal Event ID: ${r.mealEvent.id}`); // Check ID
         console.log(`  Is Anonymous: ${r.isAnonymous}`);
         console.log(`  Comment: ${r.comment}`);
     });

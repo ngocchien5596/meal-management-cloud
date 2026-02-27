@@ -318,13 +318,13 @@ export default function ImportAccountContent() {
                                     <RefreshCcw className="w-4 h-4" />
                                     Tiếp tục Nhập file
                                 </button>
-                                <Link
-                                    href="/accounts"
+                                <button
+                                    onClick={() => window.location.href = '/accounts'}
                                     className="px-8 py-3 bg-slate-900 hover:bg-black text-white text-sm font-black rounded-2xl transition-all shadow-lg active:scale-95 flex items-center gap-2"
                                 >
                                     <ArrowRight className="w-4 h-4" />
                                     Quay về Danh sách
-                                </Link>
+                                </button>
                             </div>
                         </div>
                     )}

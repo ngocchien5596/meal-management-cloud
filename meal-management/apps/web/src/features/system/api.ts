@@ -1,11 +1,5 @@
-import { api } from '@/lib/api';
+import { api, APIResponse } from '@/lib/api';
 import type { SystemConfig, RegistrationPreset, Department, Position, UpdateConfigRequest, MealPriceConfig } from './types';
-
-interface ApiResponse<T> {
-    success: boolean;
-    data: T;
-    message?: string;
-}
 
 export const systemApi = {
     getConfigs: async () => {

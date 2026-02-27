@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import prisma from '../lib/prisma.js';
 
-const router = Router();
+const router: Router = Router();
 
 // GET /api/config/server-time - Get current server time
 router.get('/server-time', async (req, res) => {

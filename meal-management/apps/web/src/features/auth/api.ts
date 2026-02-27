@@ -1,12 +1,7 @@
-import { api } from '@/lib/api';
+import { api, APIResponse } from '@/lib/api';
 import type { LoginRequest, LoginResponse, User } from './types';
 
 // Helper to define standard API response shape
-interface ApiResponse<T> {
-    success: boolean;
-    data: T;
-    error?: { message: string; code: string };
-}
 
 export const authApi = {
     login: async (data: LoginRequest) => {

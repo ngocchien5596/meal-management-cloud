@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import prisma from '../lib/prisma.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Validation schemas
 const loginSchema = z.object({
@@ -85,7 +85,7 @@ router.post('/login', async (req, res, next) => {
                 role: employee.account.role,
             },
             process.env.JWT_SECRET || 'default-secret',
-            { expiresIn: process.env.JWT_EXPIRES_IN || '3h' }
+            { expiresIn: (process.env.JWT_EXPIRES_IN || '3h') as any }
         );
 
         res.json({

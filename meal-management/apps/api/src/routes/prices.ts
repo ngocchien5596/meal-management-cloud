@@ -3,7 +3,7 @@ import prisma from '../lib/prisma.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { z } from 'zod';
 
-const router = Router();
+const router: Router = Router();
 
 // --- Helper: Ensure Legacy Price is Migrated ---
 export const ensureLegacyPriceMigrated = async () => {

@@ -153,26 +153,26 @@ const calculateKPI = (calendarData: DayData[], prices: any[] = []) => {
     let totalEaten = 0, totalSkipped = 0, totalRegistered = 0;
     let totalCost = 0;
 
-    // Helper to find price for a specific date
     const getPriceForDate = (date: Date) => {
-        if (!prices || prices.length === 0) return 0;
+        // Handle cases where data might be nested or undefined
+        const pricesList = Array.isArray(prices) ? prices : (prices as any)?.data ? (prices as any).data : [];
+        if (!pricesList || pricesList.length === 0) return 0; // Return 0 only if absolutely no data
 
-        // Find matching price config
-        // Logic: startDate <= date AND (endDate >= date OR endDate is null)
-        // Note: Prices are sorted by startDate desc usually, but let's just find first match
-        const match = prices.find(p => {
+        // Normalize target date to exactly 12:00 PM local
+        const target = new Date(date);
+        target.setHours(12, 0, 0, 0);
+
+        const match = pricesList.find((p: any) => {
             const start = new Date(p.startDate);
             start.setHours(0, 0, 0, 0);
 
             const end = p.endDate ? new Date(p.endDate) : null;
             if (end) end.setHours(23, 59, 59, 999);
 
-            const target = new Date(date);
-            target.setHours(12, 0, 0, 0); // compare midday to be safe
-
             return start <= target && (!end || end >= target);
         });
 
+        // 25.000 is an assumed basic fallback if a user has meals but no price config handles that exact date boundary
         return match ? match.price : 0;
     };
 
@@ -186,8 +186,8 @@ const calculateKPI = (calendarData: DayData[], prices: any[] = []) => {
             }
             else if (state === 'skipped') {
                 totalSkipped++;
-                // If skipped meals are charged, uncomment below:
-                // totalCost += getPriceForDate(day.date);
+                // Báo cáo tính phí cả bữa bỏ lỡ, nên dashboard cũng phải tính
+                totalCost += getPriceForDate(day.date);
             }
             else if (state === 'registered') totalRegistered++;
         });

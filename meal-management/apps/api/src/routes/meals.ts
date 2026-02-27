@@ -489,13 +489,21 @@ router.post('/:id/menu-items', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_S
     try {
         const { id } = req.params;
         const { name } = req.body;
+
+        if (!name || name.trim() === '') {
+            return res.status(400).json({ success: false, error: 'Tên món ăn không được để trống' });
+        }
+
         const menuItem = await prisma.menuItem.create({
-            data: { mealEventId: id, name }
+            data: { mealEventId: id, name: name.trim() }
         });
         res.json({ success: true, data: menuItem });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Create menu item error:', error);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
+        res.status(500).json({
+            success: false,
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Lỗi hệ thống khi tạo món ăn'
+        });
     }
 });
 

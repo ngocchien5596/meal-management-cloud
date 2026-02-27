@@ -1,11 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
+    output: 'standalone',
     async rewrites() {
         return [
             {
                 source: '/api/:path*',
-                destination: 'http://localhost:4000/api/:path*', // Proxy to Backend
+                destination: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/:path*',
             },
         ];
     },

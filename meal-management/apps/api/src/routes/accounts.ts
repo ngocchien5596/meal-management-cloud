@@ -7,7 +7,7 @@ import ExcelJS from 'exceljs';
 import { upload } from '../middleware/upload.js';
 import prisma from '../lib/prisma.js';
 
-const router = Router();
+const router: Router = Router();
 
 // GET /api/accounts/template - Download Excel Template
 router.get('/template', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req, res, next) => {
@@ -206,10 +206,21 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM', 'HR'), upload.sin
                     }
 
                     // 4. Upsert Account
-                    const role = (Object.values(Role) as string[]).includes(row.roleStr) ? row.roleStr as Role : Role.EMPLOYEE;
+                    const rawRole = row.roleStr?.trim().toUpperCase() || '';
+                    console.log(`[Import] Row ${row.rowNumber}: Raw role string: "${rawRole}"`);
+
+                    let role: Role = Role.EMPLOYEE;
+                    if (Object.values(Role).includes(rawRole as any)) {
+                        role = rawRole as Role;
+                    } else if (rawRole === 'ADMIN') {
+                        role = Role.ADMIN_SYSTEM;
+                    }
+
+                    console.log(`[Import] Row ${row.rowNumber}: Resolved Role: "${role}"`);
 
                     const existingAccount = await tx.account.findUnique({ where: { employeeId: employee.id } });
                     if (!existingAccount) {
+                        console.log(`[Import] Row ${row.rowNumber}: Creating new account with role ${role}`);
                         const passwordHash = await bcrypt.hash(row.employeeCode, 10);
                         const secretCode = Math.floor(100000 + Math.random() * 900000).toString();
                         await tx.account.create({
@@ -220,6 +231,12 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM', 'HR'), upload.sin
                                 secretCode,
                                 isActive: true
                             }
+                        });
+                    } else {
+                        console.log(`[Import] Row ${row.rowNumber}: Updating existing account role from ${existingAccount.role} to ${role}`);
+                        await tx.account.update({
+                            where: { id: existingAccount.id },
+                            data: { role }
                         });
                     }
                 });

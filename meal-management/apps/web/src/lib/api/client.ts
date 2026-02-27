@@ -33,10 +33,14 @@ async function request<T>(
 ): Promise<APIResponse<T>> {
     const token = getToken();
 
+    const isFormData = body instanceof FormData;
     const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
         ...config.headers,
     };
+
+    if (!isFormData) {
+        headers['Content-Type'] = 'application/json';
+    }
 
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -60,7 +64,7 @@ async function request<T>(
         const response = await fetch(url, {
             method,
             headers,
-            body: body ? JSON.stringify(body) : undefined,
+            body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
             signal: config.signal,
         });
 

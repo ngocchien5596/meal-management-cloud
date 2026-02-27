@@ -1,11 +1,5 @@
-import { api } from '@/lib/api';
+import { api, APIResponse } from '@/lib/api';
 import type { Account, CreateAccountRequest, UpdateAccountRequest } from './types';
-
-interface ApiResponse<T> {
-    success: boolean;
-    data: T;
-    message?: string;
-}
 
 export const accountApi = {
     getAccounts: async () => {
@@ -26,11 +20,7 @@ export const accountApi = {
     importAccounts: (file: File) => {
         const formData = new FormData();
         formData.append('file', file);
-        return api.post<any>('/accounts/import', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
+        return api.post<any>('/accounts/import', formData);
     },
 
     downloadTemplate: async () => {
