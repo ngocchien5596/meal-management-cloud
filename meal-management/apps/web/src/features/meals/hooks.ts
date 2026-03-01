@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { mealsApi, MealDetail } from './api';
 
-export const useMeals = (startDate?: string, endDate?: string) => {
+export const useMeals = (startDate?: string, endDate?: string, search?: string, status?: string) => {
     return useQuery({
-        queryKey: ['meals', startDate, endDate],
-        queryFn: () => mealsApi.getMeals(startDate, endDate),
+        queryKey: ['meals', startDate, endDate, search, status],
+        queryFn: () => mealsApi.getMeals(startDate, endDate, search, status),
     });
 };
 

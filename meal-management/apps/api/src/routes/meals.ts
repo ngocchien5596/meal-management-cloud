@@ -7,9 +7,29 @@ const router: Router = Router();
 // GET /api/meals - List all meal events with optional date filtering
 router.get('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
     try {
-        const { startDate, endDate } = req.query;
+        const { startDate, endDate, search, status } = req.query;
 
         const where: any = {};
+
+        // Status filter
+        if (status && status !== 'Tất cả trạng thái') {
+            // Map Vietnamese labels to Enum if necessary, or just use the enum directly if passed correctly
+            const statusMap: Record<string, string> = {
+                'Đang diễn ra': 'IN_PROGRESS',
+                'Nháp': 'DRAFT',
+                'Đã kết thúc': 'COMPLETED'
+            };
+            where.status = statusMap[status as string] || status;
+        }
+
+        // Search filter (by Menu Item name)
+        if (search) {
+            where.menuItems = {
+                some: {
+                    name: { contains: search as string, mode: 'insensitive' }
+                }
+            };
+        }
 
         // Date filtering logic
         if (startDate) {

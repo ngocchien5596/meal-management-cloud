@@ -192,6 +192,8 @@ export default function MealManagementPage() {
     }, [user, isAdmin, router]);
 
     const [dateFilter, setDateFilter] = useState<string>('');
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const [statusFilter, setStatusFilter] = useState<string>('Tất cả trạng thái');
 
     // Construct local range for filter
     const range = React.useMemo(() => {
@@ -202,7 +204,7 @@ export default function MealManagementPage() {
         return { start: start.toISOString(), end: end.toISOString() };
     }, [dateFilter]);
 
-    const { data: meals = [], isLoading } = useMeals(range.start, range.end);
+    const { data: meals = [], isLoading } = useMeals(range.start, range.end, searchTerm, statusFilter);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const dateInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -271,6 +273,8 @@ export default function MealManagementPage() {
                         <input
                             type="text"
                             placeholder="Tìm kiếm..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full h-10 pl-10 pr-4 bg-white border border-vtborder rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-focus focus:border-brand transition-all"
                         />
                     </div>
@@ -280,7 +284,11 @@ export default function MealManagementPage() {
                             Tổng số: <span className="text-brand font-bold">{meals.length}</span> bữa ăn
                         </div>
                         <div className="relative">
-                            <select className="h-10 pl-3 pr-8 bg-white border border-vtborder rounded-lg text-sm font-medium text-vttext-secondary focus:outline-none focus:ring-2 focus:ring-focus focus:border-brand appearance-none min-w-[150px]">
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="h-10 pl-3 pr-8 bg-white border border-vtborder rounded-lg text-sm font-medium text-vttext-secondary focus:outline-none focus:ring-2 focus:ring-focus focus:border-brand appearance-none min-w-[150px]"
+                            >
                                 <option>Tất cả trạng thái</option>
                                 <option>Đang diễn ra</option>
                                 <option>Nháp</option>
