@@ -87,8 +87,8 @@ export interface MealDetail extends MealEvent {
 }
 
 export const mealsApi = {
-    getMeals: (startDate?: string, endDate?: string) =>
-        api.get<MealEvent[]>('/meals', { params: { startDate, endDate } })
+    getMeals: (startDate?: string, endDate?: string, search?: string, status?: string) =>
+        api.get<MealEvent[]>('/meals', { params: { startDate, endDate, search, status } })
             .then(res => res.data),
 
     getMealDetail: (id: string) =>
