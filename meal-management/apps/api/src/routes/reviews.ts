@@ -88,9 +88,14 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
             success: true,
             data: review
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Review creation error:', error);
-        res.status(500).json({ success: false, error: 'Lỗi server khi gửi đánh giá.' });
+        res.status(500).json({
+            success: false,
+            error: 'Lỗi server khi gửi đánh giá.',
+            message: error.message || 'Unknown error',
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 
