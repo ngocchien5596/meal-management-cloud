@@ -66,6 +66,7 @@ async function main() {
                 mealEventId: mealEvent.id,
                 employeeId: employee.id,
                 comment: "DEBUG TEST REVIEW " + new Date().toISOString(),
+                images: [],
                 isAnonymous: true
             }
         });
