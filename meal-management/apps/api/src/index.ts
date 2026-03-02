@@ -54,7 +54,9 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // Serve static uploads
-app.use('/static/uploads', express.static(path.join(process.cwd(), 'uploads')));
+const uploadsPath = path.join(process.cwd(), 'uploads');
+console.log('📂 Serving static files from:', uploadsPath);
+app.use('/static/uploads', express.static(uploadsPath));
 
 // Health check
 app.get('/health', (req, res) => {

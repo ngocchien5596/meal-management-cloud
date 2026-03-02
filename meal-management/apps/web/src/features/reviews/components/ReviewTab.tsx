@@ -86,7 +86,7 @@ export function ReviewTab({ mealId }: ReviewTabProps) {
                                     <div
                                         key={idx}
                                         className="relative aspect-video rounded-xl overflow-hidden bg-gray-100 border border-gray-100 cursor-zoom-in group/image"
-                                        onClick={() => setSelectedImage(url)}
+                                        onClick={() => setSelectedImage(resolveImageUrl(url))}
                                     >
                                         <img
                                             src={resolveImageUrl(url)}
