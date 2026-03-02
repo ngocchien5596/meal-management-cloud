@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import path from 'path';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
@@ -16,6 +17,7 @@ import reportRoutes from './routes/reports.js';
 import configRoutes from './routes/config.js';
 import priceRoutes, { ensureLegacyPriceMigrated } from './routes/prices.js';
 import reviewRoutes from './routes/reviews.js';
+import uploadRoutes from './routes/upload.js';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js';
@@ -43,6 +45,8 @@ app.use(cors({
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// Serve static uploads
+app.use('/static/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -59,6 +63,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/prices', priceRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Error handler
 app.use(errorHandler);

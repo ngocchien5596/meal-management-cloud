@@ -233,6 +233,8 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setImageUrl('');
+                                    setLocalPreview(null);
+                                    if (fileInputRef.current) fileInputRef.current.value = '';
                                 }}
                                 className="absolute top-2 right-2 p-1.5 bg-white rounded-full hover:bg-red-50 text-red-500 shadow-sm transition-all opacity-0 group-hover:opacity-100 hover:scale-110 z-10"
                                 title="Xóa ảnh"

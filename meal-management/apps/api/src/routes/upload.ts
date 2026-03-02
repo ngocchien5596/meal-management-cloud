@@ -8,7 +8,7 @@ const router: Router = Router();
 // Configuration for Multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '../../uploads/reviews');
+        const uploadPath = path.join(process.cwd(), 'uploads/reviews');
         // Ensure directory exists
         if (!fs.existsSync(uploadPath)) {
             fs.mkdirSync(uploadPath, { recursive: true });
