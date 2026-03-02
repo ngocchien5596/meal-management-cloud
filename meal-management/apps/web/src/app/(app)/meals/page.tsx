@@ -253,11 +253,13 @@ export default function MealManagementPage() {
                         </button>
                     )}
 
+                    {/* 
                     {isAdmin && (
                         <CreateButton onClick={() => setIsCreateModalOpen(true)}>
                             Thêm mới
                         </CreateButton>
-                    )}
+                    )} 
+                    */}
                 </div>
             </div>
 
