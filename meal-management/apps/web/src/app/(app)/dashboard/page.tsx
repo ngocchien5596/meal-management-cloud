@@ -103,7 +103,7 @@ const getDaysInMonth = (year: number, month: number): number => new Date(year, m
 const getFirstDayOfMonth = (year: number, month: number): number => new Date(year, month, 1).getDay();
 
 // Types
-type MealState = 'eaten' | 'skipped' | 'missed' | 'registered' | 'available' | null;
+type MealState = 'eaten' | 'skipped' | 'missed' | 'registered' | 'available' | 'cancelled' | null;
 
 interface DayData {
     day: number;
@@ -190,6 +190,7 @@ const calculateKPI = (calendarData: DayData[], prices: any[] = []) => {
                 totalCost += getPriceForDate(day.date);
             }
             else if (state === 'registered') totalRegistered++;
+            // Note: 'cancelled' and 'missed' states are ignored in KPI calculations
         });
     });
     return { totalEaten, totalSkipped, totalRegistered, totalCost };
@@ -213,6 +214,7 @@ const DayCell = ({ data, now, onToggle }: { data: DayData; now: Date; onToggle: 
         // 1. Explicit States (Priority)
         if (type === 'eaten') return <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100 ring-2 ring-white group-hover:scale-110 transition-transform"><UtensilsIcon className="w-5 h-5 text-white" /></div>;
         if (type === 'skipped') return <div className="w-10 h-10 bg-rose-500 rounded-xl flex items-center justify-center shadow-lg shadow-rose-100 ring-2 ring-white group-hover:scale-110 transition-transform"><XIcon className="w-5 h-5 text-white" /></div>;
+        if (type === 'cancelled') return <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center ring-2 ring-white" title="Suất ăn đã bị nhà bếp hủy"><XIcon className="w-5 h-5 text-slate-400" /></div>;
 
         if (type === 'registered') {
             if (!available) {
@@ -298,6 +300,7 @@ const MobileDayItem = ({ data, now, onToggle }: { data: DayData; now: Date; onTo
         // 1. Explicit States
         if (type === 'eaten') return <div className="w-11 h-11 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100 ring-2 ring-white/50"><UtensilsIcon className="w-6 h-6 text-white" /></div>;
         if (type === 'skipped') return <div className="w-11 h-11 bg-rose-500 rounded-xl flex items-center justify-center shadow-lg shadow-rose-100 ring-2 ring-white/50"><XIcon className="w-6 h-6 text-white" /></div>;
+        if (type === 'cancelled') return <div className="w-11 h-11 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-100" title="Suất ăn đã bị nhà bếp hủy"><XIcon className="w-5 h-5 text-slate-300" /></div>;
 
         if (type === 'registered') {
             if (!available) {
@@ -439,7 +442,7 @@ export default function DashboardPage() {
 
                 // 2. If registration is CANCELLED (Kitchen override)
                 if (registration.isCancelled) {
-                    return 'skipped'; // Display as Red X (Skipped)
+                    return 'cancelled'; // Logic fix: Don't count as skipped, don't charge fee
                 }
 
                 // 3. Active registration logic
