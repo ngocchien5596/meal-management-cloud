@@ -8,6 +8,7 @@ import { Modal, Button, Input } from '@/components/ui';
 import { cn } from '@/lib/utils/cn'; // Added cn
 import { useCreateReview, useImageUpload } from '../hooks'; // Added hook
 import { ImagePreviewModal } from './ImagePreviewModal';
+import { resolveImageUrl } from '@/lib/utils/resolve-image-url';
 
 interface ReviewModalProps {
     isOpen: boolean;
@@ -211,9 +212,9 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
                             )}
                         </div>
                     ) : (
-                        <div className="relative w-full h-48 rounded-xl overflow-hidden border border-gray-200 group cursor-zoom-in" onClick={() => (localPreview || imageUrl) && setPreviewImage(localPreview || imageUrl)}>
+                        <div className="relative w-full h-48 rounded-xl overflow-hidden border border-gray-200 group cursor-zoom-in" onClick={() => (localPreview || imageUrl) && setPreviewImage(localPreview || resolveImageUrl(imageUrl))}>
                             <img
-                                src={localPreview || imageUrl}
+                                src={localPreview || resolveImageUrl(imageUrl)}
                                 alt="Preview"
                                 className={cn("w-full h-full object-cover transition-opacity", (isUploading || isCompressing) ? "opacity-50" : "opacity-100")}
                             />

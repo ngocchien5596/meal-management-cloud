@@ -39,12 +39,8 @@ export const useImageUpload = (): UseImageUploadResult => {
             setIsUploading(false);
 
             if (response.data.success) {
-                // Ensure full URL if backend returns relative path
-                const url = response.data.url;
-                if (url.startsWith('http')) return url;
-                // Construct full URL using 4000 port for now, but ideally uses Env
-                const BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
-                return `${BASE_URL}${url}`;
+                // Return relative path from backend (e.g., /static/uploads/...)
+                return response.data.url;
             } else {
                 toast.error('Có lỗi khi tải ảnh lên');
                 return null;

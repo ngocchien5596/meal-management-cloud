@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useMealReviews } from '../hooks';
 import { MealReview } from '../api';
+import { resolveImageUrl } from '@/lib/utils/resolve-image-url';
 
 import { ImagePreviewModal } from './ImagePreviewModal';
 
@@ -88,7 +89,7 @@ export function ReviewTab({ mealId }: ReviewTabProps) {
                                         onClick={() => setSelectedImage(url)}
                                     >
                                         <img
-                                            src={url}
+                                            src={resolveImageUrl(url)}
                                             alt="Review content"
                                             className="w-full h-full object-cover transition-transform duration-700 group-hover/image:scale-110"
                                         />
