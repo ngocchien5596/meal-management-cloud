@@ -192,7 +192,7 @@ model MealReview {
   employee    Employee  @relation(fields: [employeeId], references: [id])
   employeeId  String
   comment     String    @db.Text
-  images      String[]
+  images      Json
   isAnonymous Boolean   @default(true)
   createdAt   DateTime  @default(now())
 }
