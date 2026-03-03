@@ -20,4 +20,11 @@ export const useMealReviews = (mealId: string) => {
     });
 };
 
+export const useMyReviews = () => {
+    return useQuery({
+        queryKey: ['my-reviews'],
+        queryFn: () => reviewApi.getMyReviews(),
+    });
+};
+
 export * from './useImageUpload';

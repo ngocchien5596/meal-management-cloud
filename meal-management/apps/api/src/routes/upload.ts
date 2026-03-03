@@ -54,35 +54,56 @@ router.post('/image', upload.single('image'), async (req, res) => {
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        console.log('☁️ Uploading to Cloudinary:', req.file.path);
+        const hasCloudinary = process.env.CLOUDINARY_CLOUD_NAME &&
+            process.env.CLOUDINARY_API_KEY &&
+            process.env.CLOUDINARY_API_SECRET;
 
-        // Upload to Cloudinary
-        const result = await cloudinary.uploader.upload(req.file.path, {
-            folder: 'review_images',
-            use_filename: true,
-            unique_filename: true
-        });
+        if (hasCloudinary) {
+            console.log('☁️ Uploading to Cloudinary:', req.file.path);
 
-        console.log('✅ Cloudinary upload success:', result.secure_url);
+            // Upload to Cloudinary
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                folder: 'review_images',
+                use_filename: true,
+                unique_filename: true
+            });
 
-        // Cleanup local file after upload
-        try {
-            fs.unlinkSync(req.file.path);
-            console.log('🗑️ Local file cleaned up');
-        } catch (unlinkError) {
-            console.error('⚠️ Failed to delete local temp file:', unlinkError);
+            console.log('✅ Cloudinary upload success:', result.secure_url);
+
+            // Cleanup local file after upload
+            try {
+                fs.unlinkSync(req.file.path);
+                console.log('🗑️ Local file cleaned up');
+            } catch (unlinkError) {
+                console.error('⚠️ Failed to delete local temp file:', unlinkError);
+            }
+
+            return res.json({
+                success: true,
+                url: result.secure_url,
+                public_id: result.public_id,
+                mimetype: req.file.mimetype,
+                size: req.file.size
+            });
+        } else {
+            // FALLBACK TO LOCAL STORAGE
+            console.log('🏠 Cloudinary credentials missing. Using local storage fallback.');
+
+            // The file is already saved in uploads/reviews/[filename] by multer
+            // We return a relative path that the frontend can resolve
+            const relativePath = `/static/uploads/reviews/${req.file.filename}`;
+
+            return res.json({
+                success: true,
+                url: relativePath,
+                isLocal: true,
+                mimetype: req.file.mimetype,
+                size: req.file.size
+            });
         }
-
-        res.json({
-            success: true,
-            url: result.secure_url, // Return Cloudinary URL
-            public_id: result.public_id,
-            mimetype: req.file.mimetype,
-            size: req.file.size
-        });
     } catch (error) {
         console.error('🔥 Upload Error:', error);
-        res.status(500).json({ error: 'Failed to upload image to cloud' });
+        res.status(500).json({ error: 'Failed to upload image' });
     }
 });
 

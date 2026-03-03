@@ -68,13 +68,15 @@ async function request<T>(
             signal: config.signal,
         });
 
-        if (config.responseType === 'blob') {
-            return await response.blob() as any;
-        }
+        let data: any;
 
-        const data: APIResponse<T> = await response.json();
+        if (!response.ok) {
+            try {
+                data = await response.json();
+            } catch {
+                data = { error: response.statusText };
+            }
 
-        if (!response.ok || data.success === false) {
             if (response.status === 401) {
                 // Clear auth state on unauthorized
                 localStorage.removeItem('auth-storage');
@@ -82,6 +84,25 @@ async function request<T>(
                 throw new UnauthorizedError(typeof data.error === 'string' ? data.error : data.error?.message);
             }
 
+            const errorCode = (typeof data.error === 'object' && data.error?.code) || 'ERROR';
+            const errorMessage = typeof data.error === 'string'
+                ? data.error
+                : (data.error?.message || data.message || 'An error occurred');
+
+            throw new APIError(
+                errorCode,
+                errorMessage,
+                response.status
+            );
+        }
+
+        if (config.responseType === 'blob') {
+            return await response.blob() as any;
+        }
+
+        data = await response.json();
+
+        if (data && data.success === false) {
             const errorCode = (typeof data.error === 'object' && data.error?.code) || 'ERROR';
             const errorMessage = typeof data.error === 'string'
                 ? data.error

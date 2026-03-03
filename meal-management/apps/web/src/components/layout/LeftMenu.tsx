@@ -167,16 +167,17 @@ const menuItems: MenuItem[] = [
         icon: ReportIcon,
         roles: ['ADMIN_KITCHEN', 'HR', 'ADMIN_SYSTEM'],
         children: [
-            { key: 'reports-summary', label: 'Báo cáo tổng hợp', href: '/reports/summary', icon: ReportIcon },
+            { key: 'reports-summary', label: 'Báo cáo tiền ăn', href: '/reports/summary', icon: ReportIcon },
             { key: 'reports-costs', label: 'Báo cáo chi phí', href: '/reports/costs', icon: CreditCardIcon },
             { key: 'reports-reviews', label: 'Báo cáo đánh giá', href: '/reports/reviews', icon: StarIcon },
         ]
     },
+    { key: 'review', label: 'Đánh giá bữa ăn', href: '/reviews', icon: StarIcon },
     { key: 'password', label: 'Đổi mật khẩu', href: '/change-password', icon: LockIcon },
 ];
 
 // --- Main Component ---
-export function LeftMenu({ onScanClick, onReviewClick, userRole }: { onScanClick?: () => void; onReviewClick?: () => void; userRole?: string }) {
+export function LeftMenu({ onScanClick, userRole }: { onScanClick?: () => void; userRole?: string }) {
     const pathname = usePathname();
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
@@ -262,10 +263,6 @@ export function LeftMenu({ onScanClick, onReviewClick, userRole }: { onScanClick
                     </button>
                 ) : item.key === 'checkin' && onScanClick ? (
                     <button onClick={onScanClick} className="w-full text-left outline-none">
-                        {content}
-                    </button>
-                ) : item.key === 'review' && onReviewClick ? (
-                    <button onClick={onReviewClick} className="w-full text-left outline-none">
                         {content}
                     </button>
                 ) : (

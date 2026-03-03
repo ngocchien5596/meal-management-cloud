@@ -36,15 +36,8 @@ const tabs = [
 
 export default function ConfigLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex flex-col h-full bg-vtbg-secondary/30">
-            <div className="bg-white border-b border-vtborder px-8 py-6 shrink-0">
-                <h1 className="text-2xl font-black text-vttext-primary">Cấu hình hệ thống</h1>
-                <p className="text-vttext-muted text-sm font-medium mt-1">Quản lý tài khoản, phòng ban, chức vụ và các thiết lập vận hành.</p>
-            </div>
-
-            <div className="flex-1 overflow-auto p-8">
-                {children}
-            </div>
-        </div>
+        <>
+            {children}
+        </>
     );
 }

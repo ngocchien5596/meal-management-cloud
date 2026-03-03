@@ -319,9 +319,18 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                                                 <span className="text-sm font-bold text-[#E11D2E] uppercase truncate max-w-[140px]">
                                                     {rev.isAnonymous ? 'Ẩn danh' : (rev.employee?.fullName || 'Ẩn danh')}
                                                 </span>
-                                                <span className="text-xs text-slate-400 tabular-nums">
-                                                    {format(new Date(rev.createdAt), 'HH:mm')}
-                                                </span>
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-xs text-slate-400 tabular-nums">
+                                                        {format(new Date(rev.createdAt), 'HH:mm')}
+                                                    </span>
+                                                    <div className="flex items-center gap-0.5 text-amber-400 mt-0.5">
+                                                        {[...Array(5)].map((_, i) => (
+                                                            <svg key={i} width="8" height="8" viewBox="0 0 24 24" fill={i < rev.rating ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                                            </svg>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             <p className="text-xs text-[#334155] font-medium line-clamp-2 leading-relaxed italic">

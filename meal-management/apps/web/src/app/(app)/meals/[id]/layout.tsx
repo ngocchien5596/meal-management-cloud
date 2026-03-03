@@ -499,7 +499,7 @@ export default function MealDetailLayout({
                 onConfirm={handleStartMeal}
                 isLoading={startMutation.isPending}
                 title="Bắt đầu phục vụ"
-                description="Bạn có chắc chắn muốn bắt đầu phục vụ bữa ăn này? Hành động này sẽ mở check-in và khóa chỉnh sửa nguyên vật liệu/thực đơn."
+                description="Bạn có chắc chắn muốn bắt đầu phục vụ bữa ăn này? Thao tác này sẽ mở check-in và khóa chỉnh sửa nguyên vật liệu/thực đơn."
                 type="info"
                 confirmText="Bắt đầu ngay"
             />
@@ -510,7 +510,7 @@ export default function MealDetailLayout({
                 onConfirm={handleEndMeal}
                 isLoading={endMutation.isPending}
                 title="Kết thúc buổi ăn"
-                description="Bạn có chắc chắn muốn kết thúc bữa ăn này? Hành động này sẽ khóa toàn bộ dữ liệu và ngừng check-in."
+                description="Bạn có chắc chắn muốn kết thúc bữa ăn này? Thao tác này sẽ khóa toàn bộ dữ liệu và ngừng check-in."
                 type="danger"
                 confirmText="Kết thúc"
             />

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, AuthRequest } from '../middleware/auth.js';
+import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import prisma from '../lib/prisma.js';
 
 const router: Router = Router();
@@ -10,8 +10,10 @@ const router: Router = Router();
  */
 router.post('/', authenticate, async (req: AuthRequest, res) => {
     try {
-        const { date, mealType, comment, images, isAnonymous } = req.body;
+        const { date, mealType, comment, images, isAnonymous, rating } = req.body;
         const employeeId = req.user!.employeeId;
+
+        console.log('[REVIEWS] Creating review with rating:', rating, typeof rating);
 
         // Normalize date to 00:00:00 to match DB
         const mealDate = new Date(date);
@@ -57,6 +59,7 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
                 mealEventId: mealEvent.id,
                 employeeId,
                 comment,
+                rating: rating !== undefined ? Number(rating) : 5,
                 images: images || [],
                 isAnonymous: isAnonymous !== undefined ? isAnonymous : true
             },
@@ -84,6 +87,8 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
             });
         }
 
+        console.log('[REVIEWS] Final review object sent to client:', JSON.stringify(review, null, 2));
+
         res.json({
             success: true,
             data: review
@@ -95,6 +100,65 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
             error: 'Lỗi server khi gửi đánh giá.',
             message: error.message || 'Unknown error',
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
+});
+
+/**
+ * PATCH /api/reviews/:id/reply
+ * Admin replies to a review
+ */
+router.patch('/:id/reply', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req: AuthRequest, res) => {
+    try {
+        const { id } = req.params;
+        const { reply } = req.body;
+
+        if (!reply || reply.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                error: 'Nội dung phản hồi không được để trống.'
+            });
+        }
+
+        const review = await prisma.mealReview.update({
+            where: { id },
+            data: {
+                adminReply: reply,
+                adminReplyAt: new Date()
+            },
+            include: {
+                employee: {
+                    select: {
+                        fullName: true,
+                        employeeCode: true
+                    }
+                },
+                mealEvent: true
+            }
+        });
+
+        // Real-time update via Socket.io
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('update-review', {
+                review: {
+                    ...review,
+                    employeeName: review.isAnonymous ? 'Người dùng ẩn danh' : review.employee.fullName,
+                    employee: review.isAnonymous ? null : review.employee
+                }
+            });
+        }
+
+        res.json({
+            success: true,
+            data: review
+        });
+    } catch (error: any) {
+        console.error('Admin reply error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Lỗi server khi gửi phản hồi.',
+            message: error.message || 'Unknown error'
         });
     }
 });
@@ -133,6 +197,37 @@ router.get('/meal/:mealId', async (req, res) => {
     } catch (error) {
         console.error('Fetch reviews error:', error);
         res.status(500).json({ success: false, error: 'Lỗi server khi lấy đánh giá.' });
+    }
+});
+
+/**
+ * GET /api/reviews/my
+ * Get current user's reviews
+ */
+router.get('/my', authenticate, async (req: AuthRequest, res) => {
+    try {
+        const employeeId = req.user!.employeeId;
+        const reviews = await prisma.mealReview.findMany({
+            where: { employeeId },
+            include: {
+                mealEvent: true,
+                employee: {
+                    select: {
+                        fullName: true,
+                        employeeCode: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        res.json({
+            success: true,
+            data: reviews
+        });
+    } catch (error) {
+        console.error('Fetch my reviews error:', error);
+        res.status(500).json({ success: false, error: 'Lỗi server khi lấy đánh giá của bạn.' });
     }
 });
 

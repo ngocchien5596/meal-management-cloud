@@ -307,7 +307,7 @@ export default function MealManagementPage() {
                                 <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[15%]">Bữa</th>
                                 <th className="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[20%]">Trạng thái</th>
                                 <th className="py-3 px-6 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-[20%]">Nhân viên / Khách</th>
-                                <th className="py-3 px-6 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-[15%]">Hành động</th>
+                                <th className="py-3 px-6 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-[15%]">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">

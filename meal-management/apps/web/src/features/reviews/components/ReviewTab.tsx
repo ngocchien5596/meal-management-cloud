@@ -6,6 +6,7 @@ import { vi } from 'date-fns/locale';
 import { useMealReviews } from '../hooks';
 import { MealReview } from '../api';
 import { resolveImageUrl } from '@/lib/utils/resolve-image-url';
+import { StarRating } from '@/components/ui/StarRating';
 
 import { ImagePreviewModal } from './ImagePreviewModal';
 
@@ -67,6 +68,7 @@ export function ReviewTab({ mealId }: ReviewTabProps) {
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
                                         {format(new Date(review.createdAt), 'HH:mm • dd/MM/yyyy', { locale: vi })}
                                     </p>
+                                    <StarRating rating={review.rating} size="sm" className="mt-1" />
                                 </div>
                             </div>
                             {review.images && review.images.length > 0 && (

@@ -3,9 +3,11 @@ import { format, parseISO } from 'date-fns';
 
 export interface ReportSummary {
     totalMeals: number;
+    totalEaten: number;
     totalSkipped: number;
     totalCost: number;
-    avgPerDay: number;
+    attendanceRate: number;
+    wasteCost: number;
 }
 
 export interface ReportItem {
@@ -24,6 +26,27 @@ export interface ReportResponse {
     details: ReportItem[];
 }
 
+export interface CostsResponse {
+    summary: {
+        totalCost: number;
+        avgCostPerMeal: number;
+        totalMeals: number;
+        topIngredient: string;
+    };
+    data: any[];
+}
+
+export interface ReviewsResponse {
+    summary: {
+        totalReviews: number;
+        avgRating: number;
+        withImages: number;
+        anonymousCount: number;
+        responseRate: number;
+    };
+    data: any[];
+}
+
 export const reportsApi = {
     getSummary: (startDate: string, endDate: string, search?: string, departmentId?: string) => {
         return api.get<ReportResponse>('/reports/summary', {
@@ -31,27 +54,57 @@ export const reportsApi = {
         });
     },
     getCosts: (startDate: string, endDate: string) => {
-        return api.get<any[]>('/reports/costs', {
+        return api.get<CostsResponse>('/reports/costs', {
             params: { startDate, endDate }
         });
     },
-    exportCosts: (startDate: string, endDate: string) => {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/costs/export?startDate=${startDate}&endDate=${endDate}&token=${localStorage.getItem('token')}`;
-        window.open(url, '_blank');
+    exportCosts: async (startDate: string, endDate: string) => {
+        const blob = await api.get<any>('/reports/costs/export', {
+            params: { startDate, endDate },
+            responseType: 'blob'
+        });
+        const url = window.URL.createObjectURL(blob as unknown as Blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Bao-cao-chi-phi-${startDate}-${endDate}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
     },
     getReviews: (startDate: string, endDate: string) => {
-        return api.get<any[]>('/reports/reviews', {
+        return api.get<ReviewsResponse>('/reports/reviews', {
             params: { startDate, endDate }
         });
     },
-    exportReviews: (startDate: string, endDate: string) => {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/reviews/export?startDate=${startDate}&endDate=${endDate}&token=${localStorage.getItem('token')}`;
-        window.open(url, '_blank');
+    exportReviews: async (startDate: string, endDate: string) => {
+        const blob = await api.get<any>('/reports/reviews/export', {
+            params: { startDate, endDate },
+            responseType: 'blob'
+        });
+        const url = window.URL.createObjectURL(blob as unknown as Blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Bao-cao-danh-gia-${startDate}-${endDate}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
     },
-    exportExcel: (startDate: string, endDate: string, search?: string, departmentId?: string) => {
-        let url = `${process.env.NEXT_PUBLIC_API_URL}/reports/summary/export?startDate=${startDate}&endDate=${endDate}&token=${localStorage.getItem('token')}`;
-        if (search) url += `&search=${encodeURIComponent(search)}`;
-        if (departmentId) url += `&departmentId=${departmentId}`;
-        window.open(url, '_blank');
+    exportExcel: async (startDate: string, endDate: string, search?: string, departmentId?: string) => {
+        const blob = await api.get<any>('/reports/export', {
+            params: { startDate, endDate, search, departmentId },
+            responseType: 'blob'
+        });
+        const url = window.URL.createObjectURL(blob as unknown as Blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const dStart = startDate.split('-').reverse().join('-');
+        const dEnd = endDate.split('-').reverse().join('-');
+        a.download = `Bao-cao-suat-an-${dStart}-${dEnd}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
     }
 };

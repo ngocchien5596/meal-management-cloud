@@ -7,11 +7,10 @@ import { Home, QrCode, ScanLine, Star, Lock } from 'lucide-react';
 
 interface MobileNavProps {
     onScanClick?: () => void;
-    onReviewClick?: () => void;
     userRole?: string;
 }
 
-export function MobileNav({ onScanClick, onReviewClick, userRole }: MobileNavProps) {
+export function MobileNav({ onScanClick, userRole }: MobileNavProps) {
     const pathname = usePathname();
 
     const isActive = (href: string) => {
@@ -63,16 +62,17 @@ export function MobileNav({ onScanClick, onReviewClick, userRole }: MobileNavPro
                         </button>
                     </div>
 
-                    {/* 4. Review Button */}
-                    <button
-                        onClick={onReviewClick}
+                    {/* 4. My Reviews */}
+                    <Link
+                        href="/reviews"
                         className={cn(
-                            "flex flex-col items-center justify-center w-16 h-full gap-1 transition-colors text-gray-400 hover:text-gray-600"
+                            "flex flex-col items-center justify-center w-16 h-full gap-1 transition-colors",
+                            isActive('/reviews') ? "text-brand" : "text-gray-400 hover:text-gray-600"
                         )}
                     >
-                        <Star size={22} />
+                        <Star size={22} strokeWidth={isActive('/reviews') ? 2.5 : 2} />
                         <span className="text-[10px] font-bold">Đánh giá</span>
-                    </button>
+                    </Link>
 
                     {/* 5. Change Password (Replaces Menu) */}
                     <Link

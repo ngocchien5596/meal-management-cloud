@@ -373,7 +373,7 @@ export default function AccountManagementContent() {
                 onConfirm={handleConfirmDelete}
                 isLoading={deleteAccount.isPending}
                 title="Xác nhận xóa tài khoản"
-                description={`Bạn có chắc chắn muốn xóa tài khoản của "${confirmName}"? Hành động này không thể hoàn tác và toàn bộ dữ liệu sẽ bị loại bỏ.`}
+                description={`Bạn có chắc chắn muốn xóa tài khoản của "${confirmName}"? Thao tác này không thể hoàn tác và toàn bộ dữ liệu sẽ bị loại bỏ.`}
                 confirmText="Xác nhận xóa"
                 cancelText="Hủy bỏ"
                 type="danger"

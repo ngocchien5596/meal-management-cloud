@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { format, parse, isValid } from 'date-fns';
 import { toast } from 'react-hot-toast';
-import { Calendar as CalendarIcon, Upload, X, Camera, Loader2 } from 'lucide-react'; // Added Icons
+import { Calendar as CalendarIcon, Upload, X, Camera, Loader2, Star } from 'lucide-react'; // Added Icons
 import { Modal, Button, Input } from '@/components/ui';
 import { cn } from '@/lib/utils/cn'; // Added cn
 import { useCreateReview, useImageUpload } from '../hooks'; // Added hook
@@ -22,6 +22,7 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
 
     const [mealType, setMealType] = useState<'LUNCH' | 'DINNER'>('LUNCH');
     const [comment, setComment] = useState('');
+    const [rating, setRating] = useState(5);
     const [imageUrl, setImageUrl] = useState('');
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [isAnonymous, setIsAnonymous] = useState(true);
@@ -93,6 +94,7 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
                 date: formattedDate,
                 mealType,
                 comment,
+                rating,
                 isAnonymous,
                 images: imageUrl ? [imageUrl] : [],
             });
@@ -166,6 +168,35 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
                         placeholder="Hãy chia sẻ cảm nhận của bạn về chất lượng bữa ăn, thái độ phục vụ..."
                         className="w-full min-h-[120px] p-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand text-sm resize-none transition-all placeholder:text-gray-400"
                     />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Mức độ hài lòng</label>
+                    <div className="flex items-center gap-1.5 bg-gray-50/50 p-3 rounded-2xl border border-gray-100 w-fit">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                                key={star}
+                                type="button"
+                                onClick={() => setRating(star)}
+                                className="group relative transition-transform active:scale-90"
+                            >
+                                <Star
+                                    className={cn(
+                                        "w-8 h-8 transition-all duration-300",
+                                        star <= rating
+                                            ? "text-amber-400 fill-amber-400 filter drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]"
+                                            : "text-gray-200 group-hover:text-amber-200"
+                                    )}
+                                />
+                                {star === rating && (
+                                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-amber-400 rounded-full animate-pulse" />
+                                )}
+                            </button>
+                        ))}
+                        <span className="ml-3 text-sm font-black text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-100">
+                            {rating}/5
+                        </span>
+                    </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">

@@ -6,7 +6,6 @@ import { AppShell } from '@/components/layout';
 import { useAuthStore } from '@/features/auth';
 import { registrationApi } from '@/features/registrations/api';
 import { setServerTimeOffset } from '@/lib/utils/date';
-import { ReviewModal } from '@/features/reviews/components/ReviewModal';
 import dynamic from 'next/dynamic';
 
 const SelfScanModal = dynamic(
@@ -23,7 +22,6 @@ export default function AppLayout({
     const { user, isAuthenticated, checkAuth, _hasHydrated, token } = useAuthStore();
     const [isReady, setIsReady] = useState(false);
     const [isScannerOpen, setIsScannerOpen] = useState(false);
-    const [isReviewOpen, setIsReviewOpen] = useState(false);
 
     // Wait for hydration
     useEffect(() => {
@@ -64,17 +62,12 @@ export default function AppLayout({
                 user={user ? { fullName: user.fullName, employeeCode: user.employeeCode } : undefined}
                 userRole={user?.role}
                 onScanClick={() => setIsScannerOpen(true)}
-                onReviewClick={() => setIsReviewOpen(true)}
             >
                 {children}
             </AppShell>
             <SelfScanModal
                 isOpen={isScannerOpen}
                 onClose={() => setIsScannerOpen(false)}
-            />
-            <ReviewModal
-                isOpen={isReviewOpen}
-                onClose={() => setIsReviewOpen(false)}
             />
         </>
     );

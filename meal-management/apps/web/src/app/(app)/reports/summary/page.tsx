@@ -15,7 +15,9 @@ import {
     Ban,
     ChevronDown,
     Loader2,
-    Building2
+    Building2,
+    TrendingDown,
+    Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { useReportSummary } from '@/features/reports/hooks';
@@ -117,7 +119,7 @@ export default function ReportPage() {
         }
     };
 
-    const summary = data?.summary || { totalMeals: 0, totalSkipped: 0, totalCost: 0, avgPerDay: 0 };
+    const summary = data?.summary || { totalEaten: 0, totalCost: 0, attendanceRate: 0, wasteCost: 0, totalMeals: 0, totalSkipped: 0 };
     const items = data?.details || [];
 
     // Client-side pagination
@@ -145,7 +147,7 @@ export default function ReportPage() {
                             <FileText className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-black text-slate-900 leading-none">Báo cáo tổng hợp</h1>
+                            <h1 className="text-2xl font-black text-slate-900 leading-none">Báo cáo tiền ăn</h1>
                             <p className="text-sm text-slate-500 mt-1.5 font-medium">
                                 Thống kê từ {dateRange.start.split('-').reverse().join('/')} đến {dateRange.end.split('-').reverse().join('/')}
                             </p>
@@ -206,30 +208,32 @@ export default function ReportPage() {
                 {/* 2. KPI Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <StatCard
-                        label="Tổng suất ăn"
-                        value={isLoading ? '...' : summary.totalMeals}
-                        icon={Utensils}
-                        color="brand"
-                    />
-                    <StatCard
-                        label="Bữa bỏ lỡ"
-                        value={isLoading ? '...' : summary.totalSkipped}
-                        subValue={summary.totalSkipped > 0 ? 'Cần chú ý' : 'Tốt'}
-                        icon={Ban}
-                        color="rose"
-                    />
-                    <StatCard
-                        label="Trung bình/Ngày"
-                        value={isLoading ? '...' : summary.avgPerDay}
-                        icon={TrendingUp}
-                        color="amber"
-                    />
-                    <StatCard
-                        label="Tổng chi phí"
+                        label="Tổng tiền ăn"
                         value={isLoading ? '...' : formatCurrency(summary.totalCost)}
                         subValue="VNĐ"
                         icon={DollarSign}
+                        color="brand"
+                    />
+                    <StatCard
+                        label="Suất ăn thực tế"
+                        value={isLoading ? '...' : summary.totalEaten}
+                        subValue="Lượt ăn"
+                        icon={Utensils}
                         color="emerald"
+                    />
+                    <StatCard
+                        label="Tỷ lệ đi ăn"
+                        value={isLoading ? '...' : `${summary.attendanceRate}%`}
+                        subValue={summary.attendanceRate > 90 ? 'Rất tốt' : 'Cần theo dõi'}
+                        icon={Activity}
+                        color="amber"
+                    />
+                    <StatCard
+                        label="Chi phí lãng phí"
+                        value={isLoading ? '...' : formatCurrency(summary.wasteCost)}
+                        subValue="VNĐ"
+                        icon={TrendingDown}
+                        color="rose"
                     />
                 </div>
 

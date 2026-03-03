@@ -8,7 +8,18 @@ export interface MealReview {
     comment: string;
     images: string[];
     isAnonymous: boolean;
+    rating: number;
+    adminReply?: string;
+    adminReplyAt?: string;
     createdAt: string;
+    mealEvent?: {
+        mealDate: string;
+        mealType: 'LUNCH' | 'DINNER';
+    };
+    employee?: {
+        fullName: string;
+        employeeCode: string;
+    };
 }
 
 export interface CreateReviewDTO {
@@ -17,6 +28,7 @@ export interface CreateReviewDTO {
     comment: string;
     images?: string[];
     isAnonymous?: boolean;
+    rating?: number;
 }
 
 export const reviewApi = {
@@ -25,4 +37,10 @@ export const reviewApi = {
 
     getMealReviews: (mealId: string) =>
         api.get<MealReview[]>(`/reviews/meal/${mealId}`),
+
+    getMyReviews: () =>
+        api.get<MealReview[]>('/reviews/my'),
+
+    replyToReview: (id: string, reply: string) =>
+        api.patch<MealReview>(`/reviews/${id}/reply`, { reply }),
 };

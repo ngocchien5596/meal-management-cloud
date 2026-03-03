@@ -233,7 +233,7 @@ export default function IngredientsPage({ params }: { params: { id: string } }) 
                 onClose={() => setDeleteId(null)}
                 onConfirm={handleDelete}
                 title="Xác nhận xóa"
-                description="Bạn có chắc chắn muốn xóa nguyên vật liệu này không? Hành động này không thể hoàn tác."
+                description="Bạn có chắc chắn muốn xóa nguyên vật liệu này không? Thao tác này không thể hoàn tác."
                 type="danger"
             />
         </div >

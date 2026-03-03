@@ -110,10 +110,19 @@ router.get('/summary', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYS
         }, 0);
 
         // 3. Calculate Totals for Top Cards
+        const totalRegistered = reportData.reduce((acc, curr) => acc + curr.meals, 0);
+        const totalEaten = reportData.reduce((acc, curr) => acc + curr.eaten, 0);
+        const totalSkipped = reportData.reduce((acc, curr) => acc + curr.skipped, 0);
+        const totalMealPriceCost = reportData.reduce((acc, curr) => acc + curr.total, 0);
+        const totalWasteCost = reportData.reduce((acc, curr) => acc + (curr as any).wasteCost, 0);
+
         const kpi = {
-            totalMeals: reportData.reduce((acc, curr) => acc + (curr.eaten + curr.skipped), 0),
-            totalSkipped: reportData.reduce((acc, curr) => acc + curr.skipped, 0),
-            totalCost: totalIngredientCost,
+            totalMeals: totalRegistered,
+            totalEaten: totalEaten,
+            totalSkipped: totalSkipped,
+            totalCost: totalMealPriceCost, // Total money (Price * Registered)
+            wasteCost: Math.round(totalWasteCost),
+            attendanceRate: totalRegistered > 0 ? Math.round((totalEaten / totalRegistered) * 100) : 0,
             avgPerDay: 0
         };
 
@@ -270,7 +279,49 @@ router.get('/costs', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), a
             orderBy: { mealDate: 'desc' }
         });
 
-        res.json({ success: true, data: meals });
+        const totalIngredientCost = meals.reduce((sum, meal) => {
+            return sum + meal.ingredients.reduce((mSum, ing) => mSum + ing.totalPrice, 0);
+        }, 0);
+
+        const ingredientMap = new Map<string, number>();
+        meals.forEach(meal => {
+            meal.ingredients.forEach(ing => {
+                const current = ingredientMap.get(ing.name) || 0;
+                ingredientMap.set(ing.name, current + ing.totalPrice);
+            });
+        });
+
+        let topIngredient = 'N/A';
+        let maxCost = 0;
+        ingredientMap.forEach((cost, name) => {
+            if (cost > maxCost) {
+                maxCost = cost;
+                topIngredient = name;
+            }
+        });
+
+        // Get checkins only for meals that have ingredients to calculate accurate cost per meal
+        const mealsWithIngredientsIds = meals.map(m => m.id);
+        const relevantCheckins = await prisma.checkinLog.count({
+            where: {
+                mealEventId: { in: mealsWithIngredientsIds }
+            }
+        });
+
+        const kpi = {
+            totalCost: totalIngredientCost,
+            avgCostPerMeal: relevantCheckins > 0 ? Math.round(totalIngredientCost / relevantCheckins) : 0,
+            totalMeals: relevantCheckins,
+            topIngredient
+        };
+
+        res.json({
+            success: true,
+            data: {
+                data: meals,
+                summary: kpi
+            }
+        });
     } catch (error) {
         console.error('Costs report error:', error);
         res.status(500).json({ success: false, error: 'Internal Server Error' });
@@ -348,7 +399,38 @@ router.get('/reviews', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'),
             orderBy: { createdAt: 'desc' }
         });
 
-        res.json({ success: true, data: reviews });
+        const totalReviews = reviews.length;
+        const avgRating = totalReviews > 0
+            ? Number((reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews).toFixed(1))
+            : 0;
+        const withImages = reviews.filter(r => r.images && r.images.length > 0).length;
+        const anonymousCount = reviews.filter(r => r.isAnonymous).length;
+
+        // Get total employee checkins in period for response rate (excluding guests)
+        const totalEmployeeCheckins = await prisma.checkinLog.count({
+            where: {
+                employeeId: { not: null },
+                mealEvent: {
+                    mealDate: { gte: start, lte: end }
+                }
+            }
+        });
+
+        const kpi = {
+            totalReviews,
+            avgRating,
+            withImages,
+            anonymousCount,
+            responseRate: totalEmployeeCheckins > 0 ? Math.round((totalReviews / totalEmployeeCheckins) * 100) : 0
+        };
+
+        res.json({
+            success: true,
+            data: {
+                summary: kpi,
+                data: reviews
+            }
+        });
     } catch (error) {
         console.error('Reviews report error:', error);
         res.status(500).json({ success: false, error: 'Internal Server Error' });

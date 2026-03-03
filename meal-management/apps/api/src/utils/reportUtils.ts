@@ -12,6 +12,8 @@ export function calculateReportStats(
     let totalEaten = 0;
     let totalSkipped = 0;
     let totalCost = 0;
+    let eatenCost = 0;
+    let wasteCost = 0;
 
     // Map MealEventId -> Checkin Status
     const checkinMap = new Set(checkins.map(c => c.mealEventId));
@@ -40,31 +42,21 @@ export function calculateReportStats(
         }
 
         // Calculate Cost if Eaten or Skipped
-        // (Assuming we charge for skipped meals too, which is implied by "totalSkipped" being tracked financially usually)
         if (isEaten || isSkipped) {
             const mDate = new Date(reg.mealEvent.mealDate);
-            // specific logic: Find price config valid for mDate
-            // Config matches if startDate <= mDate AND (endDate == null OR endDate >= mDate)
-
-            // Sort to ensure we get likely matches, but we can just findFirst
-            // In case of overlap errors in DB (shouldn't happen), assume first match.
             const validConfig = priceConfigs.find(cfg => {
                 const start = new Date(cfg.startDate);
                 start.setHours(0, 0, 0, 0);
-
                 const end = cfg.endDate ? new Date(cfg.endDate) : null;
-                if (end) {
-                    end.setHours(23, 59, 59, 999);
-                }
-
-                // Check if mealDate is within range [start, end]
+                if (end) end.setHours(23, 59, 59, 999);
                 return start <= mDate && (!end || end >= mDate);
             });
 
-            // Default to 0 or fallback price if not found (e.g. 25000 legacy?)
-            // Putting 0 safe for now or maybe log error?
             const price = validConfig ? validConfig.price : 0;
             totalCost += price;
+
+            if (isEaten) eatenCost += price;
+            if (isSkipped) wasteCost += price;
         }
     });
 
@@ -76,6 +68,8 @@ export function calculateReportStats(
         meals: totalRegistered,
         eaten: totalEaten,
         skipped: totalSkipped,
-        total: totalCost
+        total: totalCost,
+        eatenCost,
+        wasteCost
     };
 }

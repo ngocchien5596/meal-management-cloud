@@ -185,7 +185,7 @@ export default function MenuPage({ params }: { params: { id: string } }) {
                 onConfirm={handleDelete}
                 isLoading={deleteMutation.isPending}
                 title="Xác nhận xóa món ăn"
-                description="Bạn có chắc chắn muốn xóa món ăn này khỏi thực đơn? Hành động này không thể hoàn tác."
+                description="Bạn có chắc chắn muốn xóa món ăn này khỏi thực đơn? Thao tác này không thể hoàn tác."
                 type="danger"
             />
         </div>

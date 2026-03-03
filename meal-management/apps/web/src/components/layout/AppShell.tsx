@@ -12,17 +12,16 @@ interface AppShellProps {
     };
     userRole?: string;
     onScanClick?: () => void;
-    onReviewClick?: () => void;
 }
 
-export function AppShell({ children, user, userRole, onScanClick, onReviewClick }: AppShellProps) {
+export function AppShell({ children, user, userRole, onScanClick }: AppShellProps) {
     return (
         <div className="min-h-screen bg-white flex flex-col">
             <Header user={user} userRole={userRole} />
             <div className="flex flex-1 relative">
                 {/* Desktop Sidebar - Hidden on Mobile */}
                 <div className="hidden md:block h-full shrink-0">
-                    <LeftMenu onScanClick={onScanClick} onReviewClick={onReviewClick} userRole={userRole} />
+                    <LeftMenu onScanClick={onScanClick} userRole={userRole} />
                 </div>
 
                 {/* Main Content */}
@@ -32,7 +31,7 @@ export function AppShell({ children, user, userRole, onScanClick, onReviewClick 
             </div>
 
             {/* Mobile Navigation */}
-            <MobileNav onScanClick={onScanClick} onReviewClick={onReviewClick} userRole={userRole} />
+            <MobileNav onScanClick={onScanClick} userRole={userRole} />
         </div>
     );
 }

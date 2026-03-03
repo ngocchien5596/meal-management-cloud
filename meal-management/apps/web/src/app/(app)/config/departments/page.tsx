@@ -10,41 +10,7 @@ import {
 import { ConfirmDialog } from '@/components/ui';
 import { cn } from '@/lib/utils/cn';
 import toast from 'react-hot-toast';
-
-const BuildingListIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-600">
-        <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
-        <path d="M9 22v-4h6v4" />
-        <path d="M8 6h.01" />
-        <path d="M16 6h.01" />
-        <path d="M8 10h.01" />
-        <path d="M16 10h.01" />
-        <path d="M8 14h.01" />
-        <path d="M16 14h.01" />
-    </svg>
-);
-
-const PlusCircleIcon = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="16" />
-        <line x1="8" y1="12" x2="16" y2="12" />
-    </svg>
-);
-
-const EditIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-    </svg>
-);
-
-const TrashIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="3 6 5 6 21 6" />
-        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2" />
-    </svg>
-);
+import { Building2, Plus, Edit, Trash2, Search, Loader2 } from 'lucide-react';
 
 export default function DepartmentsPage() {
     const { data: departments, isLoading } = useDepartments();
@@ -56,6 +22,11 @@ export default function DepartmentsPage() {
     const [newItemName, setNewItemName] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const filteredDepartments = departments?.filter(dept =>
+        dept.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
     const handleSave = async () => {
         if (!newItemName.trim()) return;
@@ -97,133 +68,178 @@ export default function DepartmentsPage() {
     if (isLoading) return <div className="p-8 text-center text-vttext-muted">Đang tải danh sách...</div>;
 
     return (
-        <div className="bg-white rounded-xl border border-vtborder shadow-sm overflow-hidden flex flex-col">
-            <div className="px-6 py-5 border-b border-vtborder flex items-center justify-between bg-vtbg-secondary/30">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
-                        <BuildingListIcon />
+        <div className="w-full min-h-screen bg-[#f8fafc] px-4 pb-12 animate-in fade-in duration-500">
+            <div className="max-w-[1280px] mx-auto pt-6">
+
+                {/* Header */}
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+                    <div className="flex items-center gap-4 w-full md:w-auto">
+                        <div className="w-12 h-12 bg-brand rounded-2xl flex items-center justify-center shadow-xl shadow-brand/20">
+                            <Building2 className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-black text-vttext-primary leading-none">Phòng ban</h1>
+                            <p className="text-sm text-vttext-muted mt-1.5 font-medium">Quản lý danh mục cơ cấu tổ chức</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="text-lg font-bold text-vttext-primary leading-tight">Phòng ban</h3>
-                        <p className="text-xs text-vttext-muted font-medium uppercase tracking-wider mt-0.5">Danh mục cơ cấu tổ chức</p>
+
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <button
+                            onClick={() => {
+                                setEditingId(null);
+                                setNewItemName('');
+                                setIsModalOpen(true);
+                            }}
+                            className="h-10 px-4 flex items-center gap-2 bg-brand hover:bg-brand-hover text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-brand/20 active:scale-95"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span className="hidden sm:inline">Thêm mới</span>
+                        </button>
                     </div>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingId(null);
-                        setNewItemName('');
-                        setIsModalOpen(true);
-                    }}
-                    className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-brand-hover transition-all shadow-md shadow-brand/10"
-                >
-                    <PlusCircleIcon />
-                    Thêm phòng ban
-                </button>
-            </div>
 
-            <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                    <thead>
-                        <tr className="bg-vtbg-secondary/20 border-b border-vtborder">
-                            <th className="py-4 px-6 text-xs font-bold text-vttext-muted uppercase tracking-widest w-[80px]">STT</th>
-                            <th className="py-4 px-6 text-xs font-bold text-vttext-muted uppercase tracking-widest">Tên phòng ban</th>
-                            <th className="py-4 px-6 w-[120px] text-right font-bold text-vttext-muted uppercase tracking-widest">Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-vtborder/50">
-                        {departments?.map((dept, index) => (
-                            <tr key={dept.id} className="hover:bg-vtbg-secondary/30 transition-colors group">
-                                <td className="py-4 px-6 text-[15px] font-bold text-vttext-muted">{index + 1}</td>
-                                <td className="py-4 px-6 text-[15px] text-vttext-primary font-bold">{dept.name}</td>
-                                <td className="py-4 px-6 text-right">
-                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
-                                            onClick={() => openEditModal(dept)}
-                                            className="p-1.5 text-vttext-muted hover:text-brand hover:bg-brand-soft rounded-lg transition-all"
-                                            title="Chỉnh sửa"
-                                        >
-                                            <EditIcon />
-                                        </button>
-                                        <button
-                                            onClick={() => setConfirmDeleteId(dept.id)}
-                                            className="p-1.5 text-vttext-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                            title="Xóa"
-                                        >
-                                            <TrashIcon />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                        {departments?.length === 0 && (
-                            <tr>
-                                <td colSpan={3} className="py-12 text-center text-vttext-muted italic">
-                                    Chưa có dữ liệu phòng ban.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            <div className="px-6 py-4 bg-vtbg-secondary/10 border-t border-vtborder text-xs text-vttext-muted font-bold">
-                Tổng số: {departments?.length || 0} phòng ban
-            </div>
-
-            {/* Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="px-5 py-4 border-b border-vtborder flex justify-between items-center bg-vtbg-secondary/30">
-                            <h3 className="font-bold text-vttext-primary">
-                                {editingId ? 'Cập nhật phòng ban' : 'Thêm phòng ban mới'}
-                            </h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-vttext-muted hover:text-vttext-primary">✕</button>
-                        </div>
-                        <div className="p-6">
-                            <label className="block text-sm font-bold text-vttext-primary mb-2">Tên phòng ban</label>
+                {/* Main Content */}
+                <div className="bg-white rounded-[24px] border border-vtborder shadow-xl shadow-slate-200/50 overflow-hidden">
+                    {/* Integrated Toolbar */}
+                    <div className="p-4 border-b border-surface-2 flex flex-col lg:flex-row gap-4 items-center justify-between bg-white">
+                        <div className="relative flex-1 w-full lg:max-w-md">
+                            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-vttext-muted">
+                                <Search className="w-4 h-4" />
+                            </div>
                             <input
-                                autoFocus
                                 type="text"
-                                value={newItemName}
-                                onChange={(e) => setNewItemName(e.target.value)}
-                                className="w-full h-11 px-4 border border-vtborder rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand font-medium"
-                                placeholder="Nhập tên phòng ban..."
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleSave();
-                                }}
+                                placeholder="Tìm tên phòng ban..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full h-10 pl-10 pr-4 bg-surface-2 border border-vtborder rounded-xl text-sm font-medium text-vttext-primary focus:outline-none focus:ring-2 focus:ring-focus focus:border-brand transition-all"
                             />
                         </div>
-                        <div className="px-6 py-4 bg-vtbg-secondary/30 border-t border-vtborder flex justify-end gap-3">
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="px-5 py-2.5 bg-white border border-vtborder rounded-xl text-sm font-bold text-vttext-primary hover:bg-white/50 transition-colors"
-                            >
-                                Hủy
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                disabled={!newItemName.trim() || createDept.isPending || updateDept.isPending}
-                                className="px-6 py-2.5 bg-brand text-white rounded-xl text-sm font-bold hover:bg-brand-hover disabled:opacity-50 shadow-lg shadow-brand/20 transition-all"
-                            >
-                                {createDept.isPending || updateDept.isPending ? 'Đang lưu...' : (editingId ? 'Cập nhật' : 'Thêm mới')}
-                            </button>
+
+                        <div className="flex items-center gap-3 w-full lg:w-auto">
+                            <div className="h-10 px-4 bg-surface-2 border border-vtborder rounded-xl flex items-center gap-2.5 shrink-0 hidden sm:flex">
+                                <span className="text-[10px] font-black text-vttext-muted uppercase tracking-widest">Tổng cộng</span>
+                                <span className="text-sm font-black text-brand">{filteredDepartments.length}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
 
-            <ConfirmDialog
-                isOpen={!!confirmDeleteId}
-                onClose={() => setConfirmDeleteId(null)}
-                onConfirm={handleConfirmDelete}
-                isLoading={deleteDept.isPending}
-                title="Xác nhận xóa phòng ban"
-                description="Bạn có chắc chắn muốn xóa phòng ban này? Tất cả nhân viên thuộc phòng ban này sẽ không còn phòng ban."
-                confirmText="Đồng ý xóa"
-                cancelText="Hủy"
-                type="danger"
-            />
+                    {/* Data Table */}
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead>
+                                <tr className="bg-slate-50/80 border-b border-slate-100">
+                                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[80px]">STT</th>
+                                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tên phòng ban</th>
+                                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right w-[120px]">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {isLoading ? (
+                                    <tr>
+                                        <td colSpan={3} className="py-12 text-center text-vttext-muted">Đang tải danh sách...</td>
+                                    </tr>
+                                ) : filteredDepartments.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={3} className="py-12 text-center text-slate-400 font-bold">Không có dữ liệu phù hợp</td>
+                                    </tr>
+                                ) : (
+                                    filteredDepartments.map((dept: any, index: number) => (
+                                        <tr key={dept.id} className="group hover:bg-brand-soft/50 transition-colors">
+                                            <td className="py-4 px-6">
+                                                <span className="text-sm font-bold font-mono text-vttext-muted tracking-wider">
+                                                    {String(index + 1).padStart(2, '0')}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 px-6 text-sm font-medium text-vttext-primary group-hover:text-brand transition-colors">
+                                                {dept.name}
+                                            </td>
+                                            <td className="py-4 px-6 text-right">
+                                                <div className="flex items-center justify-end gap-1 transition-all">
+                                                    <button
+                                                        onClick={() => openEditModal(dept)}
+                                                        className="p-2 hover:bg-brand-soft rounded-xl text-vttext-muted hover:text-brand transition-colors"
+                                                        title="Chỉnh sửa"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setConfirmDeleteId(dept.id)}
+                                                        className="p-2 hover:bg-rose-50 rounded-xl text-slate-400 hover:text-rose-600 transition-colors"
+                                                        title="Xóa"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Modal */}
+                {isModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                            <div className="px-6 py-5 border-b border-surface-2 flex justify-between items-center bg-white">
+                                <h3 className="text-lg font-black text-vttext-primary">
+                                    {editingId ? 'Cập nhật phòng ban' : 'Thêm phòng ban mới'}
+                                </h3>
+                                <button onClick={() => setIsModalOpen(false)} className="text-vttext-muted hover:text-vttext-primary p-2 hover:bg-surface-2 rounded-xl transition-colors">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                            <div className="p-6">
+                                <label className="block text-sm font-bold text-vttext-primary mb-2">Tên phòng ban</label>
+                                <input
+                                    autoFocus
+                                    type="text"
+                                    value={newItemName}
+                                    onChange={(e) => setNewItemName(e.target.value)}
+                                    className="w-full h-11 px-4 bg-surface-2 border border-vtborder rounded-xl focus:outline-none focus:ring-2 focus:ring-focus focus:border-brand font-medium transition-all"
+                                    placeholder="Nhập tên phòng ban..."
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleSave();
+                                    }}
+                                />
+                            </div>
+                            <div className="px-6 py-5 border-t border-surface-2 flex justify-end gap-3 bg-slate-50/50">
+                                <button
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="px-5 py-2.5 bg-white border border-vtborder rounded-xl text-sm font-bold text-vttext-primary hover:bg-surface-2 transition-colors"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={!newItemName.trim() || createDept.isPending || updateDept.isPending}
+                                    className="px-6 py-2.5 bg-brand text-white rounded-xl text-sm font-bold hover:bg-brand-hover disabled:opacity-50 shadow-lg shadow-brand/20 transition-all flex items-center justify-center min-w-[120px]"
+                                >
+                                    {createDept.isPending || updateDept.isPending ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        editingId ? 'Cập nhật' : 'Thêm mới'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <ConfirmDialog
+                    isOpen={!!confirmDeleteId}
+                    onClose={() => setConfirmDeleteId(null)}
+                    onConfirm={handleConfirmDelete}
+                    isLoading={deleteDept.isPending}
+                    title="Xác nhận xóa phòng ban"
+                    description="Bạn có chắc chắn muốn xóa phòng ban này? Tất cả nhân viên thuộc phòng ban này sẽ không còn phòng ban."
+                    confirmText="Xác nhận xóa"
+                    cancelText="Hủy bỏ"
+                    type="danger"
+                />
+            </div>
         </div>
     );
 }
