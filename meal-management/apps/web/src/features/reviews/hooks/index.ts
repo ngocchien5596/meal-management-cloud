@@ -5,9 +5,10 @@ export const useCreateReview = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (data: CreateReviewDTO) => reviewApi.createReview(data),
-        onSuccess: (_, variables) => {
-            // Invalidate specific meal queries if needed
+        onSuccess: () => {
+            // Invalidate all review-related queries
             queryClient.invalidateQueries({ queryKey: ['meal-reviews'] });
+            queryClient.invalidateQueries({ queryKey: ['my-reviews'] });
         },
     });
 };
