@@ -252,4 +252,166 @@ router.get('/export', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYST
     }
 });
 
+// GET /api/reports/costs
+router.get('/costs', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
+    try {
+        const { startDate, endDate, search } = req.query;
+        const start = startOfDay(parseISO(startDate as string));
+        const end = endOfDay(parseISO(endDate as string));
+
+        const meals = await prisma.mealEvent.findMany({
+            where: {
+                mealDate: { gte: start, lte: end },
+                ingredients: { some: {} }
+            },
+            include: {
+                ingredients: true
+            },
+            orderBy: { mealDate: 'desc' }
+        });
+
+        res.json({ success: true, data: meals });
+    } catch (error) {
+        console.error('Costs report error:', error);
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+});
+
+// GET /api/reports/costs/export
+router.get('/costs/export', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        const start = startOfDay(parseISO(startDate as string));
+        const end = endOfDay(parseISO(endDate as string));
+
+        const meals = await prisma.mealEvent.findMany({
+            where: { mealDate: { gte: start, lte: end }, ingredients: { some: {} } },
+            include: { ingredients: true },
+            orderBy: { mealDate: 'asc' }
+        });
+
+        const ExcelJS = await import('exceljs');
+        const workbook = new ExcelJS.default.Workbook();
+        const worksheet = workbook.addWorksheet('Chi phi nguyen lieu');
+
+        worksheet.columns = [
+            { header: 'Ngày', key: 'date', width: 15 },
+            { header: 'Bữa ăn', key: 'type', width: 15 },
+            { header: 'Tên nguyên vật liệu', key: 'name', width: 30 },
+            { header: 'Số lượng', key: 'quantity', width: 12 },
+            { header: 'Đơn vị', key: 'unit', width: 10 },
+            { header: 'Đơn giá (VNĐ)', key: 'price', width: 15 },
+            { header: 'Thành tiền (VNĐ)', key: 'total', width: 20 },
+        ];
+
+        worksheet.getRow(1).font = { bold: true };
+
+        meals.forEach(meal => {
+            meal.ingredients.forEach(ing => {
+                worksheet.addRow({
+                    date: meal.mealDate.toLocaleDateString('vi-VN'),
+                    type: meal.mealType === 'LUNCH' ? 'Bữa trưa' : 'Bữa tối',
+                    name: ing.name,
+                    quantity: ing.quantity,
+                    unit: ing.unit,
+                    price: ing.unitPrice,
+                    total: ing.totalPrice
+                });
+            });
+        });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=Bao-cao-chi-phi-${startDate}-${endDate}.xlsx`);
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        console.error('Costs export error:', error);
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+});
+
+// GET /api/reports/reviews
+router.get('/reviews', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        const start = startOfDay(parseISO(startDate as string));
+        const end = endOfDay(parseISO(endDate as string));
+
+        const reviews = await prisma.mealReview.findMany({
+            where: {
+                createdAt: { gte: start, lte: end }
+            },
+            include: {
+                mealEvent: true,
+                employee: { select: { fullName: true, employeeCode: true } }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        res.json({ success: true, data: reviews });
+    } catch (error) {
+        console.error('Reviews report error:', error);
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+});
+
+// GET /api/reports/reviews/export
+router.get('/reviews/export', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        const start = startOfDay(parseISO(startDate as string));
+        const end = endOfDay(parseISO(endDate as string));
+
+        const reviews = await prisma.mealReview.findMany({
+            where: { createdAt: { gte: start, lte: end } },
+            include: {
+                mealEvent: true,
+                employee: { select: { fullName: true, employeeCode: true } }
+            },
+            orderBy: { createdAt: 'asc' }
+        });
+
+        const PDFDocument = await import('pdfkit');
+        const axios = (await import('axios')).default;
+        const doc = new (PDFDocument.default)();
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=Bao-cao-danh-gia-${startDate}-${endDate}.pdf`);
+        doc.pipe(res);
+
+        // Header
+        doc.fontSize(20).text('BÁO CÁO ĐÁNH GIÁ BỮA ĂN', { align: 'center' });
+        doc.fontSize(12).text(`Từ ngày: ${startDate} đến ngày: ${endDate}`, { align: 'center' });
+        doc.moveDown();
+
+        for (const review of reviews) {
+            // Draw a horizontal line
+            doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke().moveDown();
+
+            doc.fontSize(12).font('Helvetica-Bold').text(`Ngày: ${review.mealEvent.mealDate.toLocaleDateString('vi-VN')} - Bữa: ${review.mealEvent.mealType === 'LUNCH' ? 'Trưa' : 'Tối'}`);
+            doc.fontSize(10).font('Helvetica').text(`Người gửi: ${review.isAnonymous ? 'Ẩn danh' : review.employee.fullName}`);
+            doc.text(`Nội dung: ${review.comment}`);
+            doc.moveDown(0.5);
+
+            if (review.images && Array.isArray(review.images) && review.images.length > 0) {
+                for (const imgUrl of review.images) {
+                    try {
+                        const response = await axios.get(imgUrl as string, { responseType: 'arraybuffer' });
+                        doc.image(Buffer.from(response.data), { fit: [200, 200] });
+                        doc.moveDown();
+                    } catch (e) {
+                        doc.fillColor('red').text(`[Không thể tải ảnh: ${imgUrl}]`).fillColor('black');
+                    }
+                }
+            }
+            doc.moveDown();
+        }
+
+        doc.end();
+    } catch (error) {
+        console.error('Reviews export error:', error);
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+});
+
 export default router;

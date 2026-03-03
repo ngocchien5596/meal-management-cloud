@@ -30,11 +30,22 @@ export const reportsApi = {
             params: { startDate, endDate, search, departmentId }
         });
     },
-    exportExcel: async (startDate: string, endDate: string, search?: string, departmentId?: string) => {
-        // Fetch expects the body to be blob for blob response if we don't return res
-        // But our client returns response.json(). This will fail for blobs!
-        // I need to fix the client to support blobs or use fetch directly.
-        // For now, let's assume the user wants consistency.
-        window.open(`${process.env.NEXT_PUBLIC_API_URL}/reports/export?startDate=${startDate}&endDate=${endDate}${search ? `&search=${search}` : ''}${departmentId ? `&departmentId=${departmentId}` : ''}`, '_blank');
+    getCosts: (startDate: string, endDate: string) => {
+        return api.get<any[]>('/reports/costs', {
+            params: { startDate, endDate }
+        });
+    },
+    exportCosts: (startDate: string, endDate: string) => {
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/costs/export?startDate=${startDate}&endDate=${endDate}&token=${localStorage.getItem('token')}`;
+        window.open(url, '_blank');
+    },
+    getReviews: (startDate: string, endDate: string) => {
+        return api.get<any[]>('/reports/reviews', {
+            params: { startDate, endDate }
+        });
+    },
+    exportReviews: (startDate: string, endDate: string) => {
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/reviews/export?startDate=${startDate}&endDate=${endDate}&token=${localStorage.getItem('token')}`;
+        window.open(url, '_blank');
     }
 };
