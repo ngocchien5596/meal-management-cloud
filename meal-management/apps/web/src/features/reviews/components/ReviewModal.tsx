@@ -103,7 +103,7 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
             onClose();
         } catch (error: any) {
             console.error('Submit review error:', error);
-            const errorMessage = error?.error || error?.response?.data?.error || error?.message || 'Không thể gửi đánh giá. Vui lòng thử lại.';
+            const errorMessage = error.message || 'Không thể gửi đánh giá. Vui lòng thử lại.';
             toast.error(errorMessage);
         }
     };

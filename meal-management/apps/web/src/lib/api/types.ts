@@ -2,7 +2,7 @@ export interface APIResponse<T> {
     success: boolean;
     data: T;
     message?: string;
-    error?: {
+    error?: string | {
         code: string;
         message: string;
     };

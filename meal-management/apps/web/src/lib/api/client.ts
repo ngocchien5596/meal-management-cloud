@@ -74,16 +74,22 @@ async function request<T>(
 
         const data: APIResponse<T> = await response.json();
 
-        if (!response.ok) {
+        if (!response.ok || data.success === false) {
             if (response.status === 401) {
                 // Clear auth state on unauthorized
                 localStorage.removeItem('auth-storage');
                 localStorage.removeItem('token');
-                throw new UnauthorizedError(data.error?.message);
+                throw new UnauthorizedError(typeof data.error === 'string' ? data.error : data.error?.message);
             }
+
+            const errorCode = (typeof data.error === 'object' && data.error?.code) || 'ERROR';
+            const errorMessage = typeof data.error === 'string'
+                ? data.error
+                : (data.error?.message || data.message || 'An error occurred');
+
             throw new APIError(
-                data.error?.code || 'UNKNOWN_ERROR',
-                data.error?.message || 'An error occurred',
+                errorCode,
+                errorMessage,
                 response.status
             );
         }
