@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils/cn';
 
-// Icons
+// --- Icons ---
 const CalendarIcon = ({ className = "w-[18px] h-[18px]" }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -39,6 +40,38 @@ const IdCardIcon = ({ className = "w-[18px] h-[18px]" }: { className?: string })
         <circle cx="8" cy="12" r="2" />
         <path d="M14 10h4" />
         <path d="M14 14h4" />
+    </svg>
+);
+
+const DollarIcon = ({ className = "w-[18px] h-[18px]" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="1" x2="12" y2="23" />
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+    </svg>
+);
+
+const ClockIcon = ({ className = "w-[18px] h-[18px]" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+    </svg>
+);
+
+const BuildingIcon = ({ className = "w-[18px] h-[18px]" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+        <path d="M9 22v-4h6v4" />
+        <path d="M8 6h.01" />
+        <path d="M16 6h.01" />
+        <path d="M8 10h.01" />
+        <path d="M16 10h.01" />
+    </svg>
+);
+
+const BriefcaseIcon = ({ className = "w-[18px] h-[18px]" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
     </svg>
 );
 
@@ -84,100 +117,163 @@ const StarIcon = ({ className = "w-[18px] h-[18px]" }: { className?: string }) =
     </svg>
 );
 
+const ChevronDownIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="6 9 12 15 18 9" />
+    </svg>
+);
+
+// --- Interfaces ---
 interface MenuItem {
     key: string;
     label: string;
     href: string;
     icon: React.ComponentType<{ className?: string }>;
-    roles?: string[]; // Allowed roles. If undefined, allowed for all.
+    roles?: string[];
+    children?: MenuItem[];
 }
 
+// --- Menu Configuration ---
 const menuItems: MenuItem[] = [
     { key: 'calendar', label: 'Lịch ăn', href: '/dashboard', icon: CalendarIcon },
     { key: 'checkin', label: 'Quét mã QR', href: '/checkin', icon: QRScanIcon },
     { key: 'meals', label: 'Quản lý bữa ăn', href: '/meals', icon: FoodTrayIcon, roles: ['ADMIN_KITCHEN', 'ADMIN_SYSTEM'] },
-    { key: 'config', label: 'Cấu hình hệ thống', href: '/config/accounts', icon: SettingsIcon, roles: ['ADMIN_SYSTEM'] },
+    {
+        key: 'config',
+        label: 'Cấu hình hệ thống',
+        href: '/config',
+        icon: SettingsIcon,
+        roles: ['ADMIN_SYSTEM'],
+        children: [
+            { key: 'config-accounts', label: 'Cấp tài khoản', href: '/config/accounts', icon: IdCardIcon },
+            { key: 'config-prices', label: 'Lịch sử giá', href: '/config/prices', icon: DollarIcon },
+            { key: 'config-deadline', label: 'Giờ chốt', href: '/config/deadline', icon: ClockIcon },
+            { key: 'config-departments', label: 'Phòng ban', href: '/config/departments', icon: BuildingIcon },
+            { key: 'config-positions', label: 'Chức vụ', href: '/config/positions', icon: BriefcaseIcon },
+        ]
+    },
     { key: 'myqr', label: 'Mã QR của tôi', href: '/my-qr', icon: QRCodeIcon },
     { key: 'review', label: 'Đánh giá bữa ăn', href: '#', icon: StarIcon },
     { key: 'reports', label: 'Báo cáo', href: '/reports/summary', icon: ReportIcon, roles: ['ADMIN_KITCHEN', 'HR', 'ADMIN_SYSTEM'] },
     { key: 'password', label: 'Đổi mật khẩu', href: '/change-password', icon: LockIcon },
 ];
 
+// --- Main Component ---
 export function LeftMenu({ onScanClick, onReviewClick, userRole }: { onScanClick?: () => void; onReviewClick?: () => void; userRole?: string }) {
     const pathname = usePathname();
+    const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
-    const isActive = (href: string) => {
-        if (href === '/dashboard') {
+    useEffect(() => {
+        // Auto expand if current path is a child
+        const findParent = (items: MenuItem[]): string | null => {
+            for (const item of items) {
+                if (item.children) {
+                    if (item.children.some(child => pathname.startsWith(child.href))) return item.key;
+                    const nestedParent = findParent(item.children);
+                    if (nestedParent) return nestedParent;
+                }
+            }
+            return null;
+        };
+
+        const parentKey = findParent(menuItems);
+        if (parentKey && !expandedKeys.includes(parentKey)) {
+            setExpandedKeys(prev => [...prev, parentKey]);
+        }
+    }, [pathname]);
+
+    const toggleExpand = (key: string) => {
+        setExpandedKeys(prev =>
+            prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+        );
+    };
+
+    const isParentActive = (item: MenuItem) => {
+        if (item.children) {
+            return item.children.some(child => pathname.startsWith(child.href));
+        }
+        if (item.href === '/dashboard') {
             return pathname === '/dashboard' || pathname === '/';
         }
-        if (href === '/reports/summary') {
+        if (item.href === '/reports/summary') {
             return pathname.startsWith('/reports');
         }
-        if (href === '/config/accounts') {
-            return pathname.startsWith('/config');
+        return pathname.startsWith(item.href);
+    };
+
+    const renderMenuItem = (item: MenuItem, depth = 0) => {
+        if (item.roles && (!userRole || !item.roles.includes(userRole))) {
+            return null;
         }
-        return pathname.startsWith(href);
+
+        const hasChildren = item.children && item.children.length > 0;
+        const active = depth === 0 ? isParentActive(item) : pathname === item.href;
+        const expanded = expandedKeys.includes(item.key);
+        const Icon = item.icon;
+
+        const content = (
+            <div className={cn(
+                'w-full flex items-center justify-between px-4 py-2.5 rounded-lg cursor-pointer transition-all duration-150',
+                active && !hasChildren
+                    ? 'bg-brand-soft text-brand shadow-sm shadow-brand/5'
+                    : 'text-vttext-primary hover:bg-surface-2',
+                depth > 0 && 'py-2 pl-12 pr-4 bg-transparent shadow-none' // Indent sub-items
+            )}>
+                <div className="flex items-center gap-3">
+                    <Icon className={cn('w-[18px] h-[18px]', active ? 'stroke-brand' : 'stroke-vttext-primary')} />
+                    <span className={cn('text-[15px]', active ? 'font-bold' : 'font-medium')}>
+                        {item.label}
+                    </span>
+                </div>
+                {hasChildren && (
+                    <ChevronDownIcon className={cn(
+                        'w-4 h-4 transition-transform duration-200 text-vttext-muted',
+                        expanded && 'rotate-180'
+                    )} />
+                )}
+            </div>
+        );
+
+        return (
+            <div key={item.key} className="w-full">
+                {hasChildren ? (
+                    <button
+                        onClick={() => toggleExpand(item.key)}
+                        className="w-full text-left outline-none"
+                    >
+                        {content}
+                    </button>
+                ) : item.key === 'checkin' && onScanClick ? (
+                    <button onClick={onScanClick} className="w-full text-left outline-none">
+                        {content}
+                    </button>
+                ) : item.key === 'review' && onReviewClick ? (
+                    <button onClick={onReviewClick} className="w-full text-left outline-none">
+                        {content}
+                    </button>
+                ) : (
+                    <Link href={item.href} className="w-full outline-none">
+                        {content}
+                    </Link>
+                )}
+
+                {hasChildren && expanded && (
+                    <div className="mt-1 flex flex-col gap-1">
+                        {item.children!.map(child => renderMenuItem(child, depth + 1))}
+                    </div>
+                )}
+            </div>
+        );
     };
 
     return (
-        <aside className="w-[220px] bg-white pt-4 pl-4 pr-3 shrink-0">
-            <nav className="space-y-1">
-                {menuItems.map((item) => {
-                    // Role check
-                    if (item.roles && (!userRole || !item.roles.includes(userRole))) {
-                        return null;
-                    }
-
-                    const active = isActive(item.href);
-                    const Icon = item.icon;
-
-                    const content = (
-                        <div className={cn(
-                            'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer transition-colors duration-150',
-                            active
-                                ? 'bg-brand-soft text-brand'
-                                : 'text-vttext-primary hover:bg-surface-2'
-                        )}>
-                            <Icon className={cn('w-[18px] h-[18px]', active ? 'stroke-brand' : 'stroke-vttext-primary')} />
-                            <span className="text-[15px] font-medium">{item.label}</span>
-                        </div>
-                    );
-
-                    if (item.key === 'checkin' && onScanClick) {
-                        return (
-                            <button
-                                key={item.key}
-                                onClick={onScanClick}
-                                className="w-full text-left"
-                            >
-                                {content}
-                            </button>
-                        );
-                    }
-
-                    if (item.key === 'review' && onReviewClick) {
-                        return (
-                            <button
-                                key={item.key}
-                                onClick={onReviewClick}
-                                className="w-full text-left"
-                            >
-                                {content}
-                            </button>
-                        );
-                    }
-
-                    return (
-                        <Link
-                            key={item.key}
-                            href={item.href}
-                            className="w-full"
-                        >
-                            {content}
-                        </Link>
-                    );
-                })}
+        <aside className="w-[280px] bg-white pt-4 pl-4 pr-3 shrink-0 border-r border-vtborder h-full overflow-y-auto no-scrollbar">
+            <nav className="flex flex-col gap-1">
+                {menuItems.map(item => renderMenuItem(item))}
             </nav>
+            <div className="mt-12 px-4 py-8 border-t border-vtborder/50">
+                <p className="text-[10px] font-black text-vttext-muted/30 uppercase tracking-[0.2em] text-center">MEAL MANAGEMENT V1.0</p>
+            </div>
         </aside>
     );
 }
