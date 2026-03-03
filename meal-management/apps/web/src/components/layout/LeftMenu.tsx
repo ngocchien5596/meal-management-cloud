@@ -111,6 +111,13 @@ const SettingsIcon = ({ className = "w-[18px] h-[18px]" }: { className?: string 
     </svg>
 );
 
+const CreditCardIcon = ({ className = "w-[18px] h-[18px]" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+        <line x1="1" y1="10" x2="23" y2="10" />
+    </svg>
+);
+
 const StarIcon = ({ className = "w-[18px] h-[18px]" }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -153,8 +160,18 @@ const menuItems: MenuItem[] = [
         ]
     },
     { key: 'myqr', label: 'Mã QR của tôi', href: '/my-qr', icon: QRCodeIcon },
-    { key: 'review', label: 'Đánh giá bữa ăn', href: '#', icon: StarIcon },
-    { key: 'reports', label: 'Báo cáo', href: '/reports/summary', icon: ReportIcon, roles: ['ADMIN_KITCHEN', 'HR', 'ADMIN_SYSTEM'] },
+    {
+        key: 'reports',
+        label: 'Báo cáo',
+        href: '/reports',
+        icon: ReportIcon,
+        roles: ['ADMIN_KITCHEN', 'HR', 'ADMIN_SYSTEM'],
+        children: [
+            { key: 'reports-summary', label: 'Báo cáo tổng hợp', href: '/reports/summary', icon: ReportIcon },
+            { key: 'reports-costs', label: 'Báo cáo chi phí', href: '/reports/costs', icon: CreditCardIcon },
+            { key: 'reports-reviews', label: 'Báo cáo đánh giá', href: '/reports/reviews', icon: StarIcon },
+        ]
+    },
     { key: 'password', label: 'Đổi mật khẩu', href: '/change-password', icon: LockIcon },
 ];
 
