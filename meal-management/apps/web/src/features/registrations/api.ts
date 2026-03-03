@@ -1,5 +1,10 @@
 import { api, APIResponse } from '@/lib/api';
 
+export interface MenuItem {
+    id: string;
+    name: string;
+}
+
 export interface MealEvent {
     id: string;
     mealDate: string;
@@ -7,6 +12,7 @@ export interface MealEvent {
     status: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED';
     registrations: any[];
     checkins: any[];
+    menuItems: MenuItem[];
 }
 
 export const registrationApi = {

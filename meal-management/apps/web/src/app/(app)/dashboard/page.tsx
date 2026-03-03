@@ -2,6 +2,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils/cn';
+import { Modal } from '@/components/ui';
+import { MenuItem, registrationApi } from '@/features/registrations/api';
+import { useRegistrationCalendar, useToggleRegistration } from '@/features/registrations/hooks';
+import { usePrices } from '@/features/system/hooks';
+import { QuickRegisterModal } from '@/features/registrations/components/QuickRegisterModal';
 
 const CUTOFF_HOUR = 16;
 
@@ -113,6 +118,8 @@ interface DayData {
     nextMonth?: boolean;
     lunch: MealState;
     dinner: MealState;
+    lunchMenu?: MenuItem[];
+    dinnerMenu?: MenuItem[];
 }
 
 const generateCalendarData = (year: number, month: number, now: Date): DayData[] => {
@@ -201,12 +208,82 @@ const formatCurrency = (amount: number): string => new Intl.NumberFormat('vi-VN'
 
 const MONTH_NAMES = ['Tháng 01', 'Tháng 02', 'Tháng 03', 'Tháng 04', 'Tháng 05', 'Tháng 06', 'Tháng 07', 'Tháng 08', 'Tháng 09', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
 
+const MealMenuModal = ({ isOpen, onClose, lunchMenu, dinnerMenu, date }: { isOpen: boolean, onClose: () => void, lunchMenu: MenuItem[], dinnerMenu: MenuItem[], date: Date }) => {
+    const hasLunch = lunchMenu.length > 0;
+    const hasDinner = dinnerMenu.length > 0;
+
+    return (
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={`Thực đơn ngày ${date.toLocaleDateString('vi-VN')}`}
+        >
+            <div className="space-y-6 py-2">
+                {/* Lunch Section */}
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2 px-1">
+                        <SunIcon className="w-4 h-4 text-orange-500" />
+                        <h3 className="font-black text-slate-800 uppercase tracking-wider text-xs">Bữa Trưa</h3>
+                    </div>
+                    {hasLunch ? (
+                        <div className="grid grid-cols-1 gap-2">
+                            {lunchMenu.map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-3 p-3 bg-orange-50/50 rounded-xl border border-orange-100/50">
+                                    <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center text-[10px] font-black">
+                                        {idx + 1}
+                                    </div>
+                                    <span className="font-bold text-slate-700 uppercase tracking-tight text-sm">{item.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-xs text-slate-400 italic px-1">Chưa có thực đơn cho bữa trưa.</p>
+                    )}
+                </div>
+
+                <div className="h-px bg-slate-100" />
+
+                {/* Dinner Section */}
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2 px-1">
+                        <MoonIcon className="w-4 h-4 text-indigo-500" />
+                        <h3 className="font-black text-slate-800 uppercase tracking-wider text-xs">Bữa Tối</h3>
+                    </div>
+                    {hasDinner ? (
+                        <div className="grid grid-cols-1 gap-2">
+                            {dinnerMenu.map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100/50">
+                                    <div className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-black">
+                                        {idx + 1}
+                                    </div>
+                                    <span className="font-bold text-slate-700 uppercase tracking-tight text-sm">{item.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-xs text-slate-400 italic px-1">Chưa có thực đơn cho bữa tối.</p>
+                    )}
+                </div>
+            </div>
+        </Modal>
+    );
+};
+
+const InfoIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 16v-4" />
+        <path d="M12 8h.01" />
+    </svg>
+);
+
 // --- Day Cell Component ---
 
-const DayCell = ({ data, now, onToggle }: { data: DayData; now: Date; onToggle: (day: number, meal: 'lunch' | 'dinner') => void; }) => {
-    const { day, date, disabled, prevMonth, nextMonth, lunch, dinner } = data;
+const DayCell = ({ data, now, onToggle, onShowMenu }: { data: DayData; now: Date; onToggle: (day: number, meal: 'lunch' | 'dinner') => void; onShowMenu: (lunchMenu: MenuItem[], dinnerMenu: MenuItem[], date: Date) => void; }) => {
+    const { day, date, disabled, prevMonth, nextMonth, lunch, dinner, lunchMenu, dinnerMenu } = data;
     const available = !prevMonth && !nextMonth && !disabled && isDateAvailable(date, now);
     const isTodayDate = !prevMonth && !nextMonth && isToday(date, now);
+    const hasMenu = (lunchMenu && lunchMenu.length > 0) || (dinnerMenu && dinnerMenu.length > 0);
 
     const getButton = (type: MealState, meal: 'lunch' | 'dinner') => {
         if (prevMonth || nextMonth || disabled) return null;
@@ -257,18 +334,33 @@ const DayCell = ({ data, now, onToggle }: { data: DayData; now: Date; onToggle: 
                 )}>
                     {day}
                 </span>
-                {isTodayDate && <span className="text-[10px] font-black bg-brand text-white px-2 py-0.5 rounded-full tracking-tighter">HÔM NAY</span>}
+                <div className="flex items-center gap-1.5">
+                    {hasMenu && (
+                        <button
+                            onClick={() => onShowMenu(lunchMenu || [], dinnerMenu || [], date)}
+                            className="p-1.5 bg-brand-soft text-brand rounded-xl hover:bg-brand hover:text-white transition-all shadow-sm"
+                            title="Xem thực đơn ngày"
+                        >
+                            <InfoIcon className="w-4 h-4" />
+                        </button>
+                    )}
+                    {isTodayDate && <span className="text-[10px] font-black bg-brand text-white px-2 py-0.5 rounded-full tracking-tighter">HÔM NAY</span>}
+                </div>
             </div>
 
             <div className="flex-1 flex flex-col justify-end gap-3 mt-1">
                 <div className="flex items-center justify-center gap-2">
                     <div className="flex flex-col items-center gap-1.5">
-                        <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-none">Trưa</span>
+                        <div className="flex items-center gap-1 pl-1">
+                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-none">Trưa</span>
+                        </div>
                         {getButton(lunch, 'lunch')}
                     </div>
                     <div className="w-px h-8 bg-slate-100 mx-1 mt-4" />
                     <div className="flex flex-col items-center gap-1.5">
-                        <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-none">Tối</span>
+                        <div className="flex items-center gap-1 pr-1">
+                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-none">Tối</span>
+                        </div>
                         {getButton(dinner, 'dinner')}
                     </div>
                 </div>
@@ -277,15 +369,14 @@ const DayCell = ({ data, now, onToggle }: { data: DayData; now: Date; onToggle: 
     );
 };
 
-const MobileDayItem = ({ data, now, onToggle }: { data: DayData; now: Date; onToggle: (day: number, meal: 'lunch' | 'dinner') => void; }) => {
-    const { day, date, disabled, prevMonth, nextMonth, lunch, dinner } = data;
-    // Skip rendering if not current month (handled in parent map, but good safety)
+const MobileDayItem = ({ data, now, onToggle, onShowMenu }: { data: DayData; now: Date; onToggle: (day: number, meal: 'lunch' | 'dinner') => void; onShowMenu: (lunchMenu: MenuItem[], dinnerMenu: MenuItem[], date: Date) => void; }) => {
+    const { day, date, disabled, prevMonth, nextMonth, lunch, dinner, lunchMenu, dinnerMenu } = data;
     if (prevMonth || nextMonth) return null;
 
     const available = !disabled && isDateAvailable(date, now);
     const isTodayDate = isToday(date, now);
+    const hasMenu = (lunchMenu && lunchMenu.length > 0) || (dinnerMenu && dinnerMenu.length > 0);
 
-    // Get Day Name (Thứ 2, Thứ 3...)
     const daysOfWeek = ['CN', 'THỨ 2', 'THỨ 3', 'THỨ 4', 'THỨ 5', 'THỨ 6', 'THỨ 7'];
     const dayName = daysOfWeek[date.getDay()];
 
@@ -294,8 +385,6 @@ const MobileDayItem = ({ data, now, onToggle }: { data: DayData; now: Date; onTo
 
         const isLunch = meal === 'lunch';
         const Icon = isLunch ? SunIcon : MoonIcon;
-        const iconColor = isLunch ? "text-orange-500" : "text-indigo-500";
-        const iconBg = isLunch ? "bg-orange-50" : "bg-indigo-50";
 
         // 1. Explicit States
         if (type === 'eaten') return <div className="w-11 h-11 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100 ring-2 ring-white/50"><UtensilsIcon className="w-6 h-6 text-white" /></div>;
@@ -304,10 +393,8 @@ const MobileDayItem = ({ data, now, onToggle }: { data: DayData; now: Date; onTo
 
         if (type === 'registered') {
             if (!available) {
-                // Past/Locked Registered
                 return <div className="w-11 h-11 bg-state-info/50 rounded-xl flex items-center justify-center ring-1 ring-slate-100"><CheckIcon className="w-6 h-6 text-white/50" /></div>;
             }
-            // Active Registered
             return (
                 <button
                     onClick={() => onToggle(day, meal)}
@@ -336,16 +423,24 @@ const MobileDayItem = ({ data, now, onToggle }: { data: DayData; now: Date; onTo
             "flex items-center justify-between p-4 border-b border-slate-100 last:border-0",
             isTodayDate ? "bg-brand-soft/30 -mx-2 px-6" : ""
         )}>
-            {/* Left: Date Info */}
             <div className="flex flex-col">
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-center gap-3">
                     <span className={cn("text-2xl font-black tracking-tighter", isTodayDate ? "text-brand" : "text-slate-700")}>{day}</span>
-                    {isTodayDate && <span className="text-[9px] font-bold bg-brand text-white px-2 py-0.5 rounded-full">HÔM NAY</span>}
+                    <div className="flex items-center gap-1.5">
+                        {hasMenu && (
+                            <button
+                                onClick={() => onShowMenu(lunchMenu || [], dinnerMenu || [], date)}
+                                className="p-1.5 bg-brand-soft text-brand rounded-xl border border-brand/10 transition-all shadow-sm"
+                            >
+                                <InfoIcon className="w-4 h-4" />
+                            </button>
+                        )}
+                        {isTodayDate && <span className="text-[9px] font-bold bg-brand text-white px-2 py-0.5 rounded-full">HÔM NAY</span>}
+                    </div>
                 </div>
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{dayName}</span>
             </div>
 
-            {/* Right: Actions */}
             <div className="flex items-center gap-6">
                 {/* Lunch */}
                 <div className="flex flex-col items-center gap-2">
@@ -368,31 +463,22 @@ const MobileDayItem = ({ data, now, onToggle }: { data: DayData; now: Date; onTo
 
 // --- Main Dashboard Page ---
 
-// --- Main Dashboard Page ---
-
-import { useRegistrationCalendar, useToggleRegistration } from '@/features/registrations/hooks';
-import { usePrices } from '@/features/system/hooks'; // Hook to fetch prices
-import { QuickRegisterModal } from '@/features/registrations/components/QuickRegisterModal';
-import { registrationApi } from '@/features/registrations/api';
-
 export default function DashboardPage() {
     const [mounted, setMounted] = useState(false);
     const [currentTime, setCurrentTime] = useState(() => new Date());
     const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
     const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth());
     const [isPresetOpen, setIsPresetOpen] = useState(false);
+    const [activeMenu, setActiveMenu] = useState<{ lunch: MenuItem[], dinner: MenuItem[], date: Date } | null>(null);
 
-    // API Data
     // API Data
     const { data: apiResponse, isLoading } = useRegistrationCalendar(selectedYear, selectedMonth);
-    const { data: prices } = usePrices(); // Fetch price history
+    const { data: prices } = usePrices();
     const toggleReg = useToggleRegistration();
 
-    // Sync with server time and update every minute
+    // Sync with server time
     useEffect(() => {
         setMounted(true);
-
-        // Initial sync
         registrationApi.getServerTime().then(res => {
             if (res.success && res.data?.serverTime) {
                 setCurrentTime(new Date(res.data.serverTime));
@@ -405,10 +491,9 @@ export default function DashboardPage() {
         return () => clearInterval(timer);
     }, []);
 
-    // Merge API data with calendar structure
     const calendarData = useMemo(() => {
         const baseData = generateCalendarData(selectedYear, selectedMonth, currentTime);
-        if (!apiResponse || apiResponse.length === 0) return baseData;
+        if (!apiResponse) return baseData;
 
         const events = apiResponse;
 
@@ -428,32 +513,25 @@ export default function DashboardPage() {
             const getMealState = (event: any, date: Date): MealState => {
                 const available = isDateAvailable(date, currentTime);
                 const isTodayDate = isToday(date, currentTime);
-                const isCompleted = event?.status === 'COMPLETED';
 
-                // Find any registration for the current user
-                // backend already filters by employeeId, so any registration in the array belongs to the user
                 const registration = event?.registrations?.[0];
                 const hasCheckin = event?.checkins?.length > 0;
 
-                // 1. If no registration record exists, it's just available or missed
                 if (!registration) {
                     return (available || isTodayDate) ? 'available' : 'missed';
                 }
 
-                // 2. If registration is CANCELLED (Kitchen override)
                 if (registration.isCancelled) {
-                    return 'cancelled'; // Logic fix: Don't count as skipped, don't charge fee
+                    return 'cancelled';
                 }
 
-                // 3. Active registration logic
                 if (hasCheckin) return 'eaten';
-                if (isCompleted) return 'skipped';
+                if (event?.status === 'COMPLETED') return 'skipped';
 
-                // If it's today or in the future, it's still 'registered'
-                const today = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate());
-                const mealDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                const todayBoundary = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate());
+                const mDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-                if (mealDate >= today) return 'registered';
+                if (mDate >= todayBoundary) return 'registered';
 
                 return 'skipped';
             };
@@ -461,25 +539,55 @@ export default function DashboardPage() {
             return {
                 ...day,
                 lunch: getMealState(lunchEvent, day.date),
-                dinner: getMealState(dinnerEvent, day.date)
+                dinner: getMealState(dinnerEvent, day.date),
+                lunchMenu: lunchEvent?.menuItems || [],
+                dinnerMenu: dinnerEvent?.menuItems || [],
             };
         });
     }, [selectedYear, selectedMonth, apiResponse, currentTime]);
 
+    const handleShowMenu = (lunch: MenuItem[], dinner: MenuItem[], date: Date) => {
+        setActiveMenu({ lunch, dinner, date });
+    };
+
     const kpi = useMemo(() => calculateKPI(calendarData, prices), [calendarData, prices]);
 
     const handleMonthChange = (offset: number) => {
-        if (selectedMonth + offset < 0) { setSelectedMonth(11); setSelectedYear(prev => prev - 1); }
-        else if (selectedMonth + offset > 11) { setSelectedMonth(0); setSelectedYear(prev => prev + 1); }
-        else { setSelectedMonth(prev => prev + offset); }
+        if (selectedMonth + offset < 0) {
+            setSelectedMonth(11);
+            setSelectedYear(prev => prev - 1);
+        }
+        else if (selectedMonth + offset > 11) {
+            setSelectedMonth(0);
+            setSelectedYear(prev => prev + offset >= 12 ? prev + 1 : prev); // Simplified for safety
+            setSelectedYear(prev => prev + 1);
+        }
+        else {
+            setSelectedMonth(prev => prev + offset);
+        }
+    };
+
+    // Correcting month change logic
+    const navigateMonth = (offset: number) => {
+        let newMonth = selectedMonth + offset;
+        let newYear = selectedYear;
+
+        if (newMonth < 0) {
+            newMonth = 11;
+            newYear--;
+        } else if (newMonth > 11) {
+            newMonth = 0;
+            newYear++;
+        }
+
+        setSelectedMonth(newMonth);
+        setSelectedYear(newYear);
     };
 
     const handleToggle = async (day: number, meal: 'lunch' | 'dinner') => {
-        // Create date string manually to avoid toISOString() timezone shift (UTC issue)
-        const year = selectedYear;
         const month = String(selectedMonth + 1).padStart(2, '0');
         const dayStr = String(day).padStart(2, '0');
-        const dateStr = `${year}-${month}-${dayStr}`;
+        const dateStr = `${selectedYear}-${month}-${dayStr}`;
 
         const mealType = meal.toUpperCase() as 'LUNCH' | 'DINNER';
         await toggleReg.mutateAsync({ date: dateStr, mealType });
@@ -490,7 +598,6 @@ export default function DashboardPage() {
     return (
         <div className="w-full min-h-screen bg-[#f8fafc] px-4 pb-12 animate-in fade-in duration-700">
             <div className="max-w-[1280px] mx-auto pt-6">
-                {/* 1. Header & Controls */}
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-brand rounded-2xl flex items-center justify-center shadow-xl shadow-brand/20">
@@ -503,14 +610,14 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex items-center gap-3 bg-white p-1.5 rounded-2xl border border-vtborder shadow-sm">
-                        <button onClick={() => handleMonthChange(-1)} className="p-2 hover:bg-surface-2 rounded-xl transition-colors text-vttext-muted hover:text-brand">
+                        <button onClick={() => navigateMonth(-1)} className="p-2 hover:bg-surface-2 rounded-xl transition-colors text-vttext-muted hover:text-brand">
                             <ChevronLeft />
                         </button>
                         <div className="px-4 text-center min-w-[140px]">
                             <div className="font-bold text-vttext-primary text-lg leading-tight">{MONTH_NAMES[selectedMonth]}</div>
                             <div className="text-[11px] font-black text-vttext-muted uppercase tracking-widest">{selectedYear}</div>
                         </div>
-                        <button onClick={() => handleMonthChange(1)} className="p-2 hover:bg-surface-2 rounded-xl transition-colors text-vttext-muted hover:text-brand">
+                        <button onClick={() => navigateMonth(1)} className="p-2 hover:bg-surface-2 rounded-xl transition-colors text-vttext-muted hover:text-brand">
                             <ChevronRight />
                         </button>
                     </div>
@@ -523,7 +630,6 @@ export default function DashboardPage() {
                     </button>
                 </div>
 
-                {/* 2. KPI Section */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     {[
                         { label: 'Bữa đã ăn', value: formatNumber(kpi.totalEaten), color: 'state-success', icon: <UtensilsIcon className="w-5 h-5" /> },
@@ -553,7 +659,6 @@ export default function DashboardPage() {
                     ))}
                 </div>
 
-                {/* 3. Calendar Body */}
                 <div className={cn(
                     "bg-white rounded-[40px] p-2 border border-vtborder shadow-2xl shadow-slate-200/40 relative min-h-[400px]",
                     isLoading ? "opacity-50" : ""
@@ -564,7 +669,6 @@ export default function DashboardPage() {
                         </div>
                     )}
 
-                    {/* DESKTOP: Grid View */}
                     <div className="hidden md:grid grid-cols-7 gap-1 mb-2 px-4 pt-6 pb-4 border-b border-slate-50">
                         {['THỨ 2', 'THỨ 3', 'THỨ 4', 'THỨ 5', 'THỨ 6', 'THỨ 7', 'CN'].map((day) => (
                             <div key={day} className="text-center text-[11px] font-black text-slate-400 tracking-[0.2em]">
@@ -580,40 +684,46 @@ export default function DashboardPage() {
                                 data={data}
                                 now={currentTime}
                                 onToggle={handleToggle}
+                                onShowMenu={handleShowMenu}
                             />
                         ))}
                     </div>
 
-                    {/* MOBILE: List View */}
                     <div className="md:hidden flex flex-col pt-4">
                         {calendarData.map((data, index) => {
-                            // Correctly Skip padding cells for mobile list
                             if (data.prevMonth || data.nextMonth) return null;
-
                             return (
                                 <MobileDayItem
                                     key={`mobile-${selectedYear}-${selectedMonth}-${index}`}
                                     data={data}
                                     now={currentTime}
                                     onToggle={handleToggle}
+                                    onShowMenu={handleShowMenu}
                                 />
                             );
                         })}
-                        {/* Empty state if no days (unlikely) */}
                         {calendarData.filter(d => !d.prevMonth && !d.nextMonth).length === 0 && (
                             <div className="text-center py-10 text-slate-400">Không có dữ liệu</div>
                         )}
                     </div>
                 </div>
 
-
-                {/* Modal */}
                 <QuickRegisterModal
                     isOpen={isPresetOpen}
                     onClose={() => setIsPresetOpen(false)}
                     year={selectedYear}
                     month={selectedMonth}
                 />
+
+                {activeMenu && (
+                    <MealMenuModal
+                        isOpen={!!activeMenu}
+                        onClose={() => setActiveMenu(null)}
+                        lunchMenu={activeMenu.lunch}
+                        dinnerMenu={activeMenu.dinner}
+                        date={activeMenu.date}
+                    />
+                )}
             </div>
         </div>
     );

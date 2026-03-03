@@ -54,6 +54,9 @@ export const getCalendarHandler = async (req: any, res: any, next: any) => {
                 },
                 checkins: {
                     where: { employeeId }
+                },
+                menuItems: {
+                    select: { name: true }
                 }
             }
         });
