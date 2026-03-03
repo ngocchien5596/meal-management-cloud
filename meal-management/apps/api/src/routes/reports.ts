@@ -5,10 +5,6 @@ import prisma from '../lib/prisma.js';
 import { startOfDay, endOfDay, parseISO } from 'date-fns';
 import { calculateReportStats } from '../utils/reportUtils.js';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const router: Router = Router();
 // MEAL_PRICE removed, using dynamic history
@@ -471,8 +467,8 @@ router.get('/reviews/export', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SY
         const doc = new (PDFDocument.default)();
 
         // Register Fonts to support Vietnamese
-        const fontPath = path.join(__dirname, '../assets/fonts/Roboto-Regular.ttf');
-        const fontBoldPath = path.join(__dirname, '../assets/fonts/Roboto-Bold.ttf');
+        const fontPath = path.join(process.cwd(), 'src/assets/fonts/Roboto-Regular.ttf');
+        const fontBoldPath = path.join(process.cwd(), 'src/assets/fonts/Roboto-Bold.ttf');
 
         doc.registerFont('Roboto', fontPath);
         doc.registerFont('Roboto-Bold', fontBoldPath);
