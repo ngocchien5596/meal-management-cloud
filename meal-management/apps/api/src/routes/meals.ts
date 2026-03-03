@@ -538,6 +538,30 @@ router.delete('/menu-items/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN
     }
 });
 
+router.patch('/menu-items/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+
+        if (!name || name.trim() === '') {
+            return res.status(400).json({ success: false, error: 'Tên món ăn không được để trống' });
+        }
+
+        const menuItem = await prisma.menuItem.update({
+            where: { id },
+            data: { name: name.trim() }
+        });
+
+        res.json({ success: true, data: menuItem });
+    } catch (error: any) {
+        console.error('Update menu item error:', error);
+        res.status(500).json({
+            success: false,
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Lỗi hệ thống khi cập nhật món ăn'
+        });
+    }
+});
+
 // --- Guests Management ---
 
 router.post('/:id/guests', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {

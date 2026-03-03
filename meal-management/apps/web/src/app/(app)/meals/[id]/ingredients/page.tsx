@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Modal, Input, Button, ConfirmDialog, CreateButton } from '@/components/ui';
 import { useMealDetail, useDeleteIngredient, useAddIngredient, useUpdateIngredient } from '@/features/meals/hooks';
 import { MealDetail, Ingredient } from '@/features/meals/api';
+import { Edit } from 'lucide-react';
 
 const PlusIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
@@ -11,10 +12,6 @@ const PlusIcon = () => (
 
 const TrashIcon = () => (
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
-);
-
-const EditIcon = () => (
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
 );
 
 interface IngredientFormProps {
@@ -196,10 +193,10 @@ export default function IngredientsPage({ params }: { params: { id: string } }) 
                                             <div className="flex items-center justify-end gap-3">
                                                 <button
                                                     onClick={() => handleOpenEdit(item)}
-                                                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                                                    className="p-2 hover:bg-brand-soft rounded-xl text-vttext-muted hover:text-brand transition-colors"
                                                     title="Sửa"
                                                 >
-                                                    <EditIcon />
+                                                    <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => setDeleteId(item.id)}

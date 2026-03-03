@@ -138,6 +138,10 @@ export const mealsApi = {
         api.delete<{ message: string }>(`/meals/menu-items/${id}`)
             .then(res => res.data),
 
+    updateMenuItem: (id: string, name: string) =>
+        api.patch<MenuItem>(`/meals/menu-items/${id}`, { name })
+            .then(res => res.data),
+
     // Guests
     addGuest: (mealId: string, data: { fullName: string; note?: string }) =>
         api.post<Guest>(`/meals/${mealId}/guests`, data)

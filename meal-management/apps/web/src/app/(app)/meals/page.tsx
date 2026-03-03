@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Modal, Input, Button, CreateButton } from '@/components/ui';
 import { useAuthStore } from '@/features/auth';
+import { Edit } from 'lucide-react';
 
 // --- Premium Icons ---
 // ... (keep existing icons) 
@@ -46,12 +47,6 @@ const EyeIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
     </svg>
 );
 
-const PencilIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-        <path d="m15 5 4 4" />
-    </svg>
-);
 
 const FoodTrayIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

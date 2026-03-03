@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { Modal, Input, Button, CreateButton, ConfirmDialog } from '@/components/ui';
-import { useMealDetail, useDeleteMenuItem, useAddMenuItem } from '@/features/meals/hooks';
+import { useMealDetail, useDeleteMenuItem, useAddMenuItem, useUpdateMenuItem } from '@/features/meals/hooks';
 import { MealDetail, MenuItem } from '@/features/meals/api';
+import { Edit } from 'lucide-react';
 
 const PlusIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
@@ -15,32 +16,49 @@ const TrashIcon = () => (
 
 interface MenuItemFormProps {
     mealId: string;
+    item?: MenuItem;
     onSuccess: () => void;
 }
 
-function MenuItemForm({ mealId, onSuccess }: MenuItemFormProps) {
+function MenuItemForm({ mealId, item, onSuccess }: MenuItemFormProps) {
     const addMutation = useAddMenuItem();
+    const updateMutation = useUpdateMenuItem();
+    const isEditing = !!item;
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const name = formData.get('name') as string;
-        await addMutation.mutateAsync({ mealId, name });
+
+        if (isEditing) {
+            await updateMutation.mutateAsync({ id: item.id, mealId, name });
+        } else {
+            await addMutation.mutateAsync({ mealId, name });
+        }
         onSuccess();
     };
+
+    const isPending = addMutation.isPending || updateMutation.isPending;
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
                 <label className="text-sm font-black text-slate-700 ml-1">Tên món ăn</label>
-                <Input name="name" placeholder="Ví dụ: Cơm trắng, Cá kho..." required />
+                <Input
+                    name="name"
+                    placeholder="Ví dụ: Cơm trắng, Cá kho..."
+                    defaultValue={item?.name}
+                    required
+                    autoFocus
+                />
             </div>
             <Button
                 type="submit"
                 size="lg"
                 className="w-full shadow-xl shadow-blue-200"
-                disabled={addMutation.isPending}
+                disabled={isPending}
             >
-                {addMutation.isPending ? 'ĐANG LƯU...' : 'LƯU MÓN ĂN'}
+                {isPending ? 'ĐANG LƯU...' : isEditing ? 'CẬP NHẬT MÓN ĂN' : 'LƯU MÓN ĂN'}
             </Button>
         </form>
     );
@@ -51,7 +69,8 @@ export default function MenuPage({ params }: { params: { id: string } }) {
     const { data: response, isLoading } = useMealDetail(id);
     const meal: MealDetail | undefined = response;
     const deleteMutation = useDeleteMenuItem();
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState<MenuItem | undefined>(undefined);
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
     const handleDelete = () => {
@@ -59,6 +78,16 @@ export default function MenuPage({ params }: { params: { id: string } }) {
             deleteMutation.mutate({ id: deleteId, mealId: id });
             setDeleteId(null);
         }
+    };
+
+    const handleEdit = (item: MenuItem) => {
+        setEditingItem(item);
+        setIsModalOpen(true);
+    };
+
+    const handleAdd = () => {
+        setEditingItem(undefined);
+        setIsModalOpen(true);
     };
 
     const items = meal?.menuItems || [];
@@ -74,7 +103,7 @@ export default function MenuPage({ params }: { params: { id: string } }) {
                     <p className="text-[15px] text-gray-500 mt-1">Các món ăn phục vụ trong khung giờ này</p>
                 </div>
                 {meal?.status === 'DRAFT' && (
-                    <CreateButton onClick={() => setIsAddModalOpen(true)}>
+                    <CreateButton onClick={handleAdd}>
                         THÊM MÓN MỚI
                     </CreateButton>
                 )}
@@ -108,15 +137,24 @@ export default function MenuPage({ params }: { params: { id: string } }) {
                                         {item.name}
                                     </td>
                                     <td className="py-4 px-6">
-                                        <div className="flex items-center justify-end">
+                                        <div className="flex items-center justify-end gap-2">
                                             {meal?.status === 'DRAFT' ? (
-                                                <button
-                                                    onClick={() => setDeleteId(item.id)}
-                                                    className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50"
-                                                    title="Xóa"
-                                                >
-                                                    <TrashIcon />
-                                                </button>
+                                                <>
+                                                    <button
+                                                        onClick={() => handleEdit(item)}
+                                                        className="p-2 hover:bg-brand-soft rounded-xl text-vttext-muted hover:text-brand transition-colors"
+                                                        title="Sửa"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDeleteId(item.id)}
+                                                        className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50"
+                                                        title="Xóa"
+                                                    >
+                                                        <TrashIcon />
+                                                    </button>
+                                                </>
                                             ) : (
                                                 <span className="text-xs text-gray-400 italic">Đã khóa</span>
                                             )}
@@ -130,11 +168,15 @@ export default function MenuPage({ params }: { params: { id: string } }) {
             </div>
 
             <Modal
-                isOpen={isAddModalOpen}
-                onClose={() => setIsAddModalOpen(false)}
-                title="Thêm món ăn mới"
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title={editingItem ? "Sửa món ăn" : "Thêm món ăn mới"}
             >
-                <MenuItemForm mealId={id} onSuccess={() => setIsAddModalOpen(false)} />
+                <MenuItemForm
+                    mealId={id}
+                    item={editingItem}
+                    onSuccess={() => setIsModalOpen(false)}
+                />
             </Modal>
 
             <ConfirmDialog
@@ -146,21 +188,6 @@ export default function MenuPage({ params }: { params: { id: string } }) {
                 description="Bạn có chắc chắn muốn xóa món ăn này khỏi thực đơn? Hành động này không thể hoàn tác."
                 type="danger"
             />
-
-
-            {/* <div className="mt-auto pt-6">
-                <div className="bg-amber-50/50 rounded-[32px] p-6 border border-amber-100/50 flex items-center gap-6">
-                    <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center shrink-0">
-                        <svg className="w-8 h-8 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v2" /><path d="m16.2 4.2 1.4 1.4" /><path d="M18 12h2" /><path d="m16.2 19.8 1.4-1.4" /><path d="M12 20v2" /><path d="m7.8 19.8-1.4-1.4" /><path d="M4 12H2" /><path d="m7.8 4.2-1.4 1.4" /><circle cx="12" cy="12" r="4" /></svg>
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] leading-none mb-2">Ghi chú bếp thưởng</p>
-                        <p className="text-sm font-bold text-amber-700 leading-relaxed italic">
-                            Các món ăn cần được chuẩn bị trước 30 phút so với giờ bắt đầu để đảm bảo chất lượng phục vụ.
-                        </p>
-                    </div>
-                </div>
-            </div> */}
         </div>
     );
 }

@@ -7,6 +7,7 @@ import { MealDetail, Guest } from '@/features/meals/api';
 import * as QRCode from 'qrcode';
 import toast from 'react-hot-toast';
 import { GuestImportExport } from '@/features/meals/components/GuestImportExport';
+import { Edit } from 'lucide-react';
 
 const PlusIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
@@ -14,10 +15,6 @@ const PlusIcon = () => (
 
 const TrashIcon = () => (
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
-);
-
-const EditIcon = () => (
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
 );
 
 const QrIcon = () => (
@@ -213,10 +210,10 @@ export default function GuestsPage({ params }: { params: { id: string } }) {
                                                 <>
                                                     <button
                                                         onClick={() => handleOpenEdit(guest)}
-                                                        className="text-gray-400 hover:text-blue-600 transition-colors p-2 rounded-lg hover:bg-blue-50"
+                                                        className="p-2 hover:bg-brand-soft rounded-xl text-vttext-muted hover:text-brand transition-colors"
                                                         title="Sửa"
                                                     >
-                                                        <EditIcon />
+                                                        <Edit className="w-4 h-4" />
                                                     </button>
                                                     <button
                                                         onClick={() => setDeleteId(guest.id)}

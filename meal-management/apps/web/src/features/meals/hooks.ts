@@ -120,6 +120,16 @@ export const useDeleteMenuItem = () => {
     });
 };
 
+export const useUpdateMenuItem = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, mealId, name }: { id: string; mealId: string; name: string }) => mealsApi.updateMenuItem(id, name),
+        onSuccess: (_, { mealId }) => {
+            queryClient.invalidateQueries({ queryKey: ['meal', mealId] });
+        },
+    });
+};
+
 // Guests
 export const useAddGuest = () => {
     const queryClient = useQueryClient();

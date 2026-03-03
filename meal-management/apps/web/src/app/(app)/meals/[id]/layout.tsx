@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils/cn';
-import { useMealDetail, useStartMeal, useEndMeal, useUpdateMeal } from '@/features/meals/hooks';
+import { useMealDetail, useStartMeal, useEndMeal } from '@/features/meals/hooks';
 import { useManualCheckin, useScanEmployee, useScanGuest } from '@/features/checkin/hooks';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -85,13 +85,6 @@ const SquareIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
     </svg>
 );
 
-const PencilIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-        <path d="m15 5 4 4" />
-    </svg>
-);
-
 const MonitorIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect width="20" height="14" x="2" y="3" rx="2" />
@@ -130,7 +123,6 @@ export default function MealDetailLayout({
     const { data: meal, isLoading } = useMealDetail(id) as { data: MealDetail | undefined, isLoading: boolean };
     const startMutation = useStartMeal();
     const endMutation = useEndMeal();
-    const updateMeal = useUpdateMeal();
     const manualCheckin = useManualCheckin();
     const scanEmployee = useScanEmployee();
     const scanGuest = useScanGuest();
@@ -144,32 +136,6 @@ export default function MealDetailLayout({
 
     const [isStartConfirmOpen, setIsStartConfirmOpen] = useState(false);
     const [isEndConfirmOpen, setIsEndConfirmOpen] = useState(false);
-
-    // Edit State
-    const [isEditing, setIsEditing] = useState(false);
-    const [editDate, setEditDate] = useState('');
-    const [editType, setEditType] = useState<'LUNCH' | 'DINNER'>('LUNCH');
-
-    React.useEffect(() => {
-        if (meal) {
-            setEditDate(format(new Date(meal.mealDate), 'yyyy-MM-dd'));
-            setEditType(meal.mealType);
-        }
-    }, [meal]);
-
-    const handleSaveMeal = async () => {
-        try {
-            await updateMeal.mutateAsync({
-                id,
-                data: { mealDate: editDate, mealType: editType }
-            });
-            toast.success('Cập nhật thông tin bữa ăn thành công!');
-            setIsEditing(false);
-        } catch (error) {
-            console.error(error);
-            toast.error('Có lỗi xảy ra khi cập nhật.');
-        }
-    };
 
     const handleStartMeal = async () => {
         try {
@@ -377,82 +343,31 @@ export default function MealDetailLayout({
             {/* INFO & ACTION BAR */}
             <div className="bg-white rounded-xl p-4 border border-[#eef2f7] shadow-sm mb-6 flex flex-col xl:flex-row items-center justify-between gap-4">
 
-                {/* Left: Meal Metadata (or Edit Form) */}
+                {/* Left: Meal Metadata */}
                 <div className="flex items-center gap-8 w-full xl:w-auto">
-                    {isEditing ? (
-                        <div className="flex items-center gap-4 bg-brand-soft p-2 rounded-lg border border-brand-soft2 animate-in fade-in slide-in-from-left-2 w-full">
-                            <div className="flex flex-col gap-1">
-                                <label className="text-[10px] font-bold text-brand uppercase tracking-wider">Ngày</label>
-                                <input
-                                    type="date"
-                                    value={editDate}
-                                    onChange={(e) => setEditDate(e.target.value)}
-                                    className="h-8 px-2 rounded border border-brand-soft2 text-sm bg-white focus:outline-brand"
-                                />
+                    <div className="flex flex-wrap items-center gap-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-brand-soft text-brand rounded-lg flex items-center justify-center">
+                                <CalendarIcon className="w-5 h-5" />
                             </div>
-                            <div className="flex flex-col gap-1">
-                                <label className="text-[10px] font-bold text-brand uppercase tracking-wider">Loại</label>
-                                <select
-                                    value={editType}
-                                    onChange={(e) => setEditType(e.target.value as 'LUNCH' | 'DINNER')}
-                                    className="h-8 px-2 rounded border border-brand-soft2 text-sm bg-white focus:outline-brand"
-                                >
-                                    <option value="LUNCH">Bữa Trưa</option>
-                                    <option value="DINNER">Bữa Tối</option>
-                                </select>
-                            </div>
-                            <div className="flex items-center gap-2 ml-2">
-                                <button
-                                    onClick={handleSaveMeal}
-                                    disabled={updateMeal.isPending}
-                                    className="h-8 px-3 bg-brand text-white rounded text-xs font-bold hover:bg-brand-hover disabled:opacity-50"
-                                >
-                                    Lưu
-                                </button>
-                                <button
-                                    onClick={() => setIsEditing(false)}
-                                    className="h-8 px-3 bg-white border border-brand-soft2 text-brand rounded text-xs font-bold hover:bg-brand-soft"
-                                >
-                                    Hủy
-                                </button>
+                            <div>
+                                <p className="text-[10px] font-bold text-vttext-muted uppercase tracking-wider mb-0.5">Thời gian</p>
+                                <p className="text-base font-bold text-vttext-primary">{format(new Date(meal.mealDate), 'dd/MM/yyyy')}</p>
                             </div>
                         </div>
-                    ) : (
-                        <div className="flex flex-wrap items-center gap-6 relative pr-8">
-                            {/* Edit Button (Visible only in DRAFT and for Admins) */}
-                            {meal.status === 'DRAFT' && isAdmin && (
-                                <button
-                                    onClick={() => setIsEditing(true)}
-                                    className="absolute -right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
-                                    title="Chỉnh sửa thông tin"
-                                >
-                                    <PencilIcon className="w-4 h-4" />
-                                </button>
-                            )}
 
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-brand-soft text-brand rounded-lg flex items-center justify-center">
-                                    <CalendarIcon className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-vttext-muted uppercase tracking-wider mb-0.5">Thời gian</p>
-                                    <p className="text-base font-bold text-vttext-primary">{format(new Date(meal.mealDate), 'dd/MM/yyyy')}</p>
-                                </div>
+                        <div className="w-px h-8 bg-gray-100 hidden sm:block" />
+
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center">
+                                <MealIcon className="w-5 h-5" />
                             </div>
-
-                            <div className="w-px h-8 bg-gray-100 hidden sm:block" />
-
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center">
-                                    <MealIcon className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Loại bữa</p>
-                                    <p className="text-base font-bold text-gray-900">{meal.mealType === 'LUNCH' ? 'Bữa Trưa' : 'Bữa Tối'}</p>
-                                </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Loại bữa</p>
+                                <p className="text-base font-bold text-gray-900">{meal.mealType === 'LUNCH' ? 'Bữa Trưa' : 'Bữa Tối'}</p>
                             </div>
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 {/* Right: Check-in Actions (Only if IN_PROGRESS and for Admins) */}
