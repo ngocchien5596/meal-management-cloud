@@ -47,5 +47,11 @@ export const reportsApi = {
     exportReviews: (startDate: string, endDate: string) => {
         const url = `${process.env.NEXT_PUBLIC_API_URL}/reports/reviews/export?startDate=${startDate}&endDate=${endDate}&token=${localStorage.getItem('token')}`;
         window.open(url, '_blank');
+    },
+    exportExcel: (startDate: string, endDate: string, search?: string, departmentId?: string) => {
+        let url = `${process.env.NEXT_PUBLIC_API_URL}/reports/summary/export?startDate=${startDate}&endDate=${endDate}&token=${localStorage.getItem('token')}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        if (departmentId) url += `&departmentId=${departmentId}`;
+        window.open(url, '_blank');
     }
 };

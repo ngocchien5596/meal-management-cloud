@@ -27,8 +27,8 @@ export default function CostsPage() {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const data = await reportsApi.getCosts(dateRange.start, dateRange.end);
-            setMeals(data);
+            const response = await reportsApi.getCosts(dateRange.start, dateRange.end);
+            setMeals(response.data);
         } catch (error) {
             console.error('Fetch costs error:', error);
             toast.error('Không thể tải dữ liệu chi phí');

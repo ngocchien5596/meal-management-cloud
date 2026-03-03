@@ -28,8 +28,8 @@ export default function ReviewsReportPage() {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const data = await reportsApi.getReviews(dateRange.start, dateRange.end);
-            setReviews(data);
+            const response = await reportsApi.getReviews(dateRange.start, dateRange.end);
+            setReviews(response.data);
         } catch (error) {
             console.error('Fetch reviews error:', error);
             toast.error('Không thể tải dữ liệu đánh giá');

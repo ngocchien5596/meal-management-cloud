@@ -3,11 +3,11 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function ConfigBasePage() {
+export default function ReportsBasePage() {
     const router = useRouter();
 
     useEffect(() => {
-        router.replace('/config/accounts');
+        router.replace('/reports/summary');
     }, [router]);
 
     return (

@@ -96,11 +96,10 @@ const menuItems: MenuItem[] = [
     { key: 'calendar', label: 'Lịch ăn', href: '/dashboard', icon: CalendarIcon },
     { key: 'checkin', label: 'Quét mã QR', href: '/checkin', icon: QRScanIcon },
     { key: 'meals', label: 'Quản lý bữa ăn', href: '/meals', icon: FoodTrayIcon, roles: ['ADMIN_KITCHEN', 'ADMIN_SYSTEM'] },
-    { key: 'accounts', label: 'Cấp tài khoản', href: '/accounts', icon: IdCardIcon, roles: ['HR', 'ADMIN_SYSTEM'] },
-    { key: 'config', label: 'Cấu hình hệ thống', href: '/config', icon: SettingsIcon, roles: ['ADMIN_SYSTEM'] },
+    { key: 'config', label: 'Cấu hình hệ thống', href: '/config/accounts', icon: SettingsIcon, roles: ['ADMIN_SYSTEM'] },
     { key: 'myqr', label: 'Mã QR của tôi', href: '/my-qr', icon: QRCodeIcon },
     { key: 'review', label: 'Đánh giá bữa ăn', href: '#', icon: StarIcon },
-    { key: 'reports', label: 'Báo cáo', href: '/reports', icon: ReportIcon, roles: ['ADMIN_KITCHEN', 'HR', 'ADMIN_SYSTEM'] },
+    { key: 'reports', label: 'Báo cáo', href: '/reports/summary', icon: ReportIcon, roles: ['ADMIN_KITCHEN', 'HR', 'ADMIN_SYSTEM'] },
     { key: 'password', label: 'Đổi mật khẩu', href: '/change-password', icon: LockIcon },
 ];
 
@@ -110,6 +109,12 @@ export function LeftMenu({ onScanClick, onReviewClick, userRole }: { onScanClick
     const isActive = (href: string) => {
         if (href === '/dashboard') {
             return pathname === '/dashboard' || pathname === '/';
+        }
+        if (href === '/reports/summary') {
+            return pathname.startsWith('/reports');
+        }
+        if (href === '/config/accounts') {
+            return pathname.startsWith('/config');
         }
         return pathname.startsWith(href);
     };
