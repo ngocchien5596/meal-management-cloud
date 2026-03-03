@@ -4,6 +4,11 @@ import { authenticate, authorize } from '../middleware/auth.js';
 import prisma from '../lib/prisma.js';
 import { startOfDay, endOfDay, parseISO } from 'date-fns';
 import { calculateReportStats } from '../utils/reportUtils.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router: Router = Router();
 // MEAL_PRICE removed, using dynamic history
@@ -274,7 +279,10 @@ router.get('/costs', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), a
                 ingredients: { some: {} }
             },
             include: {
-                ingredients: true
+                ingredients: true,
+                registrations: { where: { isCancelled: false } },
+                guests: true,
+                checkins: true
             },
             orderBy: { mealDate: 'desc' }
         });
@@ -300,18 +308,23 @@ router.get('/costs', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), a
             }
         });
 
-        // Get checkins only for meals that have ingredients to calculate accurate cost per meal
-        const mealsWithIngredientsIds = meals.map(m => m.id);
-        const relevantCheckins = await prisma.checkinLog.count({
-            where: {
-                mealEventId: { in: mealsWithIngredientsIds }
-            }
-        });
+        // Calculate total billable meals:
+        // For each meal event: (Active Registrations) + (Guests) + (Checkins without registration)
+        const totalBillableMeals = meals.reduce((acc, meal) => {
+            const regEmpIds = new Set(meal.registrations.map(r => r.employeeId));
+            const guestsCount = meal.guests.length;
+            const regCount = meal.registrations.length;
+
+            // Checkins from employees NOT in registration (vãng lai)
+            const extraCheckins = meal.checkins.filter(c => c.employeeId && !regEmpIds.has(c.employeeId)).length;
+
+            return acc + regCount + guestsCount + extraCheckins;
+        }, 0);
 
         const kpi = {
             totalCost: totalIngredientCost,
-            avgCostPerMeal: relevantCheckins > 0 ? Math.round(totalIngredientCost / relevantCheckins) : 0,
-            totalMeals: relevantCheckins,
+            avgCostPerMeal: totalBillableMeals > 0 ? Math.round(totalIngredientCost / totalBillableMeals) : 0,
+            totalMeals: totalBillableMeals,
             topIngredient
         };
 
@@ -457,6 +470,14 @@ router.get('/reviews/export', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SY
         const axios = (await import('axios')).default;
         const doc = new (PDFDocument.default)();
 
+        // Register Fonts to support Vietnamese
+        const fontPath = path.join(__dirname, '../assets/fonts/Roboto-Regular.ttf');
+        const fontBoldPath = path.join(__dirname, '../assets/fonts/Roboto-Bold.ttf');
+
+        doc.registerFont('Roboto', fontPath);
+        doc.registerFont('Roboto-Bold', fontBoldPath);
+        doc.font('Roboto');
+
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=Bao-cao-danh-gia-${startDate}-${endDate}.pdf`);
         doc.pipe(res);
@@ -470,8 +491,8 @@ router.get('/reviews/export', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SY
             // Draw a horizontal line
             doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke().moveDown();
 
-            doc.fontSize(12).font('Helvetica-Bold').text(`Ngày: ${review.mealEvent.mealDate.toLocaleDateString('vi-VN')} - Bữa: ${review.mealEvent.mealType === 'LUNCH' ? 'Trưa' : 'Tối'}`);
-            doc.fontSize(10).font('Helvetica').text(`Người gửi: ${review.isAnonymous ? 'Ẩn danh' : review.employee.fullName}`);
+            doc.fontSize(12).font('Roboto-Bold').text(`Ngày: ${review.mealEvent.mealDate.toLocaleDateString('vi-VN')} - Bữa: ${review.mealEvent.mealType === 'LUNCH' ? 'Trưa' : 'Tối'}`);
+            doc.fontSize(10).font('Roboto').text(`Người gửi: ${review.isAnonymous ? 'Ẩn danh' : review.employee.fullName}`);
             doc.text(`Nội dung: ${review.comment}`);
             doc.moveDown(0.5);
 

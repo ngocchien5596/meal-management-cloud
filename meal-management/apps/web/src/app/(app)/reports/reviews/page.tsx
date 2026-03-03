@@ -207,20 +207,13 @@ export default function ReviewsReportPage() {
                     </div>
 
                     {/* KPI Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <StatCard
                             label="Điểm hài lòng TB"
                             value={isLoading ? '...' : summary.avgRating}
                             subValue="/ 5"
                             icon={Star}
                             color="amber"
-                        />
-                        <StatCard
-                            label="Tỷ lệ phản hồi"
-                            value={isLoading ? '...' : `${summary.responseRate}%`}
-                            subValue="Trên tổng suất"
-                            icon={Activity}
-                            color="brand"
                         />
                         <StatCard
                             label="Đánh giá có ảnh"

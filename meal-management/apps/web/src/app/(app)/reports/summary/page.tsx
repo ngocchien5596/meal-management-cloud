@@ -208,18 +208,18 @@ export default function ReportPage() {
                 {/* 2. KPI Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <StatCard
-                        label="Tổng tiền ăn"
-                        value={isLoading ? '...' : formatCurrency(summary.totalCost)}
-                        subValue="VNĐ"
-                        icon={DollarSign}
-                        color="brand"
-                    />
-                    <StatCard
-                        label="Suất ăn thực tế"
+                        label="Số suất đã ăn"
                         value={isLoading ? '...' : summary.totalEaten}
                         subValue="Lượt ăn"
                         icon={Utensils}
                         color="emerald"
+                    />
+                    <StatCard
+                        label="Số bữa bỏ lỡ"
+                        value={isLoading ? '...' : summary.totalSkipped}
+                        subValue="Lượt bỏ bữa"
+                        icon={Ban}
+                        color="rose"
                     />
                     <StatCard
                         label="Tỷ lệ đi ăn"
@@ -229,11 +229,11 @@ export default function ReportPage() {
                         color="amber"
                     />
                     <StatCard
-                        label="Chi phí lãng phí"
-                        value={isLoading ? '...' : formatCurrency(summary.wasteCost)}
+                        label="Tổng tiền ăn"
+                        value={isLoading ? '...' : formatCurrency(summary.totalCost)}
                         subValue="VNĐ"
-                        icon={TrendingDown}
-                        color="rose"
+                        icon={DollarSign}
+                        color="brand"
                     />
                 </div>
 

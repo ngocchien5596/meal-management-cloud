@@ -9,7 +9,8 @@ import {
     DollarSign,
     Activity,
     TrendingDown,
-    Package
+    Package,
+    Utensils
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { reportsApi } from '@/features/reports/api';
@@ -191,7 +192,14 @@ export default function CostsPage() {
                     {/* KPI Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <StatCard
-                            label="Tổng tiền nhập"
+                            label="Tổng suất"
+                            value={isLoading ? '...' : summary.totalMeals}
+                            subValue="Suất ăn"
+                            icon={Utensils}
+                            color="amber"
+                        />
+                        <StatCard
+                            label="Tổng tiền NVL"
                             value={isLoading ? '...' : formatCurrency(summary.totalCost)}
                             subValue="VNĐ"
                             icon={DollarSign}
@@ -203,13 +211,6 @@ export default function CostsPage() {
                             subValue="VNĐ/Suất"
                             icon={Activity}
                             color="emerald"
-                        />
-                        <StatCard
-                            label="Số lượng bữa ăn"
-                            value={isLoading ? '...' : summary.totalMeals}
-                            subValue="Suất ăn"
-                            icon={TrendingDown}
-                            color="amber"
                         />
                         <StatCard
                             label="NVL tốn kém nhất"
