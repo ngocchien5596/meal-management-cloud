@@ -194,7 +194,7 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                             <ForkIcon />
                         </div>
                         <div className="flex flex-col">
-                            <h1 className="text-4xl font-bold text-[#1e293b] leading-tight flex items-center gap-2">
+                            <h1 className="text-2xl font-bold text-[#1e293b] leading-tight flex items-center gap-2">
                                 BẢNG THÔNG TIN NHÀ ĂN
                             </h1>
                             <div className="flex mt-1">
