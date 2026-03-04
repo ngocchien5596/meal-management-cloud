@@ -101,7 +101,7 @@ export default function ImportAccountContent() {
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
                     <div className="flex items-center gap-4 w-full md:w-auto">
                         <Link
-                            href="/accounts"
+                            href="/config/accounts"
                             className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-brand hover:border-brand-soft2 transition-all shadow-sm active:scale-95"
                         >
                             <ChevronLeft className="w-6 h-6" />
@@ -319,7 +319,7 @@ export default function ImportAccountContent() {
                                     Tiếp tục Nhập file
                                 </button>
                                 <button
-                                    onClick={() => window.location.href = '/accounts'}
+                                    onClick={() => window.location.href = '/config/accounts'}
                                     className="px-8 py-3 bg-slate-900 hover:bg-black text-white text-sm font-black rounded-2xl transition-all shadow-lg active:scale-95 flex items-center gap-2"
                                 >
                                     <ArrowRight className="w-4 h-4" />

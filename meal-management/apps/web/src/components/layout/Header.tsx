@@ -1,11 +1,10 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { LogOut, Menu, X, Utensils, Users, Settings, FileText } from 'lucide-react';
+import { LogOut, Menu, X } from 'lucide-react';
 import { useLogout } from '@/features/auth';
-
-// HeaderProps interface remains below
+import { menuItems, MenuItem, ChevronDownIcon } from '@/lib/constants/menu-items';
+import { cn } from '@/lib/utils/cn';
+import { usePathname } from 'next/navigation';
 
 interface HeaderProps {
     user?: {
@@ -17,9 +16,11 @@ interface HeaderProps {
 
 export function Header({ user, userRole }: HeaderProps) {
     const { logout } = useLogout();
+    const pathname = usePathname();
     const [currentTime, setCurrentTime] = useState(new Date());
     const [mounted, setMounted] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
     useEffect(() => {
         setMounted(true);
@@ -28,6 +29,41 @@ export function Header({ user, userRole }: HeaderProps) {
         }, 1000);
         return () => clearInterval(interval);
     }, []);
+
+    // Auto expand if current path is a child
+    useEffect(() => {
+        const findParent = (items: MenuItem[]): string | null => {
+            for (const item of items) {
+                if (item.children) {
+                    if (item.children.some(child => pathname.startsWith(child.href))) return item.key;
+                    const nestedParent = findParent(item.children);
+                    if (nestedParent) return nestedParent;
+                }
+            }
+            return null;
+        };
+
+        const parentKey = findParent(menuItems);
+        if (parentKey && !expandedKeys.includes(parentKey)) {
+            setExpandedKeys(prev => [...prev, parentKey]);
+        }
+    }, [pathname]);
+
+    const toggleExpand = (key: string) => {
+        setExpandedKeys(prev =>
+            prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+        );
+    };
+
+    const isParentActive = (item: MenuItem) => {
+        if (item.children) {
+            return item.children.some(child => pathname.startsWith(child.href));
+        }
+        if (item.href === '/dashboard' || item.href === '/') {
+            return pathname === '/dashboard' || pathname === '/';
+        }
+        return pathname.startsWith(item.href);
+    };
 
     if (!mounted) return <header className="h-[72px] bg-white border-b border-gray-200 shadow-sm z-10" />;
 
@@ -43,6 +79,76 @@ export function Header({ user, userRole }: HeaderProps) {
         return name.charAt(0).toUpperCase();
     };
 
+    const renderMobileMenuItem = (item: MenuItem, depth = 0) => {
+        if (item.roles && (!userRole || !item.roles.includes(userRole))) {
+            return null;
+        }
+
+        const hasChildren = item.children && item.children.length > 0;
+        const active = depth === 0 ? isParentActive(item) : pathname === item.href;
+        const expanded = expandedKeys.includes(item.key);
+        const Icon = item.icon;
+
+        const content = (
+            <div className={cn(
+                'flex items-center justify-between p-3 rounded-xl transition-all duration-200 group cursor-pointer',
+                active && !hasChildren
+                    ? (depth === 0 ? 'bg-brand-soft text-brand shadow-sm shadow-brand/5' : 'text-brand font-bold')
+                    : 'text-gray-700 hover:bg-slate-50 hover:text-gray-900',
+                depth > 0 && 'py-2 pl-12 bg-transparent shadow-none'
+            )}>
+                <div className="flex items-center gap-3">
+                    <div className={cn(
+                        "w-9 h-9 rounded-lg flex items-center justify-center transition-all",
+                        active ? "bg-brand text-white" : "bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700",
+                        depth > 0 && "w-6 h-6 bg-transparent" // Hide box for nested items
+                    )}>
+                        <Icon className={cn(depth > 0 ? "w-4 h-4" : "w-[18px] h-[18px]")} />
+                    </div>
+                    <span className={cn(
+                        "text-[15px] transition-all",
+                        active ? "font-bold" : "font-medium"
+                    )}>
+                        {item.label}
+                    </span>
+                </div>
+                {hasChildren && (
+                    <ChevronDownIcon className={cn(
+                        "w-4 h-4 transition-transform duration-200 text-slate-400",
+                        expanded && "rotate-180"
+                    )} />
+                )}
+            </div>
+        );
+
+        return (
+            <div key={item.key} className="w-full">
+                {hasChildren ? (
+                    <button
+                        onClick={() => toggleExpand(item.key)}
+                        className="w-full text-left outline-none"
+                    >
+                        {content}
+                    </button>
+                ) : (
+                    <Link
+                        href={item.href}
+                        onClick={() => setIsMenuOpen(false)}
+                        className="w-full outline-none block"
+                    >
+                        {content}
+                    </Link>
+                )}
+
+                {hasChildren && expanded && (
+                    <div className="mt-1 flex flex-col gap-1 anime-in fade-in slide-in-from-top-1 duration-200">
+                        {item.children!.map(child => renderMobileMenuItem(child, depth + 1))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
         <>
             <header className="h-16 md:h-[72px] bg-white border-b border-gray-200 flex items-center px-4 md:px-6 shrink-0 justify-between relative z-50">
@@ -56,17 +162,19 @@ export function Header({ user, userRole }: HeaderProps) {
                         <Menu size={24} />
                     </button>
 
-                    <div className="w-10 h-10 md:w-11 md:h-11 bg-white rounded flex items-center justify-center overflow-hidden border border-gray-100">
-                        <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="ml-3 md:ml-4">
-                        <h1 className="text-base md:text-lg font-bold text-gray-900 leading-tight line-clamp-1">
-                            Hệ thống Quản lý suất ăn
-                        </h1>
-                        <p className="text-xs lg:text-sm text-gray-500 leading-tight hidden sm:block">
-                            Công ty CP Xi măng Cẩm phả
-                        </p>
-                    </div>
+                    <Link href="/" className="flex items-center">
+                        <div className="w-10 h-10 md:w-11 md:h-11 bg-white rounded flex items-center justify-center overflow-hidden border border-gray-100">
+                            <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="ml-3 md:ml-4">
+                            <h1 className="text-base md:text-lg font-bold text-gray-900 leading-tight line-clamp-1">
+                                Hệ thống Quản lý suất ăn
+                            </h1>
+                            <p className="text-xs lg:text-sm text-gray-500 leading-tight hidden sm:block">
+                                Công ty CP Xi măng Cẩm phả
+                            </p>
+                        </div>
+                    </Link>
                 </div>
 
                 {/* Center - Time (Hidden on Mobile) */}
@@ -106,13 +214,13 @@ export function Header({ user, userRole }: HeaderProps) {
                     />
 
                     {/* Drawer Panel */}
-                    <div className="absolute top-0 left-0 bottom-0 w-[80%] max-w-[300px] bg-white shadow-2xl animate-in slide-in-from-left duration-200 flex flex-col">
+                    <div className="absolute top-0 left-0 bottom-0 w-[80%] max-w-[320px] bg-white shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
                         <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg overflow-hidden border border-gray-200">
                                     <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
                                 </div>
-                                <span className="font-bold text-gray-800 text-lg">Menu</span>
+                                <span className="font-black text-slate-800 text-lg uppercase tracking-tight">Viettel Menu</span>
                             </div>
                             <button
                                 onClick={() => setIsMenuOpen(false)}
@@ -122,82 +230,33 @@ export function Header({ user, userRole }: HeaderProps) {
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                        <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar">
                             {/* User Info Card */}
-                            <div className="mb-6 p-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-center gap-3">
-                                <div className="w-10 h-10 bg-brand rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-sm">
+                            <div className="p-4 bg-brand-soft/50 rounded-2xl border border-brand/5 flex items-center gap-4">
+                                <div className="w-12 h-12 bg-brand rounded-2xl flex items-center justify-center text-white font-black text-xl shrink-0 shadow-lg shadow-brand/20">
                                     {user?.fullName ? getInitial(user.fullName) : 'G'}
                                 </div>
                                 <div className="overflow-hidden">
-                                    <div className="font-bold text-gray-900 truncate">{user?.fullName || 'Guest'}</div>
-                                    <div className="text-xs text-gray-500 truncate">MNV: {user?.employeeCode || '---'}</div>
+                                    <div className="font-black text-slate-900 truncate leading-tight">{user?.fullName || 'Guest'}</div>
+                                    <div className="text-xs font-bold text-slate-400 mt-1 truncate uppercase tracking-widest">MNV: {user?.employeeCode || '---'}</div>
                                 </div>
                             </div>
 
                             <div className="space-y-1">
-                                <p className="px-4 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Quản lý</p>
-
-                                {['ADMIN_KITCHEN', 'ADMIN_SYSTEM'].includes(userRole || '') && (
-                                    <Link
-                                        href="/meals"
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-orange-50 text-gray-700 hover:text-orange-700 font-medium transition-colors group"
-                                    >
-                                        <div className="w-9 h-9 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center group-hover:bg-orange-200 group-hover:scale-105 transition-all">
-                                            <Utensils size={18} />
-                                        </div>
-                                        Quản lý bữa ăn
-                                    </Link>
-                                )}
-
-                                {['HR', 'ADMIN_SYSTEM'].includes(userRole || '') && (
-                                    <Link
-                                        href="/accounts"
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50 text-gray-700 hover:text-blue-700 font-medium transition-colors group"
-                                    >
-                                        <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center group-hover:bg-blue-200 group-hover:scale-105 transition-all">
-                                            <Users size={18} />
-                                        </div>
-                                        Cấp tài khoản
-                                    </Link>
-                                )}
-
-                                {['ADMIN_SYSTEM'].includes(userRole || '') && (
-                                    <Link
-                                        href="/config"
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-gray-700 hover:text-slate-700 font-medium transition-colors group"
-                                    >
-                                        <div className="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center group-hover:bg-slate-200 group-hover:scale-105 transition-all">
-                                            <Settings size={18} />
-                                        </div>
-                                        Cấu hình hệ thống
-                                    </Link>
-                                )}
-
-                                {['ADMIN_KITCHEN', 'ADMIN_SYSTEM'].includes(userRole || '') && (
-                                    <Link
-                                        href="/reports"
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-emerald-50 text-gray-700 hover:text-emerald-700 font-medium transition-colors group"
-                                    >
-                                        <div className="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-200 group-hover:scale-105 transition-all">
-                                            <FileText size={18} />
-                                        </div>
-                                        Báo cáo
-                                    </Link>
-                                )}
+                                <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Điều hướng hệ thống</p>
+                                <nav className="flex flex-col gap-1">
+                                    {menuItems.map(item => renderMobileMenuItem(item))}
+                                </nav>
                             </div>
                         </div>
 
-                        <div className="p-4 border-t border-gray-100 bg-gray-50/50">
+                        <div className="p-4 border-t border-gray-50 bg-gray-50/30">
                             <button
                                 onClick={logout}
-                                className="w-full flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-200 hover:bg-red-50 hover:border-red-100 hover:text-red-600 text-gray-600 font-medium shadow-sm transition-all"
+                                className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-white border border-slate-200 hover:bg-brand-soft hover:border-brand-soft hover:text-brand text-slate-600 font-black text-sm shadow-sm transition-all active:scale-[0.98]"
                             >
                                 <LogOut size={18} />
-                                Đăng xuất
+                                Đăng xuất hệ thống
                             </button>
                         </div>
                     </div>

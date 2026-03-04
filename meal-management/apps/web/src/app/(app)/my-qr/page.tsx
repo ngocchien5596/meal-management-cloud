@@ -175,7 +175,7 @@ export default function MyQrContent() {
                         {/* User Basic Info */}
                         <div className="mt-8 text-center space-y-2">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Thông tin nhân viên</p>
-                            <h2 className="text-3xl font-black text-slate-900 tracking-tight">{user.fullName}</h2>
+                            <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight break-words w-full px-4">{user.fullName}</h2>
                             <div className="inline-flex items-center px-4 py-1.5 bg-slate-100 rounded-full text-slate-600">
                                 <span className="text-xs font-black font-mono tracking-widest">{user.employeeCode}</span>
                             </div>

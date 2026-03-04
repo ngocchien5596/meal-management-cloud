@@ -83,7 +83,7 @@ export default function EditAccountPage({ params }: { params: { id: string } }) 
                 }
             });
             toast.success('Cập nhật tài khoản thành công! ✨');
-            router.push('/accounts');
+            router.push('/config/accounts');
         } catch (err: any) {
             console.error(err);
             const msg = err.response?.data?.error?.message || err.message || 'Lỗi không xác định';
@@ -105,7 +105,7 @@ export default function EditAccountPage({ params }: { params: { id: string } }) 
                 <AlertCircle className="w-8 h-8" />
             </div>
             <h2 className="text-xl font-black text-slate-900">Không tìm thấy tài khoản</h2>
-            <Link href="/accounts" className="text-brand font-bold hover:underline">Quay lại danh sách</Link>
+            <Link href="/config/accounts" className="text-brand font-bold hover:underline">Quay lại danh sách</Link>
         </div>
     );
 
@@ -117,7 +117,7 @@ export default function EditAccountPage({ params }: { params: { id: string } }) 
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
                     <div className="flex items-center gap-4 w-full md:w-auto">
                         <Link
-                            href="/accounts"
+                            href="/config/accounts"
                             className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm active:scale-95"
                         >
                             <ChevronLeft className="w-6 h-6" />
@@ -370,7 +370,7 @@ export default function EditAccountPage({ params }: { params: { id: string } }) 
                         {/* Form Footer */}
                         <div className="px-8 py-8 bg-slate-50/50 border-t border-slate-50 flex items-center justify-end gap-4">
                             <Link
-                                href="/accounts"
+                                href="/config/accounts"
                                 className="px-6 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm font-bold rounded-2xl transition-all shadow-sm active:scale-95"
                             >
                                 Hủy bỏ

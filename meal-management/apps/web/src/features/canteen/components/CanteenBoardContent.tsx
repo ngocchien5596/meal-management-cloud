@@ -184,28 +184,28 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
     const rightIngredients = currentMeal.ingredients?.slice(half) || [];
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] p-4 flex justify-center items-start overflow-auto">
-            <div className="w-full bg-white rounded-xl border border-[#e5e7eb] shadow-sm overflow-hidden flex flex-col h-full">
+        <div className="min-h-screen bg-[#f8fafc] md:p-4 flex justify-center items-start overflow-auto">
+            <div className="w-full bg-white md:rounded-xl border border-[#e5e7eb] shadow-sm overflow-hidden flex flex-col h-full">
 
                 {/* 2A: TOP STRIP */}
                 <div className="h-20 bg-[#fafafa] border-b border-[#e5e7eb] flex items-center justify-between px-8">
                     <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0">
+                        <div className="flex-shrink-0 scale-75 md:scale-100">
                             <ForkIcon />
                         </div>
                         <div className="flex flex-col">
-                            <h1 className="text-2xl font-bold text-[#1e293b] leading-tight flex items-center gap-2">
+                            <h1 className="text-sm md:text-2xl font-bold text-[#1e293b] leading-tight flex items-center gap-2">
                                 BẢNG THÔNG TIN NHÀ ĂN
                             </h1>
-                            <div className="flex mt-1">
-                                <span className="bg-[#fee2e2] text-[#E11D2E] text-xl font-bold px-4 py-1.5 rounded-lg border border-[#fecaca] uppercase">
+                            <div className="flex mt-0.5 md:mt-1">
+                                <span className="bg-[#fee2e2] text-[#E11D2E] text-xs md:text-xl font-bold px-2 py-0.5 md:px-4 md:py-1.5 rounded-lg border border-[#fecaca] uppercase">
                                     {currentMeal.mealType === 'LUNCH' ? 'BỮA TRƯA' : 'BỮA TỐI'}
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex gap-10">
+                    <div className="hidden lg:flex gap-10">
                         <div className="text-center">
                             <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1">HÔM NAY</p>
                             <p className="text-2xl font-bold text-[#1e293b]">
@@ -214,8 +214,8 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                         </div>
                     </div>
 
-                    <div className="bg-[#E11D2E] text-white px-8 py-3 rounded-2xl shadow-lg shadow-red-200">
-                        <span className="text-5xl font-bold tracking-widest tabular-nums">{format(currentTime, 'HH:mm:ss')}</span>
+                    <div className="bg-[#E11D2E] text-white px-4 py-2 md:px-8 md:py-3 rounded-xl md:rounded-2xl shadow-lg shadow-red-200">
+                        <span className="text-2xl md:text-5xl font-bold tracking-widest tabular-nums">{format(currentTime, 'HH:mm:ss')}</span>
                     </div>
                 </div>
 
@@ -226,9 +226,9 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                     <div className="col-span-12 lg:col-span-9 flex flex-col gap-4">
 
                         {/* ROW 1: QR CODE + TODAY MENU */}
-                        <div className="grid grid-cols-12 gap-4 h-[350px]">
+                        <div className="grid grid-cols-12 gap-4 lg:h-[350px]">
                             {/* 3.0: QR CODE (5 cols) */}
-                            <div className="col-span-5 bg-white rounded-lg border border-[#e5e7eb] shadow-xs flex flex-col items-center justify-center p-4 relative overflow-hidden">
+                            <div className="col-span-12 md:col-span-5 bg-white rounded-lg border border-[#e5e7eb] shadow-xs flex flex-col items-center justify-center p-6 lg:p-4 relative overflow-hidden">
                                 <div className="absolute top-0 inset-x-0 h-1 bg-[#E11D2E]"></div>
                                 <div className="absolute bottom-0 inset-x-0 h-1 bg-[#E11D2E]"></div>
 
@@ -259,7 +259,7 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                             </div>
 
                             {/* 3.1: THỰC ĐƠN HÔM NAY (7 cols) */}
-                            <div className="col-span-7 bg-white rounded-lg border border-[#e5e7eb] shadow-xs flex flex-col">
+                            <div className="col-span-12 md:col-span-7 bg-white rounded-lg border border-[#e5e7eb] shadow-xs flex flex-col">
                                 <div className="px-4 py-3 border-b border-[#f1f5f9] flex items-center gap-3 bg-slate-50/30">
                                     <div className="w-8 h-8 rounded-md bg-red-100 flex items-center justify-center">
                                         <CalendarIcon />
@@ -301,9 +301,9 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                         </div>
 
                         {/* ROW 2: FEEDBACK + TOMORROW MENU */}
-                        <div className="grid grid-cols-12 gap-4 h-[350px]">
+                        <div className="grid grid-cols-12 gap-4 lg:h-[350px]">
                             {/* 3.3: Ý KIẾN CBCNV (REVIEWS) (5 cols) */}
-                            <div className="col-span-5 bg-white rounded-lg border border-[#e5e7eb] shadow-xs flex flex-col relative overflow-hidden">
+                            <div className="col-span-12 md:col-span-5 bg-white rounded-lg border border-[#e5e7eb] shadow-xs flex flex-col relative overflow-hidden min-h-[300px] lg:min-h-0">
                                 <div className="px-3 py-3 border-b border-[#f1f5f9] flex flex-col gap-1 items-start bg-slate-50/50">
                                     <div className="flex items-center gap-2">
                                         <StarIconForBoard />
@@ -359,7 +359,7 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                             </div>
 
                             {/* 3.2: THỰC ĐƠN NGÀY MAI (7 cols) */}
-                            <div className="col-span-7 bg-white rounded-lg border border-[#e5e7eb] shadow-xs flex flex-col opacity-90">
+                            <div className="col-span-12 md:col-span-7 bg-white rounded-lg border border-[#e5e7eb] shadow-xs flex flex-col opacity-90">
                                 <div className="px-4 py-3 border-b border-[#f1f5f9] flex items-center gap-3 bg-slate-50/30">
                                     <div className="w-8 h-8 rounded-md bg-orange-100 flex items-center justify-center">
                                         <CalendarIcon color="#f97316" />
@@ -406,7 +406,7 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                     <div className="col-span-12 lg:col-span-3 flex flex-col gap-4">
 
                         {/* 4.1: TÌNH HÌNH CHECK-IN */}
-                        <div className="bg-white rounded-lg border border-[#e5e7eb] shadow-xs p-5 flex flex-col gap-4 h-[140px] justify-center">
+                        <div className="bg-white rounded-lg border border-[#e5e7eb] shadow-xs p-5 flex flex-col gap-4 min-h-[140px] justify-center">
                             <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider text-center">TÌNH HÌNH CHECK-IN</h2>
                             <div className="flex justify-between items-end">
                                 <div className="flex items-baseline gap-1">
@@ -424,7 +424,7 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                         </div>
 
                         {/* 4.2: LỊCH SỬ CHECK-IN (Expanded) */}
-                        <div className="bg-white rounded-lg border border-[#e5e7eb] shadow-xs flex flex-col flex-1 h-[424px]">
+                        <div className="bg-white rounded-lg border border-[#e5e7eb] shadow-xs flex flex-col flex-1 min-h-[400px] lg:h-[424px]">
                             <div className="px-5 py-4 border-b border-[#f1f5f9] flex items-center justify-between bg-slate-50/50">
                                 <div className="flex items-center gap-2">
                                     <HistoryIcon />
@@ -527,9 +527,9 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                                 </div>
                             </div>
 
-                            <div className="flex justify-end p-6 items-baseline gap-6 mt-4 mb-4">
+                            <div className="flex flex-col md:flex-row justify-end p-4 md:p-6 items-center md:items-baseline gap-2 md:gap-6 mt-4 mb-4">
                                 <span className="text-xl font-bold text-[#E11D2E] uppercase tracking-widest">TỔNG CỘNG</span>
-                                <span className="text-5xl font-bold text-[#E11D2E]">{totalCost.toLocaleString()} VND</span>
+                                <span className="text-3xl md:text-5xl font-bold text-[#E11D2E]">{totalCost.toLocaleString()} VND</span>
                             </div>
 
                             {/* 6: VERY BOTTOM ANNOUNCEMENT BAR */}

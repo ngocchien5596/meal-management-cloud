@@ -35,10 +35,10 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
                 onClick={onClose}
             />
             <div className={cn(
-                "relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl shadow-slate-900/20 overflow-hidden animate-in zoom-in-95 duration-300",
+                "relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl shadow-slate-900/20 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[calc(100vh-2rem)]",
                 className
             )}>
-                <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
+                <div className="px-6 py-4 md:px-8 md:py-6 border-b border-slate-50 flex items-center justify-between shrink-0">
                     <h2 className="text-xl font-black text-slate-900 tracking-tight">{title}</h2>
                     <button
                         onClick={onClose}
@@ -47,7 +47,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
                         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                     </button>
                 </div>
-                <div className="p-8">
+                <div className="p-6 md:p-8 overflow-y-auto">
                     {children}
                 </div>
             </div>

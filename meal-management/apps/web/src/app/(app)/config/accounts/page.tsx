@@ -155,14 +155,14 @@ export default function AccountManagementContent() {
                     {canManage && (
                         <div className="flex items-center gap-3 w-full md:w-auto">
                             <Link
-                                href="/accounts/import"
+                                href="/config/accounts/import"
                                 className="h-10 px-4 flex items-center gap-2 bg-white border border-vtborder rounded-xl text-sm font-bold text-vttext-secondary hover:bg-surface-2 hover:text-vttext-primary transition-all shadow-sm active:scale-95"
                             >
                                 <FileUp className="w-4 h-4" />
                                 <span className="hidden sm:inline">Nhập Excel</span>
                             </Link>
                             <Link
-                                href="/accounts/create"
+                                href="/config/accounts/create"
                                 className="h-10 px-4 flex items-center gap-2 bg-brand hover:bg-brand-hover text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-brand/20 active:scale-95"
                             >
                                 <Plus className="w-4 h-4" />
@@ -340,7 +340,7 @@ export default function AccountManagementContent() {
                                                 {canManage && (
                                                     <div className="flex items-center justify-end gap-1 transition-all">
                                                         <Link
-                                                            href={`/accounts/${account.id}/edit`}
+                                                            href={`/config/accounts/${account.id}/edit`}
                                                             className="p-2 hover:bg-brand-soft rounded-xl text-vttext-muted hover:text-brand transition-colors"
                                                             title="Chỉnh sửa"
                                                         >

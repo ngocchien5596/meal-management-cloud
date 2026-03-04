@@ -57,7 +57,7 @@ export default function CreateAccountContent() {
                 password: formData.password || undefined,
             });
             toast.success('Tạo tài khoản thành công! ✨');
-            router.push('/accounts');
+            router.push('/config/accounts');
         } catch (err: any) {
             console.error(err);
             const msg = err.response?.data?.error?.message || err.message || 'Lỗi không xác định';
@@ -76,13 +76,13 @@ export default function CreateAccountContent() {
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
                     <div className="flex items-center gap-4 w-full md:w-auto">
                         <Link
-                            href="/accounts"
-                            className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm active:scale-95"
+                            href="/config/accounts"
+                            className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-brand hover:border-brand-soft transition-all shadow-sm active:scale-95"
                         >
                             <ChevronLeft className="w-6 h-6" />
                         </Link>
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-200">
+                            <div className="w-12 h-12 bg-brand rounded-2xl flex items-center justify-center shadow-xl shadow-brand/20">
                                 <UserPlus className="w-6 h-6 text-white" />
                             </div>
                             <div>
@@ -117,18 +117,17 @@ export default function CreateAccountContent() {
                             {/* Section 1: Thông tin cơ bản */}
                             <div className="space-y-6">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
-                                        <User className="w-4 h-4 text-blue-600" />
+                                    <div className="w-7 h-7 bg-brand-soft rounded-lg flex items-center justify-center">
+                                        <User className="w-4 h-4 text-brand" />
                                     </div>
                                     <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Thông tin cơ bản</h3>
                                 </div>
-
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Full Name */}
                                     <div className="space-y-2">
                                         <label className="text-[13px] font-black text-slate-700 uppercase tracking-wider ml-1">Họ và tên <span className="text-rose-500">*</span></label>
                                         <div className="relative group">
-                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand transition-colors">
                                                 <User className="w-5 h-5" />
                                             </div>
                                             <input
@@ -137,7 +136,7 @@ export default function CreateAccountContent() {
                                                 required
                                                 value={formData.fullName}
                                                 onChange={handleChange}
-                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all"
+                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all"
                                                 placeholder="Nhập họ tên nhân viên"
                                             />
                                         </div>
@@ -147,7 +146,7 @@ export default function CreateAccountContent() {
                                     <div className="space-y-2">
                                         <label className="text-[13px] font-black text-slate-700 uppercase tracking-wider ml-1">Mã nhân viên <span className="text-rose-500">*</span></label>
                                         <div className="relative group">
-                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand transition-colors">
                                                 <Fingerprint className="w-5 h-5" />
                                             </div>
                                             <input
@@ -156,7 +155,7 @@ export default function CreateAccountContent() {
                                                 required
                                                 value={formData.employeeCode}
                                                 onChange={handleChange}
-                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-bold font-mono tracking-wider text-slate-900 placeholder:font-sans placeholder:tracking-normal placeholder:font-medium placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all"
+                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-bold font-mono tracking-wider text-slate-900 placeholder:font-sans placeholder:tracking-normal placeholder:font-medium placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all"
                                                 placeholder="VD: NV001"
                                             />
                                         </div>
@@ -166,7 +165,7 @@ export default function CreateAccountContent() {
                                     <div className="space-y-2 md:col-span-2">
                                         <label className="text-[13px] font-black text-slate-700 uppercase tracking-wider ml-1">Địa chỉ Email</label>
                                         <div className="relative group">
-                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand transition-colors">
                                                 <Mail className="w-5 h-5" />
                                             </div>
                                             <input
@@ -174,7 +173,7 @@ export default function CreateAccountContent() {
                                                 name="email"
                                                 value={formData.email}
                                                 onChange={handleChange}
-                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all"
+                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all"
                                                 placeholder="example@company.com"
                                             />
                                         </div>
@@ -188,18 +187,17 @@ export default function CreateAccountContent() {
                             {/* Section 2: Tổ chức */}
                             <div className="space-y-6">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <div className="w-7 h-7 bg-indigo-50 rounded-lg flex items-center justify-center">
-                                        <Building2 className="w-4 h-4 text-indigo-600" />
+                                    <div className="w-7 h-7 bg-brand-soft rounded-lg flex items-center justify-center">
+                                        <Building2 className="w-4 h-4 text-brand" />
                                     </div>
                                     <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Đơn vị công tác</h3>
                                 </div>
-
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Department */}
                                     <div className="space-y-2">
                                         <label className="text-[13px] font-black text-slate-700 uppercase tracking-wider ml-1">Phòng ban <span className="text-rose-500">*</span></label>
                                         <div className="relative group">
-                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand transition-colors">
                                                 <Building2 className="w-5 h-5" />
                                             </div>
                                             <select
@@ -207,7 +205,7 @@ export default function CreateAccountContent() {
                                                 required
                                                 value={formData.departmentId}
                                                 onChange={handleChange}
-                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer"
+                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all appearance-none cursor-pointer"
                                             >
                                                 <option value="">Chọn phòng ban</option>
                                                 {departments?.map(dept => (
@@ -224,7 +222,7 @@ export default function CreateAccountContent() {
                                     <div className="space-y-2">
                                         <label className="text-[13px] font-black text-slate-700 uppercase tracking-wider ml-1">Chức vụ <span className="text-rose-500">*</span></label>
                                         <div className="relative group">
-                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand transition-colors">
                                                 <Briefcase className="w-5 h-5" />
                                             </div>
                                             <select
@@ -232,7 +230,7 @@ export default function CreateAccountContent() {
                                                 required
                                                 value={formData.positionId}
                                                 onChange={handleChange}
-                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                                 disabled={!formData.departmentId}
                                             >
                                                 <option value="">Chọn chức vụ</option>
@@ -254,8 +252,8 @@ export default function CreateAccountContent() {
                             {/* Section 3: Cài đặt tài khoản */}
                             <div className="space-y-6">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <div className="w-7 h-7 bg-amber-50 rounded-lg flex items-center justify-center">
-                                        <ShieldCheck className="w-4 h-4 text-amber-600" />
+                                    <div className="w-7 h-7 bg-brand-soft rounded-lg flex items-center justify-center">
+                                        <ShieldCheck className="w-4 h-4 text-brand" />
                                     </div>
                                     <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Thiết lập hệ thống</h3>
                                 </div>
@@ -265,14 +263,14 @@ export default function CreateAccountContent() {
                                     <div className="space-y-2">
                                         <label className="text-[13px] font-black text-slate-700 uppercase tracking-wider ml-1">Vai trò hệ thống</label>
                                         <div className="relative group">
-                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand transition-colors">
                                                 <ShieldCheck className="w-5 h-5" />
                                             </div>
                                             <select
                                                 name="role"
                                                 value={formData.role}
                                                 onChange={handleChange}
-                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer"
+                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all appearance-none cursor-pointer"
                                             >
                                                 <option value="EMPLOYEE">NHÂN VIÊN (MẶC ĐỊNH)</option>
                                                 <option value="ADMIN_SYSTEM">ADMIN HỆ THỐNG</option>
@@ -289,7 +287,7 @@ export default function CreateAccountContent() {
                                     <div className="space-y-2">
                                         <label className="text-[13px] font-black text-slate-700 uppercase tracking-wider ml-1">Mật khẩu khởi tạo</label>
                                         <div className="relative group">
-                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand transition-colors">
                                                 <Lock className="w-5 h-5" />
                                             </div>
                                             <input
@@ -297,7 +295,7 @@ export default function CreateAccountContent() {
                                                 name="password"
                                                 value={formData.password}
                                                 onChange={handleChange}
-                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white transition-all"
+                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all"
                                                 placeholder="Để trống dùng: 123456"
                                             />
                                         </div>
@@ -310,7 +308,7 @@ export default function CreateAccountContent() {
                         {/* Form Footer */}
                         <div className="px-8 py-8 bg-slate-50/50 border-t border-slate-50 flex items-center justify-end gap-4">
                             <Link
-                                href="/accounts"
+                                href="/config/accounts"
                                 className="px-6 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm font-bold rounded-2xl transition-all shadow-sm active:scale-95"
                             >
                                 Hủy bỏ
@@ -318,7 +316,7 @@ export default function CreateAccountContent() {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black rounded-2xl transition-all shadow-lg shadow-blue-200 active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-8 py-3 bg-brand hover:bg-brand-hover text-white text-sm font-black rounded-2xl transition-all shadow-lg shadow-brand/20 active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? (
                                     <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
