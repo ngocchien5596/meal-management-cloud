@@ -194,11 +194,11 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                             <ForkIcon />
                         </div>
                         <div className="flex flex-col">
-                            <h1 className="text-2xl font-bold text-[#1e293b] leading-tight flex items-center gap-2">
+                            <h1 className="text-4xl font-bold text-[#1e293b] leading-tight flex items-center gap-2">
                                 BẢNG THÔNG TIN NHÀ ĂN
                             </h1>
-                            <div className="flex">
-                                <span className="bg-[#fee2e2] text-[#E11D2E] text-sm font-bold px-3 py-1 rounded border border-[#fecaca] uppercase">
+                            <div className="flex mt-1">
+                                <span className="bg-[#fee2e2] text-[#E11D2E] text-xl font-bold px-4 py-1.5 rounded-lg border border-[#fecaca] uppercase">
                                     {currentMeal.mealType === 'LUNCH' ? 'BỮA TRƯA' : 'BỮA TỐI'}
                                 </span>
                             </div>
@@ -207,15 +207,15 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
 
                     <div className="flex gap-10">
                         <div className="text-center">
-                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">HÔM NAY</p>
-                            <p className="text-lg font-bold text-[#1e293b]">
+                            <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1">HÔM NAY</p>
+                            <p className="text-2xl font-bold text-[#1e293b]">
                                 {format(new Date(currentMeal.mealDate), "EEEE, dd/MM/yyyy", { locale: vi })}
                             </p>
                         </div>
                     </div>
 
-                    <div className="bg-[#E11D2E] text-white px-6 py-2 rounded-xl shadow-lg shadow-red-200">
-                        <span className="text-3xl font-bold tracking-widest tabular-nums">{format(currentTime, 'HH:mm:ss')}</span>
+                    <div className="bg-[#E11D2E] text-white px-8 py-3 rounded-2xl shadow-lg shadow-red-200">
+                        <span className="text-5xl font-bold tracking-widest tabular-nums">{format(currentTime, 'HH:mm:ss')}</span>
                     </div>
                 </div>
 
@@ -265,34 +265,34 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                                         <CalendarIcon />
                                     </div>
                                     <div>
-                                        <h2 className="text-lg font-black text-[#E11D2E] uppercase tracking-wide">THỰC ĐƠN HÔM NAY</h2>
-                                        <p className="text-[11px] font-bold text-red-400 uppercase tracking-widest">Ngon miệng mỗi ngày</p>
+                                        <h2 className="text-3xl font-black text-[#E11D2E] uppercase tracking-wide">THỰC ĐƠN HÔM NAY</h2>
+                                        <p className="text-sm font-bold text-red-400 uppercase tracking-widest">Ngon miệng mỗi ngày</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 divide-x divide-[#f1f5f9] flex-1">
                                     <div className="p-4 flex flex-col gap-2 overflow-y-auto custom-scrollbar">
-                                        <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wide border-b border-blue-100 pb-1 mb-1 text-center">BỮA TRƯA</h3>
-                                        <ul className="space-y-2">
+                                        <h3 className="text-xl font-bold text-blue-600 uppercase tracking-wide border-b border-blue-100 pb-1 mb-2 text-center">BỮA TRƯA</h3>
+                                        <ul className="space-y-3">
                                             {todayLunch?.menuItems && todayLunch.menuItems.length > 0 ? todayLunch.menuItems.map((item, idx) => (
-                                                <li key={idx} className="text-base font-bold text-[#334155] flex items-start gap-2">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-2 shrink-0"></span>
+                                                <li key={idx} className="text-2xl font-bold text-[#334155] flex items-start gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-slate-300 mt-2.5 shrink-0"></span>
                                                     {item.name}
                                                 </li>
                                             )) : (
-                                                <li className="text-sm text-slate-400 italic">Trống</li>
+                                                <li className="text-lg text-slate-400 italic">Trống</li>
                                             )}
                                         </ul>
                                     </div>
                                     <div className="p-4 flex flex-col gap-2 overflow-y-auto custom-scrollbar">
-                                        <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wide border-b border-blue-100 pb-1 mb-1 text-center">BỮA TỐI</h3>
-                                        <ul className="space-y-1.5">
+                                        <h3 className="text-xl font-bold text-blue-600 uppercase tracking-wide border-b border-blue-100 pb-1 mb-2 text-center">BỮA TỐI</h3>
+                                        <ul className="space-y-3">
                                             {todayDinner?.menuItems && todayDinner.menuItems.length > 0 ? todayDinner.menuItems.map((item, idx) => (
-                                                <li key={idx} className="text-sm font-bold text-[#334155] flex items-start gap-2">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5 shrink-0"></span>
+                                                <li key={idx} className="text-xl font-bold text-[#334155] flex items-start gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-slate-300 mt-2 shrink-0"></span>
                                                     {item.name}
                                                 </li>
                                             )) : (
-                                                <li className="text-sm text-slate-400 italic">Trống</li>
+                                                <li className="text-lg text-slate-400 italic">Trống</li>
                                             )}
                                         </ul>
                                     </div>
@@ -365,34 +365,34 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                                         <CalendarIcon color="#f97316" />
                                     </div>
                                     <div>
-                                        <h2 className="text-lg font-black text-[#E11D2E] uppercase tracking-wide">THỰC ĐƠN NGÀY MAI</h2>
-                                        <p className="text-[11px] font-bold text-orange-400 uppercase tracking-widest">Đăng ký ngay</p>
+                                        <h2 className="text-3xl font-black text-[#E11D2E] uppercase tracking-wide">THỰC ĐƠN NGÀY MAI</h2>
+                                        <p className="text-sm font-bold text-orange-400 uppercase tracking-widest">Đăng ký ngay</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 divide-x divide-[#f1f5f9] flex-1">
                                     <div className="p-4 flex flex-col gap-2 overflow-y-auto custom-scrollbar">
-                                        <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wide border-b border-blue-100 pb-1 mb-1 text-center">BỮA TRƯA</h3>
-                                        <ul className="space-y-1.5">
+                                        <h3 className="text-xl font-bold text-blue-600 uppercase tracking-wide border-b border-blue-100 pb-1 mb-2 text-center">BỮA TRƯA</h3>
+                                        <ul className="space-y-3">
                                             {tomorrowLunch?.menuItems && tomorrowLunch.menuItems.length > 0 ? tomorrowLunch.menuItems.map((item, idx) => (
-                                                <li key={idx} className="text-sm font-medium text-[#334155] flex items-start gap-2">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-200 mt-1.5 shrink-0"></span>
+                                                <li key={idx} className="text-xl font-medium text-[#334155] flex items-start gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-slate-200 mt-2 shrink-0"></span>
                                                     {item.name}
                                                 </li>
                                             )) : (
-                                                <li className="text-sm text-slate-400 italic">Trống</li>
+                                                <li className="text-lg text-slate-400 italic">Trống</li>
                                             )}
                                         </ul>
                                     </div>
                                     <div className="p-4 flex flex-col gap-2 overflow-y-auto custom-scrollbar">
-                                        <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wide border-b border-blue-100 pb-1 mb-1 text-center">BỮA TỐI</h3>
-                                        <ul className="space-y-1.5">
+                                        <h3 className="text-xl font-bold text-blue-600 uppercase tracking-wide border-b border-blue-100 pb-1 mb-2 text-center">BỮA TỐI</h3>
+                                        <ul className="space-y-3">
                                             {tomorrowDinner?.menuItems && tomorrowDinner.menuItems.length > 0 ? tomorrowDinner.menuItems.map((item, idx) => (
-                                                <li key={idx} className="text-sm font-medium text-[#334155] flex items-start gap-2">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-200 mt-1.5 shrink-0"></span>
+                                                <li key={idx} className="text-xl font-medium text-[#334155] flex items-start gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-slate-200 mt-2 shrink-0"></span>
                                                     {item.name}
                                                 </li>
                                             )) : (
-                                                <li className="text-sm text-slate-400 italic">Trống</li>
+                                                <li className="text-lg text-slate-400 italic">Trống</li>
                                             )}
                                         </ul>
                                     </div>
@@ -439,21 +439,22 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                                 </div>
                             </div>
                             <div className="flex flex-col flex-1 overflow-hidden">
-                                <div className="grid grid-cols-12 bg-[#f8fafc] px-4 py-2 border-b border-[#f1f5f9]">
-                                    <div className="col-span-5 text-[10px] font-bold text-slate-400 uppercase">NHÂN VIÊN</div>
-                                    <div className="col-span-4 text-[10px] font-bold text-slate-400 uppercase text-center">MNV/LOẠI</div>
-                                    <div className="col-span-3 text-[10px] font-bold text-slate-400 uppercase text-right">GIỜ</div>
+                                <div className="grid grid-cols-12 bg-[#f8fafc] px-4 py-3 border-b border-[#f1f5f9]">
+                                    <div className="col-span-12 text-sm font-bold text-slate-400 uppercase text-center mb-1">Tình hình check-in</div>
+                                    <div className="col-span-5 text-sm font-bold text-slate-400 uppercase">NHÂN VIÊN</div>
+                                    <div className="col-span-4 text-sm font-bold text-slate-400 uppercase text-center">MNV/LOẠI</div>
+                                    <div className="col-span-3 text-sm font-bold text-slate-400 uppercase text-right">GIỜ</div>
                                 </div>
                                 <div className="divide-y divide-[#f1f5f9] overflow-y-auto flex-1 custom-scrollbar">
                                     {recentHistory.length > 0 ? recentHistory.map((checkin, idx) => (
-                                        <div key={idx} className="grid grid-cols-12 px-4 py-3 animate-in fade-in slide-in-from-right duration-500 text-xs font-black hover:bg-slate-50 transition-colors">
+                                        <div key={idx} className="grid grid-cols-12 px-4 py-4 animate-in fade-in slide-in-from-right duration-500 text-lg font-black hover:bg-slate-50 transition-colors">
                                             <div className="col-span-5 text-[#334155] uppercase truncate pr-2">
                                                 {checkin.employee?.fullName || checkin.guest?.fullName || 'Khách'}
                                             </div>
-                                            <div className="col-span-4 text-center text-slate-400 uppercase">
+                                            <div className="col-span-4 text-center text-slate-400 uppercase underline decoration-red-200 underline-offset-4">
                                                 {checkin.employee?.employeeCode || 'Khách'}
                                             </div>
-                                            <div className="col-span-3 text-right tabular-nums text-[#1e293b]">
+                                            <div className="col-span-3 text-right tabular-nums text-[#1e293b] font-black">
                                                 {format(new Date(checkin.checkinTime), 'HH:mm:ss')}
                                             </div>
                                         </div>
@@ -526,9 +527,9 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                                 </div>
                             </div>
 
-                            <div className="flex justify-end p-4 items-baseline gap-4 mt-2 mb-2">
-                                <span className="text-sm font-bold text-[#E11D2E] uppercase">TỔNG CỘNG</span>
-                                <span className="text-2xl font-bold text-[#E11D2E]">{totalCost.toLocaleString()} VND</span>
+                            <div className="flex justify-end p-6 items-baseline gap-6 mt-4 mb-4">
+                                <span className="text-xl font-bold text-[#E11D2E] uppercase tracking-widest">TỔNG CỘNG</span>
+                                <span className="text-5xl font-bold text-[#E11D2E]">{totalCost.toLocaleString()} VND</span>
                             </div>
 
                             {/* 6: VERY BOTTOM ANNOUNCEMENT BAR */}
