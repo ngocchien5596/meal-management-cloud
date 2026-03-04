@@ -329,6 +329,8 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
                         Gửi phản hồi ngay
                     </Button>
                 </div>
+                {/* Extra spacer for mobile Safari address bar */}
+                <div className="h-16 md:h-0 shrink-0" aria-hidden="true" />
             </form>
         </Modal>
     );
