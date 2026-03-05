@@ -164,75 +164,77 @@ export default function GuestsPage({ params }: { params: { id: string } }) {
             </div>
 
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-gray-50 border-b border-gray-200">
-                            <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider w-20 text-center">STT</th>
-                            <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">Họ và tên</th>
-                            <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">Ghi chú</th>
-                            <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider text-center">QR Token</th>
-                            <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider text-right">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white">
-                        {guests.length === 0 ? (
-                            <tr>
-                                <td colSpan={5} className="py-12 text-center text-gray-500 italic text-[15px]">
-                                    Chưa có khách mời nào được đăng ký.
-                                </td>
+                <div className="overflow-x-auto">
+                    <table className="w-full min-w-[650px] text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-200">
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider w-20 text-center">STT</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">Họ và tên</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">Ghi chú</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider text-center">QR Token</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider text-right">Thao tác</th>
                             </tr>
-                        ) : (
-                            guests.map((guest: Guest, idx: number) => (
-                                <tr key={guest.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors group">
-                                    <td className="py-4 px-6 text-center">
-                                        <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg text-xs font-bold text-gray-600">
-                                            {String(idx + 1).padStart(2, '0')}
-                                        </span>
-                                    </td>
-                                    <td className="py-4 px-6 text-[15px] font-medium text-gray-900 uppercase tracking-tight">
-                                        {guest.fullName}
-                                    </td>
-                                    <td className="py-4 px-6 text-[15px] text-gray-500 italic">
-                                        {guest.note || 'Không có ghi chú'}
-                                    </td>
-                                    <td className="py-4 px-6 text-center">
-                                        <button
-                                            onClick={() => handleOpenQr(guest)}
-                                            className="w-10 h-10 inline-flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm shadow-blue-500/10 active:scale-95"
-                                            title="Xem mã QR"
-                                        >
-                                            <QrIcon />
-                                        </button>
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <div className="flex items-center justify-end gap-3">
-                                            {meal?.status !== 'COMPLETED' ? (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleOpenEdit(guest)}
-                                                        className="p-2 hover:bg-brand-soft rounded-xl text-vttext-muted hover:text-brand transition-colors"
-                                                        title="Sửa"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setDeleteId(guest.id)}
-                                                        className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50"
-                                                        title="Xóa"
-                                                    >
-                                                        <TrashIcon />
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <span className="text-xs text-gray-400 italic">Đã khóa</span>
-                                            )}
-                                        </div>
+                        </thead>
+                        <tbody className="bg-white">
+                            {guests.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="py-12 text-center text-gray-500 italic text-[15px]">
+                                        Chưa có khách mời nào được đăng ký.
                                     </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ) : (
+                                guests.map((guest: Guest, idx: number) => (
+                                    <tr key={guest.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors group">
+                                        <td className="py-4 px-6 text-center">
+                                            <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg text-xs font-bold text-gray-600">
+                                                {String(idx + 1).padStart(2, '0')}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 px-6 text-[15px] font-medium text-gray-900 uppercase tracking-tight">
+                                            {guest.fullName}
+                                        </td>
+                                        <td className="py-4 px-6 text-[15px] text-gray-500 italic">
+                                            {guest.note || 'Không có ghi chú'}
+                                        </td>
+                                        <td className="py-4 px-6 text-center">
+                                            <button
+                                                onClick={() => handleOpenQr(guest)}
+                                                className="w-10 h-10 inline-flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm shadow-blue-500/10 active:scale-95"
+                                                title="Xem mã QR"
+                                            >
+                                                <QrIcon />
+                                            </button>
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <div className="flex items-center justify-end gap-3">
+                                                {meal?.status !== 'COMPLETED' ? (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleOpenEdit(guest)}
+                                                            className="p-2 hover:bg-brand-soft rounded-xl text-vttext-muted hover:text-brand transition-colors"
+                                                            title="Sửa"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setDeleteId(guest.id)}
+                                                            className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50"
+                                                            title="Xóa"
+                                                        >
+                                                            <TrashIcon />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400 italic">Đã khóa</span>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
 

@@ -50,74 +50,76 @@ export default function StaffPage({ params }: { params: { id: string } }) {
             </div>
 
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-gray-50 border-b border-gray-200">
-                            <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider w-20 text-center">STT</th>
-                            <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">MÃ NHÂN VIÊN</th>
-                            <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">HỌ TÊN</th>
-                            <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">PHÒNG BAN</th>
-                            <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">CHỨC VỤ</th>
-                            <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider text-center">HỦY SUẤT</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white">
-                        {filteredStaff.length === 0 ? (
-                            <tr>
-                                <td colSpan={5} className="py-12 text-center text-gray-500 italic text-[15px]">
-                                    Không tìm thấy nhân viên nào phù hợp.
-                                </td>
+                <div className="overflow-x-auto">
+                    <table className="w-full min-w-[700px] text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-200">
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider w-20 text-center">STT</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">MÃ NHÂN VIÊN</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">HỌ TÊN</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">PHÒNG BAN</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">CHỨC VỤ</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider text-center">HỦY SUẤT</th>
                             </tr>
-                        ) : (
-                            filteredStaff.map((reg: Registration, idx: number) => (
-                                <tr key={reg.id} className={cn("border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors", reg.isCancelled ? "bg-red-50/20" : "")}>
-                                    <td className="py-4 px-6 text-center">
-                                        <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg text-xs font-bold text-gray-600">
-                                            {String(idx + 1).padStart(2, '0')}
-                                        </span>
+                        </thead>
+                        <tbody className="bg-white">
+                            {filteredStaff.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="py-12 text-center text-gray-500 italic text-[15px]">
+                                        Không tìm thấy nhân viên nào phù hợp.
                                     </td>
-                                    <td className="py-4 px-6 text-[15px] font-medium text-gray-400 font-mono tracking-wider tabular-nums">
-                                        {reg.employee.employeeCode}
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <p className={cn("text-[15px] font-medium", reg.isCancelled ? "text-gray-400 line-through" : "text-gray-900")}>
-                                            {reg.employee.fullName}
-                                        </p>
-                                    </td>
-                                    <td className="py-4 px-6 text-[15px] text-gray-600">
-                                        {reg.employee.department.name}
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <span className="text-[12px] font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 uppercase">
-                                            {reg.employee.position.name}
-                                        </span>
-                                    </td>
-                                    <td className="py-4 px-6 text-center">
-                                        {isEditable ? (
-                                            <input
-                                                type="checkbox"
-                                                checked={reg.isCancelled}
-                                                disabled={toggleMutation.isPending}
-                                                onChange={() => toggleMutation.mutate({ id: reg.id })}
-                                                className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer disabled:opacity-50 transition-all"
-                                            />
-                                        ) : (
-                                            <div className="flex flex-col items-center gap-1">
+                                </tr>
+                            ) : (
+                                filteredStaff.map((reg: Registration, idx: number) => (
+                                    <tr key={reg.id} className={cn("border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors", reg.isCancelled ? "bg-red-50/20" : "")}>
+                                        <td className="py-4 px-6 text-center">
+                                            <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg text-xs font-bold text-gray-600">
+                                                {String(idx + 1).padStart(2, '0')}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 px-6 text-[15px] font-medium text-gray-400 font-mono tracking-wider tabular-nums">
+                                            {reg.employee.employeeCode}
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <p className={cn("text-[15px] font-medium", reg.isCancelled ? "text-gray-400 line-through" : "text-gray-900")}>
+                                                {reg.employee.fullName}
+                                            </p>
+                                        </td>
+                                        <td className="py-4 px-6 text-[15px] text-gray-600">
+                                            {reg.employee.department.name}
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <span className="text-[12px] font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 uppercase">
+                                                {reg.employee.position.name}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 px-6 text-center">
+                                            {isEditable ? (
                                                 <input
                                                     type="checkbox"
                                                     checked={reg.isCancelled}
-                                                    disabled
-                                                    className="w-5 h-5 rounded border-gray-300 text-gray-300 cursor-not-allowed opacity-50"
+                                                    disabled={toggleMutation.isPending}
+                                                    onChange={() => toggleMutation.mutate({ id: reg.id })}
+                                                    className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer disabled:opacity-50 transition-all"
                                                 />
-                                                <span className="text-[10px] text-gray-400 italic">Khóa</span>
-                                            </div>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                                            ) : (
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={reg.isCancelled}
+                                                        disabled
+                                                        className="w-5 h-5 rounded border-gray-300 text-gray-300 cursor-not-allowed opacity-50"
+                                                    />
+                                                    <span className="text-[10px] text-gray-400 italic">Khóa</span>
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
 

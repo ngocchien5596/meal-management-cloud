@@ -110,61 +110,63 @@ export default function MenuPage({ params }: { params: { id: string } }) {
             </div>
 
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-gray-50 border-b border-gray-200">
-                            <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider w-20 text-center">STT</th>
-                            <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">Tên món ăn</th>
-                            <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider text-right">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white">
-                        {items.length === 0 ? (
-                            <tr>
-                                <td colSpan={3} className="py-12 text-center text-gray-500 italic text-[15px]">
-                                    Chưa có món ăn nào trong thực đơn.
-                                </td>
+                <div className="overflow-x-auto">
+                    <table className="w-full min-w-[500px] text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-200">
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider w-20 text-center">STT</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">Tên món ăn</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider text-right">Thao tác</th>
                             </tr>
-                        ) : (
-                            items.map((item: MenuItem, idx: number) => (
-                                <tr key={item.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
-                                    <td className="py-4 px-6 text-center">
-                                        <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg text-xs font-bold text-gray-600">
-                                            {String(idx + 1).padStart(2, '0')}
-                                        </span>
-                                    </td>
-                                    <td className="py-4 px-6 text-[15px] font-medium text-gray-900 uppercase tracking-tight">
-                                        {item.name}
-                                    </td>
-                                    <td className="py-4 px-6">
-                                        <div className="flex items-center justify-end gap-2">
-                                            {meal?.status === 'DRAFT' ? (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleEdit(item)}
-                                                        className="p-2 hover:bg-brand-soft rounded-xl text-vttext-muted hover:text-brand transition-colors"
-                                                        title="Sửa"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setDeleteId(item.id)}
-                                                        className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50"
-                                                        title="Xóa"
-                                                    >
-                                                        <TrashIcon />
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <span className="text-xs text-gray-400 italic">Đã khóa</span>
-                                            )}
-                                        </div>
+                        </thead>
+                        <tbody className="bg-white">
+                            {items.length === 0 ? (
+                                <tr>
+                                    <td colSpan={3} className="py-12 text-center text-gray-500 italic text-[15px]">
+                                        Chưa có món ăn nào trong thực đơn.
                                     </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ) : (
+                                items.map((item: MenuItem, idx: number) => (
+                                    <tr key={item.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                        <td className="py-4 px-6 text-center">
+                                            <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg text-xs font-bold text-gray-600">
+                                                {String(idx + 1).padStart(2, '0')}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 px-6 text-[15px] font-medium text-gray-900 uppercase tracking-tight">
+                                            {item.name}
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <div className="flex items-center justify-end gap-2">
+                                                {meal?.status === 'DRAFT' ? (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleEdit(item)}
+                                                            className="p-2 hover:bg-brand-soft rounded-xl text-vttext-muted hover:text-brand transition-colors"
+                                                            title="Sửa"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setDeleteId(item.id)}
+                                                            className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50"
+                                                            title="Xóa"
+                                                        >
+                                                            <TrashIcon />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400 italic">Đã khóa</span>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <Modal
