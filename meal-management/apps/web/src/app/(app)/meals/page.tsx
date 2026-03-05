@@ -131,11 +131,11 @@ function CreateMealForm({ onSuccess }: { onSuccess: () => void }) {
                             const display = document.getElementById('createMealDateDisplay');
                             if (display) display.textContent = e.target.value.split('-').reverse().join('/');
                         }}
-                        className="absolute opacity-0 w-0 h-0"
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                     />
                     <button
                         type="button"
-                        onClick={() => (document.getElementById('createMealDate') as HTMLInputElement)?.showPicker()}
+                        onClick={() => (document.getElementById('createMealDate') as HTMLInputElement)?.showPicker?.()}
                         className="w-full h-11 px-4 bg-white border border-vtborder rounded-xl text-sm font-bold text-vttext-primary flex items-center justify-between shadow-sm hover:border-brand transition-all"
                     >
                         <span id="createMealDateDisplay">{new Date().toISOString().split('T')[0].split('-').reverse().join('/')}</span>
@@ -226,11 +226,11 @@ export default function MealManagementPage() {
                             ref={dateInputRef}
                             value={dateFilter}
                             onChange={(e) => setDateFilter(e.target.value)}
-                            className="absolute opacity-0 w-1 h-1 -z-10 bottom-0 left-0"
+                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                             tabIndex={-1}
                         />
                         <button
-                            onClick={() => dateInputRef.current?.showPicker()}
+                            onClick={() => dateInputRef.current?.showPicker?.()}
                             className="h-10 px-4 bg-white border border-vtborder rounded-lg text-sm font-medium text-vttext-secondary flex items-center gap-2 hover:bg-surface-2 transition-all shadow-sm"
                         >
                             <CalendarIcon className="w-4 h-4 text-vttext-muted" />
