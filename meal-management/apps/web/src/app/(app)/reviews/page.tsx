@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import {
     MessageSquare,
@@ -10,7 +10,9 @@ import {
     Loader2,
     ChevronDown,
     ChevronUp,
-    Smile
+    Smile,
+    X,
+    Filter
 } from 'lucide-react';
 import { useMyReviews } from '@/features/reviews/hooks';
 import { ReviewModal } from '@/features/reviews/components/ReviewModal';
@@ -26,6 +28,11 @@ export default function MyReviewsPage() {
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
+    // Filter states
+    const [dateFilter, setDateFilter] = useState('');
+    const [ratingFilter, setRatingFilter] = useState<number | null>(null);
+    const dateInputRef = useRef<HTMLInputElement>(null);
+
     const toggleRow = (id: string) => {
         const newExpandedRows = new Set(expandedRows);
         if (newExpandedRows.has(id)) {
@@ -38,9 +45,28 @@ export default function MyReviewsPage() {
 
     // Robust mapping: handle both nested and legacy flat structures
     const reportData = response?.data as any;
-    const reviews = Array.isArray(reportData?.data)
+    const allReviews = Array.isArray(reportData?.data)
         ? reportData.data
         : (Array.isArray(reportData) ? reportData : []);
+
+    // Apply client-side filters
+    const reviews = allReviews.filter((review: any) => {
+        if (dateFilter && review.mealEvent?.mealDate) {
+            const reviewDate = review.mealEvent.mealDate.split('T')[0];
+            if (reviewDate !== dateFilter) return false;
+        }
+        if (ratingFilter !== null && review.rating !== ratingFilter) {
+            return false;
+        }
+        return true;
+    });
+
+    const hasActiveFilters = dateFilter || ratingFilter !== null;
+
+    const clearFilters = () => {
+        setDateFilter('');
+        setRatingFilter(null);
+    };
 
     return (
         <div className="w-full min-h-screen bg-[#f8fafc] px-4 pb-12 animate-in fade-in duration-500">
@@ -66,6 +92,80 @@ export default function MyReviewsPage() {
                         </button>
                     </div>
 
+                    {/* Filter Bar */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                        <div className="flex items-center gap-2 text-slate-400 px-2">
+                            <Filter className="w-4 h-4" />
+                            <span className="text-xs font-black uppercase tracking-wider hidden sm:inline">Bộ lọc</span>
+                        </div>
+
+                        <div className="w-px h-6 bg-slate-100 hidden sm:block" />
+
+                        {/* Date Filter */}
+                        <div className="relative">
+                            <input
+                                type="date"
+                                ref={dateInputRef}
+                                value={dateFilter}
+                                onChange={(e) => setDateFilter(e.target.value)}
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                            />
+                            <button
+                                onClick={() => dateInputRef.current?.showPicker?.()}
+                                className={cn(
+                                    "h-10 px-4 rounded-xl text-sm font-bold flex items-center gap-2 transition-all border",
+                                    dateFilter
+                                        ? "bg-brand-soft text-brand border-brand-soft2"
+                                        : "bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100"
+                                )}
+                            >
+                                <CalendarIcon className="w-4 h-4" />
+                                {dateFilter ? format(new Date(dateFilter), 'dd/MM/yyyy') : 'Chọn ngày'}
+                            </button>
+                        </div>
+
+                        <div className="w-px h-6 bg-slate-100 hidden sm:block" />
+
+                        {/* Star Rating Filter */}
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold text-slate-400 mr-1 hidden sm:inline">Sao:</span>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                    key={star}
+                                    onClick={() => setRatingFilter(ratingFilter === star ? null : star)}
+                                    className={cn(
+                                        "w-9 h-9 rounded-lg flex items-center justify-center transition-all font-bold text-sm border",
+                                        ratingFilter === star
+                                            ? "bg-amber-50 text-amber-500 border-amber-200 shadow-sm shadow-amber-100"
+                                            : "bg-slate-50 text-slate-400 border-slate-100 hover:bg-amber-50 hover:text-amber-400 hover:border-amber-100"
+                                    )}
+                                    title={`${star} sao`}
+                                >
+                                    <Star className={cn("w-4 h-4", ratingFilter === star && "fill-amber-400")} />
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Clear Filters */}
+                        {hasActiveFilters && (
+                            <>
+                                <div className="w-px h-6 bg-slate-100 hidden sm:block" />
+                                <button
+                                    onClick={clearFilters}
+                                    className="h-10 px-4 rounded-xl text-xs font-bold text-rose-500 bg-rose-50 border border-rose-100 hover:bg-rose-100 transition-all flex items-center gap-1.5 active:scale-95"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                    Xóa lọc
+                                </button>
+                            </>
+                        )}
+
+                        {/* Result count */}
+                        <div className="ml-auto text-xs font-bold text-slate-400 px-2 hidden sm:block">
+                            {reviews.length}/{allReviews.length} đánh giá
+                        </div>
+                    </div>
+
                     {/* Main Content */}
                     <div className="relative min-h-[400px]">
                         {isLoading ? (
@@ -73,7 +173,7 @@ export default function MyReviewsPage() {
                                 <Loader2 className="w-8 h-8 text-brand animate-spin" />
                                 <p className="text-sm font-black text-slate-400 uppercase tracking-widest mt-4">Đang tải lịch sử...</p>
                             </div>
-                        ) : reviews.length === 0 ? (
+                        ) : allReviews.length === 0 ? (
                             <div className="bg-white rounded-3xl border border-slate-100 p-16 text-center animate-in fade-in zoom-in duration-500 shadow-sm flex flex-col items-center">
                                 <div className="w-24 h-24 bg-brand-soft rounded-full flex items-center justify-center mb-6 transition-transform hover:scale-110">
                                     <Star className="w-12 h-12 text-brand fill-brand/10" />
@@ -88,6 +188,21 @@ export default function MyReviewsPage() {
                                 >
                                     <Plus className="w-5 h-5" />
                                     Tạo đánh giá ngay
+                                </button>
+                            </div>
+                        ) : reviews.length === 0 && hasActiveFilters ? (
+                            <div className="bg-white rounded-3xl border border-slate-100 p-12 text-center shadow-sm flex flex-col items-center">
+                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                    <Filter className="w-8 h-8 text-slate-300" />
+                                </div>
+                                <h2 className="text-lg font-black text-slate-700 mb-2">Không tìm thấy kết quả</h2>
+                                <p className="text-slate-400 font-medium text-sm mb-6">Không có đánh giá nào khớp với bộ lọc hiện tại</p>
+                                <button
+                                    onClick={clearFilters}
+                                    className="inline-flex items-center gap-2 text-brand bg-brand-soft px-5 py-2.5 rounded-xl text-sm font-bold border border-brand-soft2 hover:bg-brand hover:text-white transition-all active:scale-95"
+                                >
+                                    <X className="w-4 h-4" />
+                                    Xóa bộ lọc
                                 </button>
                             </div>
                         ) : (
