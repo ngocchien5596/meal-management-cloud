@@ -556,24 +556,38 @@ router.delete('/:id', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req,
         }
 
         // Transaction to delete both tables
-        await prisma.$transaction(async (tx) => {
-            // Delete account first (if exists) due to FK
-            if (employee.account) {
-                await tx.account.delete({
-                    where: { employeeId: id },
+        try {
+            await prisma.$transaction(async (tx) => {
+                // Delete account first (if exists) due to FK
+                if (employee.account) {
+                    await tx.account.delete({
+                        where: { employeeId: id },
+                    });
+                }
+
+                // Delete employee
+                await tx.employee.delete({
+                    where: { id },
+                });
+            });
+
+            res.json({
+                success: true,
+                message: 'Xóa tài khoản thành công',
+            });
+        } catch (error: any) {
+            // Prisma error P2003: Foreign key constraint violated
+            if (error.code === 'P2003') {
+                return res.status(400).json({
+                    success: false,
+                    error: {
+                        message: 'Không thể xóa nhân viên này vì đang có dữ liệu liên quan (lịch sử ăn, đăng ký, hoặc giao dịch). Vui lòng kiểm tra lại.',
+                        code: 'CONSTRAINT_VIOLATION'
+                    }
                 });
             }
-
-            // Delete employee
-            await tx.employee.delete({
-                where: { id },
-            });
-        });
-
-        res.json({
-            success: true,
-            message: 'Xóa tài khoản thành công',
-        });
+            next(error);
+        }
 
     } catch (error) {
         next(error);

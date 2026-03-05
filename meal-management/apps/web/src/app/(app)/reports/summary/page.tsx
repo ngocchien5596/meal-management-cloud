@@ -160,7 +160,7 @@ export default function ReportPage() {
                             <div className="flex items-center gap-1 text-sm font-bold text-slate-700">
                                 <div className="relative">
                                     <button
-                                        onClick={() => startInputRef.current?.showPicker()}
+                                        onClick={() => startInputRef.current?.showPicker?.()}
                                         className="hover:text-brand transition-colors"
                                     >
                                         {dateRange.start.split('-').reverse().join('/')}
@@ -170,13 +170,13 @@ export default function ReportPage() {
                                         type="date"
                                         value={dateRange.start}
                                         onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                                        className="absolute opacity-0 w-0 h-0 pointer-events-none"
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                                     />
                                 </div>
                                 <span className="text-slate-400">-</span>
                                 <div className="relative">
                                     <button
-                                        onClick={() => endInputRef.current?.showPicker()}
+                                        onClick={() => endInputRef.current?.showPicker?.()}
                                         className="hover:text-brand transition-colors"
                                     >
                                         {dateRange.end.split('-').reverse().join('/')}
@@ -186,7 +186,7 @@ export default function ReportPage() {
                                         type="date"
                                         value={dateRange.end}
                                         onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                                        className="absolute opacity-0 w-0 h-0 pointer-events-none"
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                                     />
                                 </div>
                             </div>
