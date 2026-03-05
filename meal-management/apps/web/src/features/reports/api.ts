@@ -23,6 +23,11 @@ export interface ReportItem {
 
 export interface ReportResponse {
     summary: ReportSummary;
+    guestSummary?: {
+        totalMeals: number;
+        totalEaten: number;
+        totalCost: number;
+    };
     details: ReportItem[];
 }
 
@@ -91,9 +96,9 @@ export const reportsApi = {
         a.remove();
         window.URL.revokeObjectURL(url);
     },
-    exportExcel: async (startDate: string, endDate: string, search?: string, departmentId?: string) => {
+    exportExcel: async (startDate: string, endDate: string, search?: string, departmentId?: string, includeGuests?: boolean) => {
         const blob = await api.get<any>('/reports/export', {
-            params: { startDate, endDate, search, departmentId },
+            params: { startDate, endDate, search, departmentId, includeGuests },
             responseType: 'blob'
         });
         const url = window.URL.createObjectURL(blob as unknown as Blob);

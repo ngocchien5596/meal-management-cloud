@@ -17,7 +17,8 @@ import {
     Loader2,
     Building2,
     TrendingDown,
-    Activity
+    Activity,
+    Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { useReportSummary } from '@/features/reports/hooks';
@@ -96,6 +97,7 @@ export default function ReportPage() {
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [selectedDept, setSelectedDept] = useState('');
     const [isExporting, setIsExporting] = useState(false);
+    const [showGuests, setShowGuests] = useState(false);
 
     const { data: departments } = useDepartments();
 
@@ -109,7 +111,7 @@ export default function ReportPage() {
     const handleExport = async () => {
         setIsExporting(true);
         try {
-            await reportsApi.exportExcel(dateRange.start, dateRange.end, debouncedSearch, selectedDept);
+            await reportsApi.exportExcel(dateRange.start, dateRange.end, debouncedSearch, selectedDept, showGuests);
             toast.success('Xuất báo cáo Excel thành công! ✨');
         } catch (error) {
             console.error('Export error:', error);
@@ -119,8 +121,35 @@ export default function ReportPage() {
         }
     };
 
-    const summary = data?.summary || { totalEaten: 0, totalCost: 0, attendanceRate: 0, wasteCost: 0, totalMeals: 0, totalSkipped: 0 };
-    const items = data?.details || [];
+    const baseSummary = data?.summary || { totalEaten: 0, totalCost: 0, attendanceRate: 0, wasteCost: 0, totalMeals: 0, totalSkipped: 0 };
+    const guestSummary = data?.guestSummary;
+
+    const summary = showGuests && guestSummary ? {
+        ...baseSummary,
+        totalMeals: baseSummary.totalMeals + guestSummary.totalMeals,
+        totalEaten: baseSummary.totalEaten + guestSummary.totalEaten,
+        totalCost: baseSummary.totalCost + guestSummary.totalCost,
+        attendanceRate: (baseSummary.totalMeals + guestSummary.totalMeals) > 0
+            ? Math.round(((baseSummary.totalEaten + guestSummary.totalEaten) / (baseSummary.totalMeals + guestSummary.totalMeals)) * 100)
+            : baseSummary.attendanceRate,
+        totalSkipped: baseSummary.totalSkipped + (guestSummary.totalMeals - guestSummary.totalEaten)
+    } : baseSummary;
+
+    const baseItems = data?.details || [];
+    const items = [...baseItems];
+
+    if (showGuests && guestSummary && guestSummary.totalMeals > 0) {
+        items.push({
+            id: 'guest-summary-row',
+            empCode: 'GUEST',
+            name: 'KHÁCH',
+            department: 'Vãng lai',
+            meals: guestSummary.totalMeals,
+            eaten: guestSummary.totalEaten,
+            skipped: Math.max(0, guestSummary.totalMeals - guestSummary.totalEaten),
+            total: guestSummary.totalCost
+        });
+    }
 
     // Client-side pagination
     const [page, setPage] = useState(1);
@@ -191,6 +220,21 @@ export default function ReportPage() {
                                 </div>
                             </div>
                         </div>
+
+                        <div className="w-px h-6 bg-slate-100 mx-1" />
+
+                        <button
+                            onClick={() => setShowGuests(!showGuests)}
+                            className={cn(
+                                "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold transition-all border outline-none",
+                                showGuests
+                                    ? "bg-emerald-50 text-emerald-600 border-emerald-100 shadow-sm"
+                                    : "bg-white text-slate-400 border-slate-100 hover:bg-slate-50"
+                            )}
+                        >
+                            <Users className="w-4 h-4" />
+                            <span>Thống kê cả khách</span>
+                        </button>
 
                         <div className="w-px h-6 bg-slate-100 mx-1" />
 

@@ -164,7 +164,9 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
         );
     }
 
-    const totalRegistered = currentMeal.registrations?.filter(r => !r.isCancelled).length || 0;
+    const totalRegisteredEmps = currentMeal.registrations?.filter(r => !r.isCancelled).length || 0;
+    const totalGuests = currentMeal.guests?.length || 0;
+    const totalRegistered = totalRegisteredEmps + totalGuests;
     const totalCheckins = currentMeal.checkins?.length || 0;
     const progress = totalRegistered > 0 ? (totalCheckins / totalRegistered) * 100 : 0;
 

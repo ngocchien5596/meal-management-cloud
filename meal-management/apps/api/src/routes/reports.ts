@@ -134,10 +134,54 @@ router.get('/summary', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYS
 
         kpi.avgPerDay = uniqueDays > 0 ? Math.round(kpi.totalMeals / uniqueDays) : 0;
 
+        // 4. Calculate Guest Statistics
+        const visitorMeals = await prisma.mealEvent.findMany({
+            where: {
+                mealDate: { gte: start, lte: end }
+            },
+            include: {
+                guests: true,
+                checkins: {
+                    where: { guestId: { not: null } }
+                }
+            }
+        });
+
+        let totalGuestMeals = 0;
+        let totalGuestEaten = 0;
+        let totalGuestCost = 0;
+
+        visitorMeals.forEach(meal => {
+            const guestCount = meal.guests.length;
+            const checkinCount = meal.checkins.length;
+
+            totalGuestMeals += guestCount;
+            totalGuestEaten += checkinCount;
+
+            // Find price for this meal date
+            const validConfig = priceConfigs.find(cfg => {
+                const s = new Date(cfg.startDate);
+                s.setHours(0, 0, 0, 0);
+                const e = cfg.endDate ? new Date(cfg.endDate) : null;
+                if (e) e.setHours(23, 59, 59, 999);
+                return s <= meal.mealDate && (!e || e >= meal.mealDate);
+            });
+
+            const price = validConfig ? validConfig.price : 0;
+            totalGuestCost += guestCount * price;
+        });
+
+        const guestSummary = {
+            totalMeals: totalGuestMeals,
+            totalEaten: totalGuestEaten,
+            totalCost: totalGuestCost
+        };
+
         res.json({
             success: true,
             data: {
                 summary: kpi,
+                guestSummary,
                 details: reportData
             }
         });
@@ -208,6 +252,53 @@ router.get('/export', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYST
             return calculateReportStats(emp, emp.checkins, emp.registrations, priceConfigs);
         });
 
+        // 1. Calculate Guest Statistics if requested
+        const includeGuests = req.query.includeGuests === 'true';
+        let guestRow: any = null;
+
+        if (includeGuests) {
+            const visitorMeals = await prisma.mealEvent.findMany({
+                where: { mealDate: { gte: start, lte: end } },
+                include: {
+                    guests: true,
+                    checkins: { where: { guestId: { not: null } } }
+                }
+            });
+
+            let totalGuestMeals = 0;
+            let totalGuestEaten = 0;
+            let totalGuestCost = 0;
+
+            visitorMeals.forEach(meal => {
+                const guestCount = meal.guests.length;
+                const checkinCount = meal.checkins.length;
+                totalGuestMeals += guestCount;
+                totalGuestEaten += checkinCount;
+
+                const validConfig = priceConfigs.find(cfg => {
+                    const s = new Date(cfg.startDate);
+                    s.setHours(0, 0, 0, 0);
+                    const e = cfg.endDate ? new Date(cfg.endDate) : null;
+                    if (e) e.setHours(23, 59, 59, 999);
+                    return s <= meal.mealDate && (!e || e >= meal.mealDate);
+                });
+                const price = validConfig ? validConfig.price : 0;
+                totalGuestCost += guestCount * price;
+            });
+
+            if (totalGuestMeals > 0) {
+                guestRow = {
+                    stt: reportData.length + 1,
+                    empCode: 'GUEST',
+                    name: 'KHÁCH',
+                    department: 'Vãng lai',
+                    eaten: `${totalGuestEaten}/${totalGuestMeals}`,
+                    skipped: Math.max(0, totalGuestMeals - totalGuestEaten),
+                    total: totalGuestCost
+                };
+            }
+        }
+
         // Create Excel Workbook
         const ExcelJS = await import('exceljs');
         const workbook = new ExcelJS.default.Workbook();
@@ -219,7 +310,7 @@ router.get('/export', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYST
             { header: 'Mã NV', key: 'empCode', width: 15 },
             { header: 'Họ và tên', key: 'name', width: 30 },
             { header: 'Phòng ban', key: 'department', width: 25 },
-            { header: 'Đã ăn', key: 'eaten', width: 15 },
+            { header: 'Đã ăn/Đăng ký', key: 'eaten', width: 15 },
             { header: 'Bỏ lỡ', key: 'skipped', width: 15 },
             { header: 'Tổng tiền (VNĐ)', key: 'total', width: 20 },
         ];
@@ -235,11 +326,18 @@ router.get('/export', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYST
                 empCode: item.empCode,
                 name: item.name,
                 department: item.department,
-                eaten: item.eaten,
+                eaten: `${item.eaten}/${item.meals}`,
                 skipped: item.skipped,
                 total: item.total
             });
         });
+
+        // Add Guest row if available
+        if (guestRow) {
+            const r = worksheet.addRow(guestRow);
+            r.font = { bold: true };
+            r.getCell('name').font = { bold: true, color: { argb: 'FF10B981' } }; // Use a custom color for emphasis?
+        }
 
         // Set response headers
         res.setHeader(
