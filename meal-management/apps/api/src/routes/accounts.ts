@@ -506,6 +506,38 @@ router.put('/:id', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req, re
             // Update or Create Account
             let updatedAccount;
             if (employee.account) {
+                // If account status is being changed to Inactive (isActive: false)
+                // we should cancel all future meal registrations (bypassing cutoff)
+                if (data.isActive === false && employee.account.isActive === true) {
+                    const now = new Date();
+                    const todayAtMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+                    // Find all future active registrations
+                    const futureRegs = await tx.registration.findMany({
+                        where: {
+                            employeeId: id,
+                            isCancelled: false,
+                            mealEvent: {
+                                mealDate: { gte: todayAtMidnight }
+                            }
+                        },
+                        select: { id: true }
+                    });
+
+                    if (futureRegs.length > 0) {
+                        const regIds = futureRegs.map(r => r.id);
+                        await tx.registration.updateMany({
+                            where: { id: { in: regIds } },
+                            data: {
+                                isCancelled: true,
+                                cancelledAt: new Date(),
+                                cancelledBy: 'ACCOUNT_DEACTIVATED'
+                            }
+                        });
+                        console.log(`[Deactivation] Canceled ${regIds.length} future registrations for employee ${id}`);
+                    }
+                }
+
                 updatedAccount = await tx.account.update({
                     where: { employeeId: id },
                     data: accountUpdateData,
