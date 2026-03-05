@@ -17,7 +17,7 @@ interface AppShellProps {
 export function AppShell({ children, user, userRole, onScanClick }: AppShellProps) {
     return (
         <div className="min-h-screen bg-white flex flex-col">
-            <Header user={user} userRole={userRole} />
+            <Header user={user} userRole={userRole} onScanClick={onScanClick} />
             <div className="flex flex-1 relative">
                 {/* Desktop Sidebar - Hidden on Mobile */}
                 <div className="hidden md:block h-full shrink-0">

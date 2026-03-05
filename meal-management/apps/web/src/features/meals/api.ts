@@ -33,16 +33,29 @@ export interface MealReview {
 
 export interface Ingredient {
     id: string;
-    name: string;
+    catalogId: string;
+    catalog: IngredientCatalogItem;
     quantity: number;
     unit: string;
     unitPrice: number;
     totalPrice: number;
 }
 
-export interface MenuItem {
+export interface IngredientCatalogItem {
     id: string;
     name: string;
+    defaultUnit: string;
+}
+
+export interface MenuItemCatalogItem {
+    id: string;
+    name: string;
+}
+
+export interface MenuItem {
+    id: string;
+    catalogId: string;
+    catalog: MenuItemCatalogItem;
 }
 
 export interface Guest {
@@ -116,12 +129,11 @@ export const mealsApi = {
             .then(res => res.data),
 
     // Ingredients
-    // Ingredients
-    addIngredient: (mealId: string, data: Omit<Ingredient, 'id' | 'totalPrice'>) =>
+    addIngredient: (mealId: string, data: Omit<Ingredient, 'id' | 'totalPrice'> & { catalogId?: string }) =>
         api.post<Ingredient>(`/meals/${mealId}/ingredients`, data)
             .then(res => res.data),
 
-    updateIngredient: (id: string, data: Partial<Omit<Ingredient, 'id' | 'totalPrice'>>) =>
+    updateIngredient: (id: string, data: Partial<Omit<Ingredient, 'id' | 'totalPrice'> & { catalogId?: string }>) =>
         api.patch<Ingredient>(`/meals/ingredients/${id}`, data)
             .then(res => res.data),
 
@@ -129,17 +141,51 @@ export const mealsApi = {
         api.delete<{ message: string }>(`/meals/ingredients/${id}`)
             .then(res => res.data),
 
+    // Ingredient Catalog
+    getCatalog: (search?: string) =>
+        api.get<IngredientCatalogItem[]>('/ingredients/catalog', { params: { search } })
+            .then(res => res.data),
+
+    createCatalogItem: (data: Omit<IngredientCatalogItem, 'id'>) =>
+        api.post<IngredientCatalogItem>('/ingredients/catalog', data)
+            .then(res => res.data),
+
+    updateCatalogItem: (id: string, data: Partial<Omit<IngredientCatalogItem, 'id'>>) =>
+        api.patch<IngredientCatalogItem>(`/ingredients/catalog/${id}`, data)
+            .then(res => res.data),
+
+    deleteCatalogItem: (id: string) =>
+        api.delete<{ message: string }>(`/ingredients/catalog/${id}`)
+            .then(res => res.data),
+
     // Menu Items
-    addMenuItem: (mealId: string, name: string) =>
-        api.post<MenuItem>(`/meals/${mealId}/menu-items`, { name })
+    addMenuItem: (mealId: string, name: string, catalogId?: string) =>
+        api.post<MenuItem>(`/meals/${mealId}/menu-items`, { name, catalogId })
             .then(res => res.data),
 
     deleteMenuItem: (id: string) =>
         api.delete<{ message: string }>(`/meals/menu-items/${id}`)
             .then(res => res.data),
 
-    updateMenuItem: (id: string, name: string) =>
-        api.patch<MenuItem>(`/meals/menu-items/${id}`, { name })
+    // Menu Item Catalog
+    getMenuCatalog: (search?: string) =>
+        api.get<MenuItemCatalogItem[]>('/menu-items/catalog', { params: { search } })
+            .then(res => res.data),
+
+    createMenuCatalogItem: (data: Omit<MenuItemCatalogItem, 'id'>) =>
+        api.post<MenuItemCatalogItem>('/menu-items/catalog', data)
+            .then(res => res.data),
+
+    updateMenuCatalogItem: (id: string, data: Partial<Omit<MenuItemCatalogItem, 'id'>>) =>
+        api.patch<MenuItemCatalogItem>(`/menu-items/catalog/${id}`, data)
+            .then(res => res.data),
+
+    deleteMenuCatalogItem: (id: string) =>
+        api.delete<{ message: string }>(`/menu-items/catalog/${id}`)
+            .then(res => res.data),
+
+    updateMenuItem: (id: string, mealId: string, catalogId: string) =>
+        api.patch<MenuItem>(`/meals/menu-items/${id}`, { catalogId })
             .then(res => res.data),
 
     // Guests

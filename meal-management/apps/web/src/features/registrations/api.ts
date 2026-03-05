@@ -2,7 +2,9 @@ import { api, APIResponse } from '@/lib/api';
 
 export interface MenuItem {
     id: string;
-    name: string;
+    catalog: {
+        name: string;
+    };
 }
 
 export interface MealEvent {

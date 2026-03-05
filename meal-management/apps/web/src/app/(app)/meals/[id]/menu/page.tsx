@@ -1,14 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Input, Button, CreateButton, ConfirmDialog } from '@/components/ui';
-import { useMealDetail, useDeleteMenuItem, useAddMenuItem, useUpdateMenuItem } from '@/features/meals/hooks';
-import { MealDetail, MenuItem } from '@/features/meals/api';
-import { Edit } from 'lucide-react';
-
-const PlusIcon = () => (
-    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
-);
+import { useMealDetail, useDeleteMenuItem, useAddMenuItem, useUpdateMenuItem, useMenuCatalog } from '@/features/meals/hooks';
+import { MealDetail, MenuItem, MenuItemCatalogItem } from '@/features/meals/api';
+import { Edit, Search, PlusCircle, Utensils } from 'lucide-react';
 
 const TrashIcon = () => (
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
@@ -25,33 +21,100 @@ function MenuItemForm({ mealId, item, onSuccess }: MenuItemFormProps) {
     const updateMutation = useUpdateMenuItem();
     const isEditing = !!item;
 
+    const [name, setName] = useState(item?.catalog?.name || '');
+    const [catalogId, setCatalogId] = useState<string | undefined>(item?.catalogId);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const { data: catalog } = useMenuCatalog(name);
+    const wrapperRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                setShowSuggestions(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [wrapperRef]);
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const name = formData.get('name') as string;
 
         if (isEditing) {
-            await updateMutation.mutateAsync({ id: item.id, mealId, name });
+            await updateMutation.mutateAsync({ id: item!.id, mealId, catalogId: catalogId || item!.catalogId });
         } else {
-            await addMutation.mutateAsync({ mealId, name });
+            await addMutation.mutateAsync({ mealId, name, catalogId });
         }
         onSuccess();
     };
 
     const isPending = addMutation.isPending || updateMutation.isPending;
 
+    const selectSuggestion = (suggestion: MenuItemCatalogItem) => {
+        setName(suggestion.name);
+        setCatalogId(suggestion.id);
+        setShowSuggestions(false);
+    };
+
+    const handleNameChange = (val: string) => {
+        setName(val);
+        setCatalogId(undefined); // Clear catalog link if manually typing
+        setShowSuggestions(true);
+    };
+
+    const suggestions = Array.isArray(catalog) ? catalog : [];
+    const exactMatch = suggestions.find(s => s.name.toLowerCase() === name.toLowerCase());
+    const showQuickAdd = name.length > 0 && !exactMatch;
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
+            <div className="space-y-2 relative" ref={wrapperRef}>
                 <label className="text-sm font-black text-slate-700 ml-1">Tên món ăn</label>
-                <Input
-                    name="name"
-                    placeholder="Ví dụ: Cơm trắng, Cá kho..."
-                    defaultValue={item?.name}
-                    required
-                    autoFocus
-                />
+                <div className="relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                        name="name"
+                        placeholder="Ví dụ: Cơm trắng, Cá kho..."
+                        value={name}
+                        onChange={(e) => handleNameChange(e.target.value)}
+                        onFocus={() => setShowSuggestions(true)}
+                        className="pl-10"
+                        required
+                        autoComplete="off"
+                        autoFocus
+                    />
+                </div>
+
+                {showSuggestions && (name.length > 0 || suggestions.length > 0) && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                        {suggestions.map((s) => (
+                            <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => selectSuggestion(s)}
+                                className="w-full px-4 py-3 text-left hover:bg-blue-50 flex items-center gap-3 transition-colors border-b border-slate-50 last:border-0"
+                            >
+                                <Utensils className="w-4 h-4 text-slate-400" />
+                                <span className="text-[15px] font-bold text-slate-700 uppercase">{s.name}</span>
+                            </button>
+                        ))}
+
+                        {showQuickAdd && (
+                            <button
+                                type="button"
+                                onClick={() => setShowSuggestions(false)}
+                                className="w-full px-4 py-3 text-left bg-blue-50/50 hover:bg-blue-50 flex items-center gap-3 transition-colors text-blue-600"
+                            >
+                                <PlusCircle className="w-4 h-4" />
+                                <div className="flex flex-col">
+                                    <span className="font-bold">{name} (Thêm mới)</span>
+                                </div>
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
+
             <Button
                 type="submit"
                 size="lg"
@@ -92,15 +155,13 @@ export default function MenuPage({ params }: { params: { id: string } }) {
 
     const items = meal?.menuItems || [];
 
-    if (isLoading) return <div className="py-20 text-center text-slate-400 font-bold">Đang tải...</div>;
-
     return (
         <div className="flex flex-col h-full animate-in fade-in duration-500">
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
                     <h3 className="text-xl font-bold text-gray-900">Thực đơn bữa ăn</h3>
-                    <p className="text-[15px] text-gray-500 mt-1">Các món ăn phục vụ trong khung giờ này</p>
+                    <p className="text-[15px] text-gray-500 mt-1">Các món ăn phục vụ trong khung giờ này (Tổng số món: {items.length})</p>
                 </div>
                 {meal?.status === 'DRAFT' && (
                     <CreateButton onClick={handleAdd}>
@@ -120,7 +181,11 @@ export default function MenuPage({ params }: { params: { id: string } }) {
                             </tr>
                         </thead>
                         <tbody className="bg-white">
-                            {items.length === 0 ? (
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={3} className="py-20 text-center text-slate-400 font-bold">Đang tải...</td>
+                                </tr>
+                            ) : items.length === 0 ? (
                                 <tr>
                                     <td colSpan={3} className="py-12 text-center text-gray-500 italic text-[15px]">
                                         Chưa có món ăn nào trong thực đơn.
@@ -134,8 +199,8 @@ export default function MenuPage({ params }: { params: { id: string } }) {
                                                 {String(idx + 1).padStart(2, '0')}
                                             </span>
                                         </td>
-                                        <td className="py-4 px-6 text-[15px] font-medium text-gray-900 uppercase tracking-tight">
-                                            {item.name}
+                                        <td className="py-4 px-6 text-[15px] font-bold text-gray-900 uppercase tracking-tight">
+                                            {item.catalog?.name || 'Món ăn'}
                                         </td>
                                         <td className="py-4 px-6">
                                             <div className="flex items-center justify-end gap-2">
@@ -143,14 +208,14 @@ export default function MenuPage({ params }: { params: { id: string } }) {
                                                     <>
                                                         <button
                                                             onClick={() => handleEdit(item)}
-                                                            className="p-2 hover:bg-brand-soft rounded-xl text-vttext-muted hover:text-brand transition-colors"
+                                                            className="p-2 hover:bg-blue-50 rounded-xl text-slate-400 hover:text-blue-600 transition-colors"
                                                             title="Sửa"
                                                         >
                                                             <Edit className="w-4 h-4" />
                                                         </button>
                                                         <button
                                                             onClick={() => setDeleteId(item.id)}
-                                                            className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50"
+                                                            className="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50"
                                                             title="Xóa"
                                                         >
                                                             <TrashIcon />
@@ -173,12 +238,15 @@ export default function MenuPage({ params }: { params: { id: string } }) {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 title={editingItem ? "Sửa món ăn" : "Thêm món ăn mới"}
+                contentClassName="overflow-visible"
             >
-                <MenuItemForm
-                    mealId={id}
-                    item={editingItem}
-                    onSuccess={() => setIsModalOpen(false)}
-                />
+                <div className="min-h-[350px]">
+                    <MenuItemForm
+                        mealId={id}
+                        item={editingItem}
+                        onSuccess={() => setIsModalOpen(false)}
+                    />
+                </div>
             </Modal>
 
             <ConfirmDialog

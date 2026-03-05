@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Modal, Input, Button, ConfirmDialog, CreateButton } from '@/components/ui';
-import { useMealDetail, useDeleteIngredient, useAddIngredient, useUpdateIngredient } from '@/features/meals/hooks';
-import { MealDetail, Ingredient } from '@/features/meals/api';
-import { Edit } from 'lucide-react';
+import { Modal, Input, Button, ConfirmDialog, CreateButton, CurrencyInput } from '@/components/ui';
+import { useMealDetail, useDeleteIngredient, useAddIngredient, useUpdateIngredient, useCatalog } from '@/features/meals/hooks';
+import { MealDetail, Ingredient, IngredientCatalogItem } from '@/features/meals/api';
+import { Edit, Search, PlusCircle } from 'lucide-react';
 
 const PlusIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
@@ -25,13 +25,21 @@ function IngredientForm({ mealId, onSuccess, initialData }: IngredientFormProps)
     const updateMutation = useUpdateIngredient();
     const isEditing = !!initialData;
 
+    const [searchTerm, setSearchTerm] = useState(initialData?.catalog?.name || '');
+    const [selectedCatalogItem, setSelectedCatalogItem] = useState<IngredientCatalogItem | null>(initialData?.catalog || null);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [unit, setUnit] = useState(initialData?.unit || 'kg');
+
+    const { data: catalog } = useCatalog(searchTerm);
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const data = {
-            name: formData.get('name') as string,
+            catalogId: selectedCatalogItem?.id || initialData?.catalogId || undefined,
+            name: searchTerm,
             quantity: formData.get('quantity') as string,
-            unit: formData.get('unit') as string,
+            unit: unit,
             unitPrice: formData.get('unitPrice') as string,
         };
 
@@ -43,14 +51,80 @@ function IngredientForm({ mealId, onSuccess, initialData }: IngredientFormProps)
         onSuccess();
     };
 
+    const handleSelect = (item: IngredientCatalogItem) => {
+        setSearchTerm(item.name);
+        setSelectedCatalogItem(item);
+        setUnit(item.defaultUnit);
+        setShowDropdown(false);
+    };
+
     const isLoading = addMutation.isPending || updateMutation.isPending;
+
+    // Filtered results for the dropdown
+    const suggestions = Array.isArray(catalog) ? catalog : [];
+    const exactMatch = suggestions.find((s: IngredientCatalogItem) => s.name.toLowerCase() === searchTerm.toLowerCase());
+    const showQuickAdd = searchTerm.length > 0 && !exactMatch;
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-                <label className="text-sm font-black text-slate-700 ml-1">Tên nguyên vật liệu</label>
-                <Input name="name" defaultValue={initialData?.name} placeholder="Ví dụ: Rau muống, Thịt bò..." required />
+            <div className="space-y-2 relative">
+                <label className="text-sm font-black text-slate-700 ml-1">Tên Nguyên liệu</label>
+                <div className="relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setShowDropdown(true);
+                        }}
+                        onFocus={() => setShowDropdown(true)}
+                        placeholder="Tìm kiếm hoặc nhập mới..."
+                        required
+                        className="pl-10"
+                        autoComplete="off"
+                    />
+                </div>
+
+                {showDropdown && (searchTerm || suggestions.length > 0) && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto animate-in slide-in-from-top-2 duration-200">
+                        {suggestions.map((item) => (
+                            <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => handleSelect(item)}
+                                className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors flex items-center justify-between border-b border-slate-50 last:border-0"
+                            >
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-slate-800">{item.name}</span>
+                                    <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{item.defaultUnit}</span>
+                                </div>
+                            </button>
+                        ))}
+                        {showQuickAdd && (
+                            <button
+                                type="button"
+                                onClick={() => setShowDropdown(false)}
+                                className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors flex items-center gap-3 text-blue-600 bg-blue-50/30"
+                            >
+                                <PlusCircle className="w-5 h-5" />
+                                <span className="font-bold">{searchTerm} (Thêm mới)</span>
+                            </button>
+                        )}
+                        {!showQuickAdd && suggestions.length === 0 && (
+                            <div className="px-4 py-8 text-center text-slate-400 text-sm font-medium">
+                                Gõ để tìm kiếm hoặc thêm mới...
+                            </div>
+                        )}
+                    </div>
+                )}
+                {showDropdown && (
+                    <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowDropdown(false)}
+                    />
+                )}
             </div>
+
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <label className="text-sm font-black text-slate-700 ml-1">Số lượng</label>
@@ -62,7 +136,8 @@ function IngredientForm({ mealId, onSuccess, initialData }: IngredientFormProps)
                         <select
                             name="unit"
                             required
-                            defaultValue={initialData?.unit || 'kg'}
+                            value={unit}
+                            onChange={(e) => setUnit(e.target.value)}
                             className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none appearance-none"
                         >
                             <option value="kg">kg</option>
@@ -71,6 +146,8 @@ function IngredientForm({ mealId, onSuccess, initialData }: IngredientFormProps)
                             <option value="cái">cái</option>
                             <option value="chai">chai</option>
                             <option value="quả">quả</option>
+                            <option value="bó">bó</option>
+                            <option value="gói">gói</option>
                         </select>
                         <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
                             <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -80,7 +157,7 @@ function IngredientForm({ mealId, onSuccess, initialData }: IngredientFormProps)
             </div>
             <div className="space-y-2">
                 <label className="text-sm font-black text-slate-700 ml-1">Đơn giá (VNĐ)</label>
-                <Input name="unitPrice" type="number" defaultValue={initialData?.unitPrice} placeholder="25000" required />
+                <CurrencyInput name="unitPrice" defaultValue={initialData?.unitPrice} placeholder="25.000" required />
             </div>
             <Button
                 type="submit"
@@ -88,7 +165,7 @@ function IngredientForm({ mealId, onSuccess, initialData }: IngredientFormProps)
                 className="w-full shadow-xl shadow-blue-200"
                 disabled={isLoading}
             >
-                {isLoading ? 'ĐANG LƯU...' : (isEditing ? 'CẬP NHẬT' : 'LƯU NGUYÊN VẬT LIỆU')}
+                {isLoading ? 'ĐANG LƯU...' : (isEditing ? 'CẬP NHẬT' : 'LƯU Nguyên liệu')}
             </Button>
         </form>
     );
@@ -131,7 +208,7 @@ export default function IngredientsPage({ params }: { params: { id: string } }) 
         <div className="flex flex-col h-full animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
-                    <h3 className="text-xl font-bold text-gray-900">Chi tiết nguyên vật liệu</h3>
+                    <h3 className="text-xl font-bold text-gray-900">Chi tiết Nguyên liệu</h3>
                     <p className="text-[15px] text-gray-500 mt-1">Quản lý định mức và chi phí nguyên liệu cho bữa ăn (Tổng số mục NVL: {items.length})</p>
                 </div>
                 <div className="flex items-center gap-6">
@@ -166,7 +243,7 @@ export default function IngredientsPage({ params }: { params: { id: string } }) 
                             {items.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="py-12 text-center text-gray-500 italic text-[15px]">
-                                        Chưa có nguyên vật liệu nào được thêm.
+                                        Chưa có Nguyên liệu nào được thêm.
                                     </td>
                                 </tr>
                             ) : (
@@ -178,7 +255,7 @@ export default function IngredientsPage({ params }: { params: { id: string } }) 
                                             </span>
                                         </td>
                                         <td className="py-4 px-6 text-[15px] font-medium text-gray-900">
-                                            {item.name}
+                                            {item.catalog.name}
                                         </td>
                                         <td className="py-4 px-6 text-[15px] text-gray-700 text-center">
                                             <span className="font-medium text-gray-900">{item.quantity}</span> <span className="text-gray-500 text-sm">{item.unit}</span>
@@ -221,13 +298,16 @@ export default function IngredientsPage({ params }: { params: { id: string } }) 
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={editingItem ? "Cập nhật nguyên vật liệu" : "Thêm nguyên vật liệu mới"}
+                title={editingItem ? "Cập nhật Nguyên liệu" : "Thêm Nguyên liệu mới"}
+                contentClassName="overflow-visible"
             >
-                <IngredientForm
-                    mealId={id}
-                    onSuccess={() => setIsModalOpen(false)}
-                    initialData={editingItem}
-                />
+                <div className="min-h-[450px]">
+                    <IngredientForm
+                        mealId={id}
+                        onSuccess={() => setIsModalOpen(false)}
+                        initialData={editingItem}
+                    />
+                </div>
             </Modal>
 
             <ConfirmDialog
@@ -235,7 +315,7 @@ export default function IngredientsPage({ params }: { params: { id: string } }) 
                 onClose={() => setDeleteId(null)}
                 onConfirm={handleDelete}
                 title="Xác nhận xóa"
-                description="Bạn có chắc chắn muốn xóa nguyên vật liệu này không? Thao tác này không thể hoàn tác."
+                description="Bạn có chắc chắn muốn xóa Nguyên liệu này không? Thao tác này không thể hoàn tác."
                 type="danger"
             />
         </div >

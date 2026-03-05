@@ -9,9 +9,10 @@ interface ModalProps {
     title: string;
     children: React.ReactNode;
     className?: string;
+    contentClassName?: string;
 }
 
-export function Modal({ isOpen, onClose, title, children, className }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, className, contentClassName }: ModalProps) {
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose();
@@ -47,7 +48,10 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
                         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                     </button>
                 </div>
-                <div className="p-6 md:p-8 overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+                <div className={cn(
+                    "p-6 md:p-8 overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom))]",
+                    contentClassName
+                )}>
                     {children}
                 </div>
             </div>

@@ -278,7 +278,7 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                                             {todayLunch?.menuItems && todayLunch.menuItems.length > 0 ? todayLunch.menuItems.map((item, idx) => (
                                                 <li key={idx} className="text-2xl font-bold text-[#334155] flex items-start gap-2">
                                                     <span className="w-2 h-2 rounded-full bg-slate-300 mt-2.5 shrink-0"></span>
-                                                    {item.name}
+                                                    {item.catalog?.name || 'Món ăn'}
                                                 </li>
                                             )) : (
                                                 <li className="text-lg text-slate-400 italic">Trống</li>
@@ -291,7 +291,7 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                                             {todayDinner?.menuItems && todayDinner.menuItems.length > 0 ? todayDinner.menuItems.map((item, idx) => (
                                                 <li key={idx} className="text-xl font-bold text-[#334155] flex items-start gap-2">
                                                     <span className="w-2 h-2 rounded-full bg-slate-300 mt-2 shrink-0"></span>
-                                                    {item.name}
+                                                    {item.catalog?.name || 'Món ăn'}
                                                 </li>
                                             )) : (
                                                 <li className="text-lg text-slate-400 italic">Trống</li>
@@ -378,7 +378,7 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                                             {tomorrowLunch?.menuItems && tomorrowLunch.menuItems.length > 0 ? tomorrowLunch.menuItems.map((item, idx) => (
                                                 <li key={idx} className="text-xl font-medium text-[#334155] flex items-start gap-2">
                                                     <span className="w-2 h-2 rounded-full bg-slate-200 mt-2 shrink-0"></span>
-                                                    {item.name}
+                                                    {item.catalog?.name || 'Món ăn'}
                                                 </li>
                                             )) : (
                                                 <li className="text-lg text-slate-400 italic">Trống</li>
@@ -391,7 +391,7 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                                             {tomorrowDinner?.menuItems && tomorrowDinner.menuItems.length > 0 ? tomorrowDinner.menuItems.map((item, idx) => (
                                                 <li key={idx} className="text-xl font-medium text-[#334155] flex items-start gap-2">
                                                     <span className="w-2 h-2 rounded-full bg-slate-200 mt-2 shrink-0"></span>
-                                                    {item.name}
+                                                    {item.catalog?.name || 'Món ăn'}
                                                 </li>
                                             )) : (
                                                 <li className="text-lg text-slate-400 italic">Trống</li>
@@ -495,7 +495,7 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                                         <tbody className="font-bold text-[#334155]">
                                             {leftIngredients.map((item, idx) => (
                                                 <tr key={idx}>
-                                                    <td className="py-2.5 px-2 truncate max-w-[180px]">{item.name}</td>
+                                                    <td className="py-2.5 px-2 truncate max-w-[180px]">{item.catalog?.name || 'Nguyên liệu'}</td>
                                                     <td className="py-2.5 px-2 text-center text-slate-400">{item.quantity} {item.unit}</td>
                                                     <td className="py-2.5 px-2 text-right text-slate-400">{item.unitPrice.toLocaleString()}</td>
                                                     <td className="py-2.5 px-2 text-right text-[#1e293b]">{item.totalPrice.toLocaleString()}</td>
@@ -518,7 +518,7 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                                         <tbody className="font-bold text-[#334155]">
                                             {rightIngredients.map((item, idx) => (
                                                 <tr key={idx}>
-                                                    <td className="py-2.5 px-1 truncate max-w-[120px]">{item.name}</td>
+                                                    <td className="py-2.5 px-1 truncate max-w-[120px]">{item.catalog?.name || 'Nguyên liệu'}</td>
                                                     <td className="py-2.5 px-1 text-center text-slate-400">{item.quantity} {item.unit}</td>
                                                     <td className="py-2.5 px-1 text-right text-slate-400">{item.unitPrice.toLocaleString()}</td>
                                                     <td className="py-2.5 px-1 text-right text-[#1e293b]">{item.totalPrice.toLocaleString()}</td>

@@ -232,7 +232,7 @@ const MealMenuModal = ({ isOpen, onClose, lunchMenu, dinnerMenu, date }: { isOpe
                                     <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center text-[10px] font-black">
                                         {idx + 1}
                                     </div>
-                                    <span className="font-bold text-slate-700 uppercase tracking-tight text-sm">{item.name}</span>
+                                    <span className="font-bold text-slate-700 uppercase tracking-tight text-sm">{item.catalog.name}</span>
                                 </div>
                             ))}
                         </div>
@@ -256,7 +256,7 @@ const MealMenuModal = ({ isOpen, onClose, lunchMenu, dinnerMenu, date }: { isOpe
                                     <div className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-black">
                                         {idx + 1}
                                     </div>
-                                    <span className="font-bold text-slate-700 uppercase tracking-tight text-sm">{item.name}</span>
+                                    <span className="font-bold text-slate-700 uppercase tracking-tight text-sm">{item.catalog.name}</span>
                                 </div>
                             ))}
                         </div>

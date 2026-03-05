@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { CurrencyInput } from '@/components/ui';
 import {
     usePrices,
     useCreatePrice,
@@ -253,17 +254,13 @@ export default function PriceHistoryPage() {
                                     <div className="p-6 space-y-6">
                                         <div className="space-y-2">
                                             <label className="block text-sm font-bold text-vttext-primary">Giá (VNĐ)</label>
-                                            <div className="relative">
-                                                <input
-                                                    type="number"
-                                                    value={newPriceValue}
-                                                    onChange={e => setNewPriceValue(e.target.value)}
-                                                    autoFocus
-                                                    className="w-full h-11 pl-4 pr-10 border border-vtborder rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand font-bold text-lg"
-                                                    placeholder="0"
-                                                />
-                                                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none font-bold text-vttext-muted">₫</div>
-                                            </div>
+                                            <CurrencyInput
+                                                value={newPriceValue}
+                                                onChange={(raw) => setNewPriceValue(raw)}
+                                                autoFocus
+                                                className="h-11 text-lg"
+                                                placeholder="25.000"
+                                            />
                                         </div>
 
                                         {(editingPriceId || priceMode === 'custom') && (

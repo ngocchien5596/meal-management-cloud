@@ -247,7 +247,7 @@ export default function MealDetailLayout({
     );
 
     const tabs = [
-        { key: 'ingredients', label: 'Nguyên vật liệu', href: `${baseUrl}/ingredients`, icon: IngredientsIcon, badge: 0 },
+        { key: 'ingredients', label: 'Nguyên liệu', href: `${baseUrl}/ingredients`, icon: IngredientsIcon, badge: 0 },
         { key: 'menu', label: 'Thực đơn', href: `${baseUrl}/menu`, icon: MenuIcon, badge: 0 },
         { key: 'staff', label: 'DS nhân viên', href: `${baseUrl}/staff`, icon: UsersIcon, badge: (meal as MealDetail)?.registrations?.filter((r: any) => !r.isCancelled).length || 0 },
         { key: 'guests', label: 'Khách', href: `${baseUrl}/guests`, icon: GuestIcon, badge: (meal as MealDetail)?.guests?.length || 0 },
@@ -499,7 +499,7 @@ export default function MealDetailLayout({
                 onConfirm={handleStartMeal}
                 isLoading={startMutation.isPending}
                 title="Bắt đầu phục vụ"
-                description="Bạn có chắc chắn muốn bắt đầu phục vụ bữa ăn này? Thao tác này sẽ mở check-in và khóa chỉnh sửa nguyên vật liệu/thực đơn."
+                description="Bạn có chắc chắn muốn bắt đầu phục vụ bữa ăn này? Thao tác này sẽ mở check-in và khóa chỉnh sửa Nguyên liệu/thực đơn."
                 type="info"
                 confirmText="Bắt đầu ngay"
             />

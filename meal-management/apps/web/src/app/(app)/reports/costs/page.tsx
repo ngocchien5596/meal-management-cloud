@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Calendar as CalendarIcon,
     Download as DownloadIcon,
@@ -10,7 +10,8 @@ import {
     Activity,
     TrendingDown,
     Package,
-    Utensils
+    Utensils,
+    ChevronDown as ChevronDownIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { reportsApi } from '@/features/reports/api';
@@ -75,6 +76,36 @@ export default function CostsPage() {
     const [isExporting, setIsExporting] = useState(false);
     const [meals, setMeals] = useState<any[]>([]);
     const [summary, setSummary] = useState<any>({ totalCost: 0, avgCostPerMeal: 0, totalMeals: 0, topIngredient: 'N/A' });
+    const [expandedMeals, setExpandedMeals] = useState<string[]>([]);
+
+    const groupedMeals = useMemo(() => {
+        const groups: Record<string, {
+            meal: any;
+            ingredients: any[];
+            totalCost: number;
+        }> = {};
+
+        meals.forEach(meal => {
+            const mealId = meal.id;
+            if (!groups[mealId]) {
+                groups[mealId] = {
+                    meal,
+                    ingredients: meal.ingredients || [],
+                    totalCost: meal.ingredients?.reduce((acc: number, ing: any) => acc + ing.totalPrice, 0) || 0
+                };
+            }
+        });
+
+        return Object.values(groups).sort((a, b) =>
+            new Date(b.meal.mealDate).getTime() - new Date(a.meal.mealDate).getTime()
+        );
+    }, [meals]);
+
+    const toggleMeal = (mealId: string) => {
+        setExpandedMeals(prev =>
+            prev.includes(mealId) ? prev.filter(id => id !== mealId) : [...prev, mealId]
+        );
+    };
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -119,15 +150,6 @@ export default function CostsPage() {
     const startInputRef = React.useRef<HTMLInputElement>(null);
     const endInputRef = React.useRef<HTMLInputElement>(null);
 
-    // Flatten ingredients for table
-    const allIngredients = meals.flatMap(meal =>
-        meal.ingredients.map((ing: any) => ({
-            ...ing,
-            mealDate: meal.mealDate,
-            mealType: meal.mealType
-        }))
-    );
-
     return (
         <div className="w-full min-h-screen bg-[#f8fafc] px-4 pb-12 animate-in fade-in duration-500">
             <div className="max-w-[1280px] mx-auto pt-6">
@@ -140,7 +162,7 @@ export default function CostsPage() {
                             </div>
                             <div>
                                 <h1 className="text-2xl font-black text-slate-900 leading-none">Báo cáo chi phí</h1>
-                                <p className="text-sm text-slate-500 mt-1.5 font-medium">Chi tiết nguyên vật liệu từng bữa ăn</p>
+                                <p className="text-sm text-slate-500 mt-1.5 font-medium">Chi tiết Nguyên liệu từng bữa ăn</p>
                             </div>
                         </div>
 
@@ -221,55 +243,108 @@ export default function CostsPage() {
                         />
                     </div>
 
-                    {/* Table section */}
-                    <div className="bg-white rounded-[24px] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden flex flex-col min-h-[500px]">
-                        <div className="flex-1 w-full overflow-x-auto relative">
-                            {isLoading && (
-                                <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
-                                    <Loader2 className="w-8 h-8 text-brand animate-spin" />
-                                </div>
-                            )}
+                    {/* Grouped Accordion Section */}
+                    <div className="flex flex-col gap-4">
+                        {isLoading ? (
+                            <div className="bg-white rounded-[24px] border border-slate-100 shadow-xl shadow-slate-200/50 p-12 flex flex-col items-center justify-center gap-4">
+                                <Loader2 className="w-10 h-10 text-brand animate-spin" />
+                                <p className="text-slate-400 font-bold animate-pulse">Đang tải dữ liệu chi phí...</p>
+                            </div>
+                        ) : groupedMeals.length === 0 ? (
+                            <div className="bg-white rounded-[24px] border border-slate-100 shadow-xl shadow-slate-200/50 p-12 text-center">
+                                <Package className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+                                <p className="text-slate-400 font-bold text-lg">Không có dữ liệu chi phí cho giai đoạn này</p>
+                            </div>
+                        ) : (
+                            groupedMeals.map((group) => {
+                                const isExpanded = expandedMeals.includes(group.meal.id);
+                                return (
+                                    <div
+                                        key={group.meal.id}
+                                        className={cn(
+                                            "bg-white rounded-[24px] border border-slate-100 shadow-sm overflow-hidden transition-all duration-300",
+                                            isExpanded ? "shadow-xl shadow-slate-200/50 ring-1 ring-brand/5" : "hover:shadow-md hover:border-slate-200"
+                                        )}
+                                    >
+                                        {/* Meal Header Button */}
+                                        <button
+                                            onClick={() => toggleMeal(group.meal.id)}
+                                            className="w-full flex flex-col md:flex-row md:items-center justify-between p-5 md:p-6 text-left hover:bg-slate-50/50 transition-colors gap-4"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className={cn(
+                                                    "w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-lg",
+                                                    isExpanded ? "bg-brand text-white shadow-brand/20 scale-110" : "bg-slate-100 text-slate-500 shadow-slate-200"
+                                                )}>
+                                                    <Utensils className="w-6 h-6" />
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="text-lg font-black text-slate-900 leading-tight">
+                                                            {new Date(group.meal.mealDate).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit' })}
+                                                        </h3>
+                                                        <span className={cn(
+                                                            "px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider",
+                                                            group.meal.mealType === 'LUNCH' ? "bg-orange-100 text-orange-600" : "bg-indigo-100 text-indigo-600"
+                                                        )}>
+                                                            {group.meal.mealType === 'LUNCH' ? 'Trưa' : 'Tối'}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-tight">Chi tiết Nguyên liệu</p>
+                                                </div>
+                                            </div>
 
-                            <table className="w-full min-w-[900px]">
-                                <thead>
-                                    <tr className="bg-slate-50/80 border-b border-slate-100">
-                                        <th className="py-4 px-6 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-[60px]">STT</th>
-                                        <th className="py-4 px-6 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Ngày</th>
-                                        <th className="py-4 px-6 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Bữa ăn</th>
-                                        <th className="py-4 px-6 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Nguyên vật liệu</th>
-                                        <th className="py-4 px-6 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Số lượng</th>
-                                        <th className="py-4 px-6 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Đơn vị</th>
-                                        <th className="py-4 px-6 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Thành tiền</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-50">
-                                    {allIngredients.length === 0 && !isLoading ? (
-                                        <tr>
-                                            <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">Không có dữ liệu chi phí cho giai đoạn này</td>
-                                        </tr>
-                                    ) : (
-                                        allIngredients.map((item: any, index: number) => (
-                                            <tr key={`${item.id}-${index}`} className="group hover:bg-blue-50/50 transition-colors">
-                                                <td className="py-4 px-6 text-center text-sm font-bold text-slate-400 font-mono">{String(index + 1).padStart(2, '0')}</td>
-                                                <td className="py-4 px-6 text-sm font-medium text-slate-600">{new Date(item.mealDate).toLocaleDateString('vi-VN')}</td>
-                                                <td className="py-4 px-6">
-                                                    <span className={cn(
-                                                        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold",
-                                                        item.mealType === 'LUNCH' ? "bg-orange-50 text-orange-600" : "bg-indigo-50 text-indigo-600"
-                                                    )}>
-                                                        {item.mealType === 'LUNCH' ? 'Trưa' : 'Tối'}
-                                                    </span>
-                                                </td>
-                                                <td className="py-4 px-6 text-[15px] font-semibold text-slate-900">{item.name}</td>
-                                                <td className="py-4 px-6 text-center font-bold text-slate-700">{item.quantity}</td>
-                                                <td className="py-4 px-6 text-center text-slate-500">{item.unit}</td>
-                                                <td className="py-4 px-6 text-right font-black text-emerald-600">{formatCurrency(item.totalPrice)} ₫</td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                            <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto">
+                                                <div className="text-right">
+                                                    <div className="text-xl font-black text-emerald-600">{formatCurrency(group.totalCost)} ₫</div>
+                                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Tổng chi phí bữa ăn</div>
+                                                </div>
+                                                <div className={cn(
+                                                    "w-8 h-8 rounded-full flex items-center justify-center bg-slate-50 border border-slate-100 transition-transform duration-300",
+                                                    isExpanded && "rotate-180 bg-brand-soft border-brand/20 text-brand"
+                                                )}>
+                                                    <ChevronDownIcon className="w-4 h-4" />
+                                                </div>
+                                            </div>
+                                        </button>
+
+                                        {/* Expanded Content */}
+                                        {isExpanded && (
+                                            <div className="border-t border-slate-50 bg-slate-50/30 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                <div className="overflow-x-auto">
+                                                    <table className="w-full">
+                                                        <thead>
+                                                            <tr className="border-b border-slate-100">
+                                                                <th className="py-4 px-6 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-[80px]">STT</th>
+                                                                <th className="py-4 px-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Nguyên liệu</th>
+                                                                <th className="py-4 px-6 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Số lượng</th>
+                                                                <th className="py-4 px-6 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Đơn vị</th>
+                                                                <th className="py-4 px-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Đơn giá</th>
+                                                                <th className="py-4 px-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Thành tiền</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-slate-100 bg-white">
+                                                            {group.ingredients.map((ing, idx) => (
+                                                                <tr key={ing.id} className="hover:bg-blue-50/30 transition-colors">
+                                                                    <td className="py-4 px-6 text-center text-sm font-bold text-slate-400 font-mono">{(idx + 1).toString().padStart(2, '0')}</td>
+                                                                    <td className="py-4 px-6">
+                                                                        <div className="font-bold text-slate-900">{ing.catalog.name}</div>
+                                                                    </td>
+                                                                    <td className="py-4 px-6 text-center font-black text-slate-700">{ing.quantity}</td>
+                                                                    <td className="py-4 px-6 text-center text-sm font-bold text-slate-500">{ing.unit}</td>
+                                                                    <td className="py-4 px-6 text-right font-bold text-slate-600">{formatCurrency(ing.unitPrice)} ₫</td>
+                                                                    <td className="py-4 px-6 text-right font-black text-emerald-600">{formatCurrency(ing.totalPrice)} ₫</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })
+                        )}
                     </div>
                 </div>
             </div>

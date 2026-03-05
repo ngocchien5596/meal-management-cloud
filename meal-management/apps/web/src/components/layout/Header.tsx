@@ -12,9 +12,10 @@ interface HeaderProps {
         employeeCode: string;
     };
     userRole?: string;
+    onScanClick?: () => void;
 }
 
-export function Header({ user, userRole }: HeaderProps) {
+export function Header({ user, userRole, onScanClick }: HeaderProps) {
     const { logout } = useLogout();
     const pathname = usePathname();
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -127,6 +128,16 @@ export function Header({ user, userRole }: HeaderProps) {
                     <button
                         onClick={() => toggleExpand(item.key)}
                         className="w-full text-left outline-none"
+                    >
+                        {content}
+                    </button>
+                ) : item.key === 'checkin' && onScanClick ? (
+                    <button
+                        onClick={() => {
+                            onScanClick();
+                            setIsMenuOpen(false);
+                        }}
+                        className="w-full text-left outline-none block"
                     >
                         {content}
                     </button>

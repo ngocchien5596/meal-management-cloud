@@ -186,29 +186,72 @@ export default function MealManagementPage() {
         }
     }, [user, isAdmin, router]);
 
-    const [dateFilter, setDateFilter] = useState<string>('');
+    // Initialize with default range: Yesterday to Today + 2
+    const getInitialRange = () => {
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        const plusTwo = new Date(today);
+        plusTwo.setDate(today.getDate() + 2);
+
+        return {
+            start: yesterday.toISOString().split('T')[0],
+            end: plusTwo.toISOString().split('T')[0]
+        };
+    };
+
+    const initialRange = getInitialRange();
+    const [startDateFilter, setStartDateFilter] = useState<string>(initialRange.start);
+    const [endDateFilter, setEndDateFilter] = useState<string>(initialRange.end);
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [statusFilter, setStatusFilter] = useState<string>('Tất cả trạng thái');
 
     // Construct local range for filter
     const range = React.useMemo(() => {
-        if (!dateFilter) return { start: undefined, end: undefined };
-        const [y, m, d] = dateFilter.split('-').map(Number);
-        const start = new Date(y, m - 1, d); // Local Midnight
-        const end = new Date(y, m - 1, d, 23, 59, 59, 999); // Local End of Day
-        return { start: start.toISOString(), end: end.toISOString() };
-    }, [dateFilter]);
+        if (!startDateFilter && !endDateFilter) return { start: undefined, end: undefined };
 
-    const { data: meals = [], isLoading } = useMeals(range.start, range.end, searchTerm, statusFilter);
+        let startIso = undefined;
+        let endIso = undefined;
+
+        if (startDateFilter) {
+            const [y, m, d] = startDateFilter.split('-').map(Number);
+            startIso = new Date(y, m - 1, d, 0, 0, 0, 0).toISOString();
+        }
+
+        if (endDateFilter) {
+            const [y, m, d] = endDateFilter.split('-').map(Number);
+            endIso = new Date(y, m - 1, d, 23, 59, 59, 999).toISOString();
+        }
+
+        return { start: startIso, end: endIso };
+    }, [startDateFilter, endDateFilter]);
+
+    const { data: rawMeals = [], isLoading } = useMeals(range.start, range.end, searchTerm, statusFilter);
+
+    // Client-side sort safeguard: Ensure ascending chronological order (Past -> Future)
+    const meals = React.useMemo(() => {
+        return [...rawMeals].sort((a, b) => {
+            const dateA = new Date(a.mealDate).getTime();
+            const dateB = new Date(b.mealDate).getTime();
+
+            if (dateA !== dateB) return dateA - dateB;
+
+            // Secondary sort: LUNCH before DINNER
+            // L comes after D, so to put LUNCH (L) first, we return b.mealType compare a.mealType (descending alphabetical)
+            return b.mealType.localeCompare(a.mealType);
+        });
+    }, [rawMeals]);
+
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const dateInputRef = React.useRef<HTMLInputElement>(null);
+    const startInputRef = React.useRef<HTMLInputElement>(null);
+    const endInputRef = React.useRef<HTMLInputElement>(null);
 
     return (
         <div className="w-full min-h-screen bg-[#f8fafc] px-7 py-6 animate-in fade-in duration-500">
 
             {/* 1. Header (Standardized) */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                <div className="flex items-center gap-4 mb-10">
+                <div className="flex items-center gap-4 mb-4 md:mb-0">
                     <div className="w-12 h-12 bg-brand rounded-2xl flex items-center justify-center shadow-xl shadow-brand/20">
                         <FoodTrayIcon className="w-6 h-6 text-white" />
                     </div>
@@ -218,43 +261,66 @@ export default function MealManagementPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    {/* Date Picker Button */}
-                    <div className="relative">
-                        <input
-                            type="date"
-                            ref={dateInputRef}
-                            value={dateFilter}
-                            onChange={(e) => setDateFilter(e.target.value)}
-                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10 md:pointer-events-none"
-                            tabIndex={-1}
-                        />
-                        <button
-                            onClick={() => dateInputRef.current?.showPicker?.()}
-                            className="h-10 px-4 bg-white border border-vtborder rounded-lg text-sm font-medium text-vttext-secondary flex items-center gap-2 hover:bg-surface-2 transition-all shadow-sm"
-                        >
-                            <CalendarIcon className="w-4 h-4 text-vttext-muted" />
-                            {dateFilter ? format(new Date(dateFilter), 'dd/MM/yyyy') : 'Chọn ngày'}
-                            <ChevronDown className="w-3 h-3 text-vttext-muted" />
-                        </button>
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        {/* Start Date */}
+                        <div className="relative">
+                            <input
+                                type="date"
+                                ref={startInputRef}
+                                value={startDateFilter}
+                                onChange={(e) => setStartDateFilter(e.target.value)}
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10 md:pointer-events-none"
+                                tabIndex={-1}
+                            />
+                            <button
+                                onClick={() => startInputRef.current?.showPicker?.()}
+                                className="h-10 px-3 bg-white border border-vtborder rounded-lg text-xs font-semibold text-vttext-secondary flex items-center gap-2 hover:bg-surface-2 transition-all shadow-sm min-w-[130px]"
+                            >
+                                <div className="flex flex-col items-start leading-none gap-0.5">
+                                    <span className="text-[9px] uppercase text-vttext-muted">Từ ngày</span>
+                                    <span className="text-xs">{startDateFilter ? format(new Date(startDateFilter), 'dd/MM/yyyy') : 'Chọn'}</span>
+                                </div>
+                                <CalendarIcon className="w-3.5 h-3.5 text-vttext-muted ml-auto" />
+                            </button>
+                        </div>
+
+                        <span className="text-slate-300 font-bold">→</span>
+
+                        {/* End Date */}
+                        <div className="relative">
+                            <input
+                                type="date"
+                                ref={endInputRef}
+                                value={endDateFilter}
+                                onChange={(e) => setEndDateFilter(e.target.value)}
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10 md:pointer-events-none"
+                                tabIndex={-1}
+                            />
+                            <button
+                                onClick={() => endInputRef.current?.showPicker?.()}
+                                className="h-10 px-3 bg-white border border-vtborder rounded-lg text-xs font-semibold text-vttext-secondary flex items-center gap-2 hover:bg-surface-2 transition-all shadow-sm min-w-[130px]"
+                            >
+                                <div className="flex flex-col items-start leading-none gap-0.5">
+                                    <span className="text-[9px] uppercase text-vttext-muted">Đến ngày</span>
+                                    <span className="text-xs">{endDateFilter ? format(new Date(endDateFilter), 'dd/MM/yyyy') : 'Chọn'}</span>
+                                </div>
+                                <CalendarIcon className="w-3.5 h-3.5 text-vttext-muted ml-auto" />
+                            </button>
+                        </div>
                     </div>
 
-                    {dateFilter && (
+                    {(startDateFilter !== initialRange.start || endDateFilter !== initialRange.end) && (
                         <button
-                            onClick={() => setDateFilter('')}
-                            className="h-10 px-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-medium"
+                            onClick={() => {
+                                setStartDateFilter(initialRange.start);
+                                setEndDateFilter(initialRange.end);
+                            }}
+                            className="h-10 px-3 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-lg text-xs font-bold transition-colors"
                         >
-                            Xóa lọc
+                            Reset
                         </button>
                     )}
-
-                    {/* 
-                    {isAdmin && (
-                        <CreateButton onClick={() => setIsCreateModalOpen(true)}>
-                            Thêm mới
-                        </CreateButton>
-                    )} 
-                    */}
                 </div>
             </div>
 

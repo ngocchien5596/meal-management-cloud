@@ -103,7 +103,7 @@ export const useDeleteIngredient = () => {
 export const useAddMenuItem = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ mealId, name }: { mealId: string; name: string }) => mealsApi.addMenuItem(mealId, name),
+        mutationFn: ({ mealId, name, catalogId }: { mealId: string; name: string; catalogId?: string }) => mealsApi.addMenuItem(mealId, name, catalogId),
         onSuccess: (_, { mealId }) => {
             queryClient.invalidateQueries({ queryKey: ['meal', mealId] });
         },
@@ -123,7 +123,7 @@ export const useDeleteMenuItem = () => {
 export const useUpdateMenuItem = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, mealId, name }: { id: string; mealId: string; name: string }) => mealsApi.updateMenuItem(id, name),
+        mutationFn: ({ id, mealId, catalogId }: { id: string; mealId: string; catalogId: string }) => mealsApi.updateMenuItem(id, mealId, catalogId),
         onSuccess: (_, { mealId }) => {
             queryClient.invalidateQueries({ queryKey: ['meal', mealId] });
         },
@@ -168,6 +168,82 @@ export const useToggleRegistration = () => {
         onSuccess: (_, { id }) => {
             queryClient.invalidateQueries({ queryKey: ['meal'] }); // Invalidate specific meal detail
             queryClient.invalidateQueries({ queryKey: ['registrations'] }); // Invalidate global calendar/summaries
+        },
+    });
+};
+
+// Ingredient Catalog
+export const useCatalog = (search?: string) => {
+    return useQuery({
+        queryKey: ['ingredient-catalog', search],
+        queryFn: () => mealsApi.getCatalog(search),
+    });
+};
+
+export const useCreateCatalogItem = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: any) => mealsApi.createCatalogItem(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['ingredient-catalog'] });
+        },
+    });
+};
+
+export const useUpdateCatalogItem = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: any }) => mealsApi.updateCatalogItem(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['ingredient-catalog'] });
+        },
+    });
+};
+
+export const useDeleteCatalogItem = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => mealsApi.deleteCatalogItem(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['ingredient-catalog'] });
+        },
+    });
+};
+
+// Menu Item Catalog
+export const useMenuCatalog = (search?: string) => {
+    return useQuery({
+        queryKey: ['menu-catalog', search],
+        queryFn: () => mealsApi.getMenuCatalog(search),
+    });
+};
+
+export const useCreateMenuCatalogItem = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: any) => mealsApi.createMenuCatalogItem(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['menu-catalog'] });
+        },
+    });
+};
+
+export const useUpdateMenuCatalogItem = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: any }) => mealsApi.updateMenuCatalogItem(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['menu-catalog'] });
+        },
+    });
+};
+
+export const useDeleteMenuCatalogItem = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => mealsApi.deleteMenuCatalogItem(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['menu-catalog'] });
         },
     });
 };
