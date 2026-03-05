@@ -581,25 +581,67 @@ router.get('/reviews/export', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SY
         doc.fontSize(12).text(`Từ ngày: ${startDate} đến ngày: ${endDate}`, { align: 'center' });
         doc.moveDown();
 
-        for (const review of reviews) {
-            // Draw a horizontal line
-            doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke().moveDown();
+        // Group reviews by meal
+        const groups: Record<string, {
+            meal: any;
+            reviews: any[];
+            avgRating: string;
+        }> = {};
 
-            doc.fontSize(12).font('Roboto-Bold').text(`Ngày: ${review.mealEvent.mealDate.toLocaleDateString('vi-VN')} - Bữa: ${review.mealEvent.mealType === 'LUNCH' ? 'Trưa' : 'Tối'}`);
-            doc.fontSize(10).font('Roboto').text(`Người gửi: ${review.isAnonymous ? 'Ẩn danh' : review.employee.fullName}`);
-            doc.text(`Nội dung: ${review.comment}`);
+        reviews.forEach(review => {
+            const mealId = review.mealEvent.id;
+            if (!groups[mealId]) {
+                groups[mealId] = {
+                    meal: review.mealEvent,
+                    reviews: [],
+                    avgRating: '0'
+                };
+            }
+            groups[mealId].reviews.push(review);
+        });
+
+        const sortedGroups = Object.values(groups).map(group => ({
+            ...group,
+            avgRating: (group.reviews.reduce((acc, r) => acc + r.rating, 0) / group.reviews.length).toFixed(1)
+        })).sort((a, b) => new Date(b.meal.mealDate).getTime() - new Date(a.meal.mealDate).getTime());
+
+        for (const group of sortedGroups) {
+            // Meal Group Header
+            doc.rect(50, doc.y, 500, 25).fill('#f1f5f9').stroke('#e2e8f0');
+            doc.fillColor('#0f172a').font('Roboto-Bold').fontSize(12)
+                .text(`${group.meal.mealDate.toLocaleDateString('vi-VN')} - Bữa: ${group.meal.mealType === 'LUNCH' ? 'Trưa' : 'Tối'} (${group.avgRating}/5 sao)`, 60, doc.y - 18);
             doc.moveDown(0.5);
 
-            if (review.images && Array.isArray(review.images) && review.images.length > 0) {
-                for (const imgUrl of review.images) {
-                    try {
-                        const response = await axios.get(imgUrl as string, { responseType: 'arraybuffer' });
-                        doc.image(Buffer.from(response.data), { fit: [200, 200] });
-                        doc.moveDown();
-                    } catch (e) {
-                        doc.fillColor('red').text(`[Không thể tải ảnh: ${imgUrl}]`).fillColor('black');
+            for (const review of group.reviews) {
+                // Check if we need a new page
+                if (doc.y > 700) doc.addPage();
+
+                doc.fontSize(10).font('Roboto-Bold').fillColor('#334155').text(`Người gửi: ${review.isAnonymous ? 'Ẩn danh' : review.employee.fullName} - Đánh giá: ${review.rating}/5 sao`);
+                doc.font('Roboto').fillColor('#475569').text(`Nhận xét: ${review.comment}`);
+
+                if (review.adminReply) {
+                    doc.moveDown(0.2);
+                    doc.font('Roboto-Bold').fillColor('#059669').text(`Phản hồi từ Bếp: `, { continued: true })
+                        .font('Roboto').fillColor('#065f46').text(review.adminReply);
+                }
+
+                if (review.images && Array.isArray(review.images) && review.images.length > 0) {
+                    doc.moveDown(0.5);
+                    for (const imgUrl of review.images) {
+                        try {
+                            const response = await axios.get(imgUrl as string, { responseType: 'arraybuffer' });
+                            const imgWidth = 150;
+                            // Check for page overflow before adding image
+                            if (doc.y + imgWidth > 750) doc.addPage();
+                            doc.image(Buffer.from(response.data), { fit: [imgWidth, imgWidth] });
+                            doc.moveDown();
+                        } catch (e) {
+                            doc.fillColor('red').text(`[Không thể tải ảnh: ${imgUrl}]`).fillColor('black');
+                        }
                     }
                 }
+                doc.moveDown();
+                doc.moveTo(70, doc.y).lineTo(530, doc.y).strokeColor('#f1f5f9').stroke().moveDown(0.5);
             }
             doc.moveDown();
         }
