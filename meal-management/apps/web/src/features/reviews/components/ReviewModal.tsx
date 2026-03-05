@@ -133,7 +133,7 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
                             <input
                                 type="date"
                                 ref={dateInputRef}
-                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10 md:pointer-events-none"
                                 tabIndex={-1}
                                 aria-hidden="true"
                                 onChange={(e) => {

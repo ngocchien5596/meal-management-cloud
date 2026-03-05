@@ -170,7 +170,7 @@ export default function ReportPage() {
                                         type="date"
                                         value={dateRange.start}
                                         onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full md:pointer-events-none"
                                     />
                                 </div>
                                 <span className="text-slate-400">-</span>
@@ -186,7 +186,7 @@ export default function ReportPage() {
                                         type="date"
                                         value={dateRange.end}
                                         onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full md:pointer-events-none"
                                     />
                                 </div>
                             </div>

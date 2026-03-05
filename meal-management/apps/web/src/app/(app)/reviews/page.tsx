@@ -108,7 +108,7 @@ export default function MyReviewsPage() {
                                 ref={dateInputRef}
                                 value={dateFilter}
                                 onChange={(e) => setDateFilter(e.target.value)}
-                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10 md:pointer-events-none"
                             />
                             <button
                                 onClick={() => dateInputRef.current?.showPicker?.()}

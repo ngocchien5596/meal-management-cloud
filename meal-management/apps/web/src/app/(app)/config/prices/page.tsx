@@ -277,7 +277,7 @@ export default function PriceHistoryPage() {
                                                         onChange={e => setNewPriceDate(e.target.value)}
                                                         disabled={!!editingPriceId && !isLatestPrice}
                                                         min={!editingPriceId ? format(addDays(new Date(), 1), 'yyyy-MM-dd') : undefined}
-                                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10 md:pointer-events-none"
                                                     />
                                                     <button
                                                         type="button"
