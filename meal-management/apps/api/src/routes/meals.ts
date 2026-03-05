@@ -26,7 +26,9 @@ router.get('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async 
         if (search) {
             where.menuItems = {
                 some: {
-                    name: { contains: search as string, mode: 'insensitive' }
+                    catalog: {
+                        name: { contains: search as string, mode: 'insensitive' }
+                    }
                 }
             };
         }
@@ -41,15 +43,23 @@ router.get('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async 
 
         if (endDate) {
             where.mealDate = { ...where.mealDate, lte: new Date(endDate as string) };
-        } else {
-            // Default: Show history + Up to Tomorrow (Hide future beyond tomorrow)
-            // "Chỉ hiển thị các bữa trong quá khứ và của ngày mai"
-            const today = new Date();
-            const tomorrow = new Date(today);
-            tomorrow.setDate(today.getDate() + 1);
-            tomorrow.setHours(23, 59, 59, 999);
+        }
 
-            where.mealDate = { ...where.mealDate, lte: tomorrow };
+        // Apply default range if no filters are present
+        if (!startDate && !endDate && !search) {
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            yesterday.setHours(0, 0, 0, 0);
+
+            const plusTwoDays = new Date(today);
+            plusTwoDays.setDate(today.getDate() + 2);
+            plusTwoDays.setHours(23, 59, 59, 999);
+
+            where.mealDate = {
+                gte: yesterday,
+                lte: plusTwoDays
+            };
         }
 
         const meals = await prisma.mealEvent.findMany({
@@ -63,12 +73,21 @@ router.get('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async 
                 },
                 menuItems: {
                     select: {
-                        name: true
+                        catalog: { select: { name: true } }
                     }
                 }
             },
-            orderBy: { mealDate: 'desc' }
+            orderBy: [
+                { mealDate: 'asc' },
+                { mealType: 'desc' } // LUNCH (12) comes after DINNER (4) alphabetically, so 'desc' puts LUNCH first
+            ]
         });
+
+        // Debug log to verify sort order in server logs
+        if (meals.length > 0) {
+            console.log(`[DEBUG] First meal: ${meals[0].mealDate.toISOString().split('T')[0]} ${meals[0].mealType}`);
+            console.log(`[DEBUG] Last meal: ${meals[meals.length - 1].mealDate.toISOString().split('T')[0]} ${meals[meals.length - 1].mealType}`);
+        }
 
         res.json({ success: true, data: meals });
     } catch (error) {
@@ -259,8 +278,8 @@ router.get('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), asy
         const meal = await prisma.mealEvent.findUnique({
             where: { id },
             include: {
-                ingredients: true,
-                menuItems: true,
+                ingredients: { include: { catalog: true } },
+                menuItems: { include: { catalog: true } },
                 guests: true,
                 _count: {
                     select: {
@@ -442,16 +461,36 @@ router.post('/:id/end', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM')
 router.post('/:id/ingredients', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, quantity, unit, unitPrice } = req.body;
+        const { name, quantity, unit, unitPrice, catalogId } = req.body;
+
+        let finalCatalogId = catalogId;
+
+        // "Quick Add" logic or auto-linking
+        if (!finalCatalogId && name) {
+            const catalogItem = await prisma.ingredientCatalog.upsert({
+                where: { name },
+                update: {},
+                create: {
+                    name,
+                    defaultUnit: unit
+                }
+            });
+            finalCatalogId = catalogItem.id;
+        }
+
+        const q = parseFloat(quantity) || 0;
+        const p = parseFloat(unitPrice) || 0;
+
         const ingredient = await prisma.ingredient.create({
             data: {
                 mealEventId: id,
-                name,
-                quantity: parseFloat(quantity),
+                catalogId: finalCatalogId,
+                quantity: q,
                 unit,
-                unitPrice: parseFloat(unitPrice),
-                totalPrice: parseFloat(quantity) * parseFloat(unitPrice)
-            }
+                unitPrice: p,
+                totalPrice: q * p
+            },
+            include: { catalog: true }
         });
         res.json({ success: true, data: ingredient });
     } catch (error) {
@@ -463,27 +502,32 @@ router.post('/:id/ingredients', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_
 router.patch('/ingredients/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, quantity, unit, unitPrice } = req.body;
+        const { name, quantity, unit, unitPrice, catalogId } = req.body;
 
         const updateData: any = {};
-        if (name) updateData.name = name;
         if (quantity !== undefined) updateData.quantity = parseFloat(quantity);
         if (unit) updateData.unit = unit;
         if (unitPrice !== undefined) updateData.unitPrice = parseFloat(unitPrice);
+        if (catalogId) updateData.catalogId = catalogId;
 
         // Re-calculate total price if needed
         if (quantity !== undefined || unitPrice !== undefined) {
             const current = await prisma.ingredient.findUnique({ where: { id } });
             if (current) {
-                const q = quantity !== undefined ? parseFloat(quantity) : current.quantity;
-                const p = unitPrice !== undefined ? parseFloat(unitPrice) : current.unitPrice;
+                const q = quantity !== undefined ? (parseFloat(quantity) || 0) : current.quantity;
+                const p = unitPrice !== undefined ? (parseFloat(unitPrice) || 0) : current.unitPrice;
                 updateData.totalPrice = q * p;
+
+                // Update numeric fields in updateData as well to ensure they are parsed numbers
+                if (quantity !== undefined) updateData.quantity = q;
+                if (unitPrice !== undefined) updateData.unitPrice = p;
             }
         }
 
         const ingredient = await prisma.ingredient.update({
             where: { id },
-            data: updateData
+            data: updateData,
+            include: { catalog: true }
         });
         res.json({ success: true, data: ingredient });
     } catch (error) {
@@ -508,14 +552,31 @@ router.delete('/ingredients/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMI
 router.post('/:id/menu-items', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
     try {
         const { id } = req.params;
-        const { name } = req.body;
+        const { name, catalogId } = req.body;
 
         if (!name || name.trim() === '') {
             return res.status(400).json({ success: false, error: 'Tên món ăn không được để trống' });
         }
 
+        const trimmedName = name.trim();
+        let finalCatalogId = catalogId;
+
+        // Quick Add or Auto-link
+        if (!finalCatalogId) {
+            const catalogItem = await prisma.menuItemCatalog.upsert({
+                where: { name: trimmedName },
+                update: {},
+                create: { name: trimmedName }
+            });
+            finalCatalogId = catalogItem.id;
+        }
+
         const menuItem = await prisma.menuItem.create({
-            data: { mealEventId: id, name: name.trim() }
+            data: {
+                mealEventId: id,
+                catalogId: finalCatalogId
+            },
+            include: { catalog: true }
         });
         res.json({ success: true, data: menuItem });
     } catch (error: any) {
@@ -541,7 +602,7 @@ router.delete('/menu-items/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN
 router.patch('/menu-items/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
     try {
         const { id } = req.params;
-        const { name } = req.body;
+        const { name, catalogId } = req.body;
 
         if (!name || name.trim() === '') {
             return res.status(400).json({ success: false, error: 'Tên món ăn không được để trống' });
@@ -549,7 +610,10 @@ router.patch('/menu-items/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_
 
         const menuItem = await prisma.menuItem.update({
             where: { id },
-            data: { name: name.trim() }
+            data: {
+                catalogId
+            },
+            include: { catalog: true }
         });
 
         res.json({ success: true, data: menuItem });

@@ -119,24 +119,43 @@ model Guest {
 }
 
 model Ingredient {
-  id          String    @id @default(cuid())
+  id          String            @id @default(cuid())
   mealEventId String
-  name        String
+  catalogId   String
   quantity    Float
   unit        String
   unitPrice   Float
   totalPrice  Float
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  mealEvent   MealEvent @relation(fields: [mealEventId], references: [id])
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  catalog     IngredientCatalog @relation(fields: [catalogId], references: [id])
+  mealEvent   MealEvent         @relation(fields: [mealEventId], references: [id])
+}
+
+model IngredientCatalog {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  defaultUnit String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  ingredients Ingredient[]
 }
 
 model MenuItem {
   id          String    @id @default(cuid())
   mealEventId String
-  name        String
+  catalogId   String
   createdAt   DateTime  @default(now())
+  catalog     MenuItemCatalog @relation(fields: [catalogId], references: [id])
   mealEvent   MealEvent @relation(fields: [mealEventId], references: [id])
+}
+
+model MenuItemCatalog {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  menuItems MenuItem[]
 }
 
 model SystemConfig {

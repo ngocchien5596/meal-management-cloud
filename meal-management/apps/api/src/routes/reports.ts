@@ -102,7 +102,7 @@ router.get('/summary', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYS
                 }
             },
             include: {
-                ingredients: true
+                ingredients: { include: { catalog: true } }
             }
         });
 
@@ -373,7 +373,7 @@ router.get('/costs', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), a
                 ingredients: { some: {} }
             },
             include: {
-                ingredients: true,
+                ingredients: { include: { catalog: true } },
                 registrations: { where: { isCancelled: false } },
                 guests: true,
                 checkins: true
@@ -388,8 +388,9 @@ router.get('/costs', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), a
         const ingredientMap = new Map<string, number>();
         meals.forEach(meal => {
             meal.ingredients.forEach(ing => {
-                const current = ingredientMap.get(ing.name) || 0;
-                ingredientMap.set(ing.name, current + ing.totalPrice);
+                const name = ing.catalog.name;
+                const current = ingredientMap.get(name) || 0;
+                ingredientMap.set(name, current + ing.totalPrice);
             });
         });
 
@@ -444,7 +445,7 @@ router.get('/costs/export', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYST
 
         const meals = await prisma.mealEvent.findMany({
             where: { mealDate: { gte: start, lte: end }, ingredients: { some: {} } },
-            include: { ingredients: true },
+            include: { ingredients: { include: { catalog: true } } },
             orderBy: { mealDate: 'asc' }
         });
 
@@ -455,7 +456,7 @@ router.get('/costs/export', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYST
         worksheet.columns = [
             { header: 'Ngày', key: 'date', width: 15 },
             { header: 'Bữa ăn', key: 'type', width: 15 },
-            { header: 'Tên nguyên vật liệu', key: 'name', width: 30 },
+            { header: 'Tên Nguyên liệu', key: 'name', width: 30 },
             { header: 'Số lượng', key: 'quantity', width: 12 },
             { header: 'Đơn vị', key: 'unit', width: 10 },
             { header: 'Đơn giá (VNĐ)', key: 'price', width: 15 },
@@ -464,19 +465,54 @@ router.get('/costs/export', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYST
 
         worksheet.getRow(1).font = { bold: true };
 
+        let grandTotal = 0;
+
         meals.forEach(meal => {
+            let mealTotal = 0;
             meal.ingredients.forEach(ing => {
+                mealTotal += ing.totalPrice;
+                grandTotal += ing.totalPrice;
+
                 worksheet.addRow({
                     date: meal.mealDate.toLocaleDateString('vi-VN'),
                     type: meal.mealType === 'LUNCH' ? 'Bữa trưa' : 'Bữa tối',
-                    name: ing.name,
+                    name: ing.catalog.name,
                     quantity: ing.quantity,
                     unit: ing.unit,
                     price: ing.unitPrice,
                     total: ing.totalPrice
                 });
             });
+
+            // Add meal summary row
+            const summaryRow = worksheet.addRow({
+                date: '',
+                type: '',
+                name: `CỘNG BỮA ${meal.mealType === 'LUNCH' ? 'TRƯA' : 'TỐI'} (${meal.mealDate.toLocaleDateString('vi-VN')})`,
+                quantity: '',
+                unit: '',
+                price: '',
+                total: mealTotal
+            });
+            summaryRow.font = { bold: true };
+            summaryRow.getCell('total').font = { bold: true, color: { argb: 'FF059669' } }; // emerald-600
         });
+
+        // Add grand total row
+        worksheet.addRow({}); // spacer
+        const grandTotalRow = worksheet.addRow({
+            date: '',
+            type: '',
+            name: 'TỔNG CỘNG TẤT CẢ',
+            quantity: '',
+            unit: '',
+            price: '',
+            total: grandTotal
+        });
+        grandTotalRow.font = { bold: true };
+        grandTotalRow.height = 25;
+        const totalCell = grandTotalRow.getCell('total');
+        totalCell.font = { bold: true, size: 14, color: { argb: 'FF059669' } };
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename=Bao-cao-chi-phi-${startDate}-${endDate}.xlsx`);

@@ -56,7 +56,9 @@ export const getCalendarHandler = async (req: any, res: any, next: any) => {
                     where: { employeeId }
                 },
                 menuItems: {
-                    select: { name: true }
+                    select: {
+                        catalog: { select: { name: true } }
+                    }
                 }
             }
         });

@@ -18,6 +18,8 @@ import configRoutes from './routes/config.js';
 import priceRoutes, { ensureLegacyPriceMigrated } from './routes/prices.js';
 import reviewRoutes from './routes/reviews.js';
 import uploadRoutes from './routes/upload.js';
+import ingredientRoutes from './routes/ingredients.js';
+import menuItemRoutes from './routes/menu-items.js';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js';
@@ -74,6 +76,8 @@ app.use('/api/config', configRoutes);
 app.use('/api/prices', priceRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/ingredients', ingredientRoutes);
+app.use('/api/menu-items', menuItemRoutes);
 
 // Error handler
 app.use(errorHandler);
