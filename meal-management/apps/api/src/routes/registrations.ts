@@ -344,10 +344,14 @@ router.post('/preset', authenticate, async (req: Request, res: Response, next: N
                     mealEvent: {
                         mealDate: { gte: startDate, lte: endDate }
                     }
-                }
+                },
+                include: { checkin: true }
             });
 
             for (const reg of existingRegs) {
+                // Skip if already has a check-in log (prevent foreign key constraint violation)
+                if ((reg as any).checkin) continue;
+
                 const regEvent = await tx.mealEvent.findUnique({ where: { id: reg.mealEventId } });
                 if (regEvent && canModifyWithCutoff(regEvent.mealDate, cutoffValue)) {
                     await tx.registration.delete({
