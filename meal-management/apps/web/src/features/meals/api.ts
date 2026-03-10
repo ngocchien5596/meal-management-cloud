@@ -113,7 +113,7 @@ export const mealsApi = {
             .then(res => res.data),
 
     getCurrentMeal: () =>
-        api.get<MealDetail | null>('/meals/current')
+        api.get<MealDetail | null>('/meals/active')
             .then(res => res.data),
 
     createMeal: (data: { mealDate: string; mealType: 'LUNCH' | 'DINNER' }) =>
@@ -125,11 +125,11 @@ export const mealsApi = {
             .then(res => res.data),
 
     startMeal: (id: string) =>
-        api.post<MealEvent>(`/meals/${id}/start`)
+        api.patch<MealEvent>(`/meals/${id}`, { status: 'IN_PROGRESS' })
             .then(res => res.data),
 
     endMeal: (id: string) =>
-        api.post<MealEvent>(`/meals/${id}/end`)
+        api.patch<MealEvent>(`/meals/${id}`, { status: 'COMPLETED' })
             .then(res => res.data),
 
     // Ingredients
@@ -205,7 +205,7 @@ export const mealsApi = {
         api.patch<Guest>(`/meals/guests/${id}`, data)
             .then(res => res.data),
 
-    toggleRegistration: (id: string) =>
-        api.post<Registration>(`/meals/registrations/${id}/toggle`)
+    toggleRegistration: (id: string, isCancelled: boolean) =>
+        api.patch<Registration>(`/registrations/${id}`, { isCancelled })
             .then(res => res.data),
 };

@@ -36,6 +36,11 @@ const tabs = [
         name: 'Địa điểm ăn',
         href: '/config/locations',
         icon: MapPin
+    },
+    {
+        name: 'Danh bạ khách',
+        href: '/config/guests',
+        icon: Users
     }
 ];
 

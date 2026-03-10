@@ -1,7 +1,7 @@
 import { APIError, NetworkError, UnauthorizedError } from './errors';
 import type { APIResponse } from './types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6000/api/v1';
 
 type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 

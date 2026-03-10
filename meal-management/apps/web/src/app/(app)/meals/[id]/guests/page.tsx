@@ -7,7 +7,8 @@ import { MealDetail, Guest } from '@/features/meals/api';
 import * as QRCode from 'qrcode';
 import toast from 'react-hot-toast';
 import { GuestImportExport } from '@/features/meals/components/GuestImportExport';
-import { Edit } from 'lucide-react';
+import { Edit, Search, PlusCircle, Users } from 'lucide-react';
+import { useGuestDirectories } from '@/features/guest-directory/api';
 
 const PlusIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
@@ -30,15 +31,35 @@ interface GuestFormProps {
 function GuestForm({ mealId, guest, onSuccess }: GuestFormProps) {
     const addMutation = useAddGuest();
     const updateMutation = useUpdateGuest();
+    const isEditing = !!guest;
+
+    const [fullName, setFullName] = useState(guest?.fullName || '');
+    const [note, setNote] = useState(guest?.note || '');
+    const [directoryId, setDirectoryId] = useState<string | undefined>(guest?.id); // Actually, we don't have directoryId in Guest interface yet on frontend API, but we'll send it if selected
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const { data: directoriesResponse } = useGuestDirectories(fullName);
+    const wrapperRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                setShowSuggestions(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [wrapperRef]);
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
+
         const data = {
-            fullName: formData.get('fullName') as string,
-            note: formData.get('note') as string,
+            fullName,
+            note,
+            directoryId
         };
 
-        if (guest) {
+        if (isEditing) {
             await updateMutation.mutateAsync({ id: guest.id, mealId, data });
         } else {
             await addMutation.mutateAsync({ mealId, data });
@@ -46,32 +67,93 @@ function GuestForm({ mealId, guest, onSuccess }: GuestFormProps) {
         onSuccess();
     };
 
+    const isPending = addMutation.isPending || updateMutation.isPending;
+
+    const handleNameChange = (val: string) => {
+        setFullName(val);
+        setDirectoryId(undefined); // Clear directory link if manually typing
+        setShowSuggestions(true);
+    };
+
+    const selectSuggestion = (suggestion: any) => {
+        setFullName(suggestion.fullName);
+        setNote(suggestion.note || '');
+        setDirectoryId(suggestion.id);
+        setShowSuggestions(false);
+    };
+
+    const suggestions = directoriesResponse || [];
+    const exactMatch = suggestions.find((s: any) => s.fullName.toLowerCase() === fullName.toLowerCase());
+    const showQuickAdd = fullName.length > 0 && !exactMatch;
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
+            <div className="space-y-2 relative" ref={wrapperRef}>
                 <label className="text-sm font-black text-slate-700 ml-1">Họ và tên khách</label>
-                <Input
-                    name="fullName"
-                    placeholder="Ví dụ: Nguyễn Văn A..."
-                    defaultValue={guest?.fullName}
-                    required
-                />
+                <div className="relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                        name="fullName"
+                        placeholder="Ví dụ: Nguyễn Văn A..."
+                        value={fullName}
+                        onChange={(e) => handleNameChange(e.target.value)}
+                        onFocus={() => setShowSuggestions(true)}
+                        className="pl-10"
+                        required
+                        autoComplete="off"
+                        autoFocus
+                    />
+                </div>
+
+                {showSuggestions && (fullName.length > 0 || suggestions.length > 0) && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                        {suggestions.map((s: any) => (
+                            <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => selectSuggestion(s)}
+                                className="w-full px-4 py-3 text-left hover:bg-blue-50 flex items-center gap-3 transition-colors border-b border-slate-50 last:border-0"
+                            >
+                                <Users className="w-4 h-4 text-slate-400" />
+                                <div className="flex flex-col">
+                                    <span className="text-[15px] font-bold text-slate-700 uppercase">{s.fullName}</span>
+                                    {s.note && <span className="text-xs text-slate-500">{s.note}</span>}
+                                </div>
+                            </button>
+                        ))}
+
+                        {showQuickAdd && (
+                            <button
+                                type="button"
+                                onClick={() => setShowSuggestions(false)}
+                                className="w-full px-4 py-3 text-left bg-blue-50/50 hover:bg-blue-50 flex items-center gap-3 transition-colors text-blue-600 border-t border-slate-100"
+                            >
+                                <PlusCircle className="w-4 h-4" />
+                                <div className="flex flex-col">
+                                    <span className="font-bold">{fullName} (Thêm mới)</span>
+                                </div>
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
+
             <div className="space-y-2">
                 <label className="text-sm font-black text-slate-700 ml-1">Ghi chú</label>
                 <Input
                     name="note"
                     placeholder="Ví dụ: Khách hàng dự án..."
-                    defaultValue={guest?.note}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
                 />
             </div>
             <Button
                 type="submit"
                 size="lg"
                 className="w-full shadow-xl shadow-blue-200 uppercase"
-                disabled={addMutation.isPending || updateMutation.isPending}
+                disabled={isPending}
             >
-                {addMutation.isPending || updateMutation.isPending ? 'Đang xử lý...' : (guest ? 'Cập nhật khách mời' : 'Đăng ký khách mời')}
+                {isPending ? 'Đang xử lý...' : (guest ? 'Cập nhật khách mời' : 'Đăng ký khách mời')}
             </Button>
         </form>
     );

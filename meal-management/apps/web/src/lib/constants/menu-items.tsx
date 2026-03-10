@@ -149,6 +149,15 @@ export const ChevronDownIcon = ({ className = "w-4 h-4" }: { className?: string 
     </svg>
 );
 
+export const UsersIcon = ({ className = "w-[18px] h-[18px]" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+);
+
 // --- Interfaces ---
 export interface MenuItem {
     key: string;
@@ -176,6 +185,7 @@ export const menuItems: MenuItem[] = [
             { key: 'config-deadline', label: 'Giờ chốt', href: '/config/deadline', icon: ClockIcon },
             { key: 'config-ingredients', label: 'Danh mục nguyên liệu', href: '/config/ingredients', icon: PackageIcon },
             { key: 'config-menu-items', label: 'Danh mục món ăn', href: '/config/menu-items', icon: UtensilsIcon },
+            { key: 'config-guests', label: 'Danh bạ khách', href: '/config/guests', icon: UsersIcon },
             { key: 'config-departments', label: 'Phòng ban', href: '/config/departments', icon: BuildingIcon },
             { key: 'config-positions', label: 'Chức vụ', href: '/config/positions', icon: BriefcaseIcon },
             { key: 'config-locations', label: 'Địa điểm ăn', href: '/config/locations', icon: MapPinIcon },

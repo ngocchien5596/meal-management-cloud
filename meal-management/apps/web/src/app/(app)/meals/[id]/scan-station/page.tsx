@@ -6,12 +6,27 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils/cn';
 import { useMealDetail } from '@/features/meals/hooks';
-import { useScanEmployee, useScanGuest } from '@/features/checkin/hooks';
+import { useScanEmployee, useScanGuest, useManualCheckin } from '@/features/checkin/hooks';
 import { playCheckinSuccess, playCheckinError } from '@/lib/utils/audio';
 import { Button } from '@/components/ui';
 import { MealDetail } from '@/features/meals/api';
+import toast from 'react-hot-toast';
 
 // --- Viettel Professional Icons ---
+const KeyboardIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="20" height="16" x="2" y="4" rx="2" />
+        <path d="M6 8h.001" />
+        <path d="M10 8h.001" />
+        <path d="M14 8h.001" />
+        <path d="M18 8h.001" />
+        <path d="M8 12h.001" />
+        <path d="M12 12h.001" />
+        <path d="M16 12h.001" />
+        <path d="M7 16h10" />
+    </svg>
+);
+
 const CameraIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -63,10 +78,13 @@ export default function ScanStationPage() {
 
     const scanEmployee = useScanEmployee();
     const scanGuest = useScanGuest();
+    const manualCheckin = useManualCheckin();
 
     const [recentScans, setRecentScans] = useState<ScanResult[]>([]);
     const [flash, setFlash] = useState<'success' | 'error' | null>(null);
     const [time, setTime] = useState(new Date());
+    const [manualCode, setManualCode] = useState('');
+    const [manualSecret, setManualSecret] = useState('');
 
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const containerId = 'scan-station-viewport';
@@ -177,6 +195,44 @@ export default function ScanStationPage() {
         }
     };
 
+    const handleManualSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!manualCode || !manualSecret) {
+            toast.error('Vui lòng nhập đầy đủ Mã NV và Mã bí mật');
+            return;
+        }
+        if (flash) return;
+
+        try {
+            const result = await manualCheckin.mutateAsync({
+                mealEventId: id,
+                employeeCode: manualCode,
+                secretCode: manualSecret
+            });
+
+            const scanObj: ScanResult = {
+                id: Math.random().toString(36).substr(2, 9),
+                type: 'SUCCESS',
+                message: `NV: ${result.data.employee.fullName} check-in thủ công`,
+                employee: result.data.employee,
+                timestamp: new Date()
+            };
+
+            playCheckinSuccess();
+            setFlash('success');
+            setRecentScans(prev => [scanObj, ...prev].slice(0, 20));
+            setManualCode('');
+            setManualSecret('');
+            setTimeout(() => setFlash(null), 800);
+
+        } catch (err: any) {
+            console.error('Manual check-in error:', err);
+            playCheckinError();
+            setFlash('error');
+            setTimeout(() => setFlash(null), 800);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -207,8 +263,8 @@ export default function ScanStationPage() {
                         <CameraIcon className="w-7 h-7 text-[#EE0033]" />
                     </div>
                     <div className="text-white">
-                        <h1 className="text-2xl font-black tracking-tighter leading-tight uppercase">VIETTEL SCAN STATION</h1>
-                        <div className="flex items-center gap-2 text-[11px] font-bold opacity-80 mt-0.5">
+                        {/* <h1 className="text-2xl font-black tracking-tighter leading-tight uppercase">VIETTEL SCAN STATION</h1> */}
+                        <div className="text-2xl font-black tracking-tighter leading-tight uppercase">
                             <span>{meal.mealType === 'LUNCH' ? 'BỮA TRƯA' : 'BỮA TỐI'}</span>
                             <span className="w-1 h-1 bg-white rounded-full" />
                             <span>{format(new Date(meal.mealDate), 'dd/MM/yyyy')}</span>
@@ -255,42 +311,81 @@ export default function ScanStationPage() {
                     </div>
                 )}
 
-                {/* Left Panel: High Quality Camera Viewport */}
-                <div className="flex-[1.6] relative bg-slate-900 flex items-center justify-center p-4">
-                    <div
-                        id={containerId}
-                        className="w-full h-full max-w-5xl rounded-3xl overflow-hidden border-4 border-slate-800 shadow-2xl relative"
-                    >
-                        {/* Camera Scanline Animation */}
-                        <div className="absolute inset-0 pointer-events-none z-10 bg-gradient-to-b from-[#EE0033]/0 via-[#EE0033]/10 to-[#EE0033]/0 h-20 w-full animate-scan-line" />
-                    </div>
+                {/* Left Panel: High Quality Camera Viewport & Manual Input */}
+                <div className="flex-[1.6] relative bg-slate-900 flex flex-col p-6 gap-6">
+                    {/* Manual Input Form */}
+                    <form onSubmit={handleManualSubmit} className="relative z-20 bg-slate-800/80 backdrop-blur-md rounded-2xl p-4 border border-slate-700 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 shrink-0 self-start md:self-auto w-full md:w-auto">
+                            <div className="w-10 h-10 bg-[#EE0033]/20 rounded-xl flex items-center justify-center shrink-0">
+                                <KeyboardIcon className="w-5 h-5 text-[#EE0033]" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-black text-white uppercase tracking-wider">NHẬP MÃ THỦ CÔNG</h3>
+                                <p className="text-[10px] text-slate-400">Dành cho thiết bị hỏng camera</p>
+                            </div>
+                        </div>
+                        <div className="flex-1 flex gap-3 w-full md:max-w-xl">
+                            <input
+                                type="text"
+                                placeholder="Mã NV..."
+                                value={manualCode}
+                                onChange={(e) => setManualCode(e.target.value)}
+                                className="flex-1 min-w-0 h-10 md:h-12 px-4 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#EE0033]/50 focus:border-[#EE0033] uppercase font-mono transition-all text-sm shadow-inner"
+                            />
+                            <input
+                                type="password"
+                                placeholder="Mật mã..."
+                                value={manualSecret}
+                                onChange={(e) => setManualSecret(e.target.value)}
+                                className="flex-1 min-w-0 h-10 md:h-12 px-4 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#EE0033]/50 focus:border-[#EE0033] font-mono transition-all text-sm shadow-inner"
+                            />
+                            <button
+                                type="submit"
+                                disabled={manualCheckin.isPending}
+                                className="h-10 md:h-12 px-4 md:px-6 bg-[#EE0033] hover:bg-[#CC002D] text-white rounded-xl text-sm font-black uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#EE0033]/20 shrink-0 border border-white/10"
+                            >
+                                {manualCheckin.isPending ? "XỬ LÝ..." : "XÁC NHẬN"}
+                            </button>
+                        </div>
+                    </form>
 
-                    {/* Viewport UI Overlays - Technical Layer */}
-                    <div className="absolute inset-0 pointer-events-none z-20 flex flex-col items-center justify-between p-12">
-                        <div className="w-full flex justify-between items-start">
-                            <div className="flex flex-col gap-3">
-                                <div className="px-4 py-1.5 bg-[#EE0033] shadow-lg rounded-lg flex items-center gap-3">
-                                    <div className="w-3 h-3 bg-white rounded-full animate-pulse shadow-[0_0_8px_#fff]" />
-                                    <span className="text-xs font-black text-white uppercase tracking-widest">CAMERA FEED ACTIVE</span>
+                    {/* Camera Viewport */}
+                    <div className="flex-1 w-full relative flex items-center justify-center min-h-0 bg-black rounded-3xl overflow-hidden border-4 border-slate-800 shadow-2xl">
+                        <div
+                            id={containerId}
+                            className="w-full h-full relative"
+                        >
+                            {/* Camera Scanline Animation */}
+                            <div className="absolute inset-0 pointer-events-none z-10 bg-gradient-to-b from-[#EE0033]/0 via-[#EE0033]/15 to-[#EE0033]/0 h-20 w-full animate-scan-line" />
+                        </div>
+
+                        {/* Viewport UI Overlays - Technical Layer */}
+                        <div className="absolute inset-0 pointer-events-none z-20 flex flex-col items-center justify-between p-8 md:p-12 max-w-5xl mx-auto">
+                            <div className="w-full flex justify-between items-start">
+                                <div className="flex flex-col gap-3">
+                                    <div className="px-4 py-1.5 bg-[#EE0033] shadow-lg rounded-lg flex items-center gap-3">
+                                        <div className="w-3 h-3 bg-white rounded-full animate-pulse shadow-[0_0_8px_#fff]" />
+                                        <span className="text-[10px] md:text-xs font-black text-white uppercase tracking-widest">CAMERA FEED ACTIVE</span>
+                                    </div>
+                                    <div className="px-4 py-1.5 bg-slate-900/80 backdrop-blur border-2 border-[#EE0033] rounded-lg shadow-md w-max">
+                                        <span className="text-[10px] md:text-xs font-black text-[#EE0033] uppercase tracking-widest">BATCH MODE: ON</span>
+                                    </div>
                                 </div>
-                                <div className="px-4 py-1.5 bg-white border-2 border-[#EE0033] rounded-lg shadow-md">
-                                    <span className="text-xs font-black text-[#EE0033] uppercase tracking-widest">BATCH MODE: ON</span>
-                                </div>
+
+                                <div className="h-16 w-16 md:h-24 md:w-24 border-t-4 border-r-4 border-white/20 rounded-tr-3xl" />
                             </div>
 
-                            <div className="h-24 w-24 border-t-4 border-r-4 border-white/20 rounded-tr-3xl" />
-                        </div>
+                            <div className="flex flex-col items-center gap-6">
+                                <p className="text-xs md:text-sm font-black text-white uppercase tracking-[0.2em] md:tracking-[0.4em] bg-black/60 px-6 md:px-8 py-3 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl text-center">
+                                    ĐẶT MÃ QR VÀO KHUNG QUÉT
+                                </p>
+                            </div>
 
-                        <div className="flex flex-col items-center gap-6">
-                            <p className="text-sm font-black text-white uppercase tracking-[0.4em] bg-black/60 px-8 py-3 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl">
-                                ĐẶT MÃ QR VÀO KHUNG QUÉT
-                            </p>
-                        </div>
-
-                        <div className="w-full flex justify-between items-end">
-                            <div className="h-24 w-24 border-b-4 border-l-4 border-white/20 rounded-bl-3xl" />
-                            <div className="text-[10px] font-bold text-white/40 font-mono tracking-widest bg-black/40 px-3 py-1 rounded">
-                                SYSTEM_ID: VIETTEL_MS_{id.slice(0, 8)}
+                            <div className="w-full flex justify-between items-end">
+                                <div className="h-16 w-16 md:h-24 md:w-24 border-b-4 border-l-4 border-white/20 rounded-bl-3xl" />
+                                <div className="text-[8px] md:text-[10px] font-bold text-white/40 font-mono tracking-widest bg-black/40 px-3 py-1 rounded">
+                                    SYSTEM_ID: VIETTEL_MS_{id.slice(0, 8)}
+                                </div>
                             </div>
                         </div>
                     </div>

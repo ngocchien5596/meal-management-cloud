@@ -35,9 +35,9 @@ export default function StaffPage({ params }: { params: { id: string } }) {
     const filteredStaff = staff.filter((reg: Registration) => {
         const matchesSearch = reg.employee.fullName.toLowerCase().includes(search.toLowerCase()) ||
             reg.employee.employeeCode.toLowerCase().includes(search.toLowerCase());
-        
+
         const matchesLocation = locationFilter === 'all' || reg.location?.id === locationFilter;
-        
+
         return matchesSearch && matchesLocation;
     });
 
@@ -107,7 +107,7 @@ export default function StaffPage({ params }: { params: { id: string } }) {
                         <tbody className="bg-white">
                             {filteredStaff.length === 0 ? (
                                 <tr>
-                                <td colSpan={7} className="py-12 text-center text-gray-500 italic text-[15px]">
+                                    <td colSpan={7} className="py-12 text-center text-gray-500 italic text-[15px]">
                                         Không tìm thấy nhân viên nào phù hợp.
                                     </td>
                                 </tr>
@@ -149,7 +149,7 @@ export default function StaffPage({ params }: { params: { id: string } }) {
                                                     type="checkbox"
                                                     checked={reg.isCancelled}
                                                     disabled={toggleMutation.isPending}
-                                                    onChange={() => toggleMutation.mutate({ id: reg.id })}
+                                                    onChange={() => toggleMutation.mutate({ id: reg.id, isCancelled: !reg.isCancelled })}
                                                     className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer disabled:opacity-50 transition-all"
                                                 />
                                             ) : (

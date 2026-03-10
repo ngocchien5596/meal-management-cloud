@@ -89,8 +89,12 @@ export const canModify = async (mealDate: Date, userRole?: string): Promise<bool
 
 export const getCalendarHandler = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { year, month } = req.params as any;
+        const { year, month } = req.query as any;
         const employeeId = (req as unknown as AuthRequest).user!.employeeId;
+
+        if (!year || !month) {
+            return res.status(400).json({ success: false, error: 'year and month are required query parameters' });
+        }
 
         const startDate = new Date(parseInt(year), parseInt(month), 1);
         const endDate = new Date(parseInt(year), parseInt(month) + 1, 0);
@@ -269,17 +273,54 @@ export const updateLocationHandler = async (req: Request, res: Response, next: N
     }
 };
 
-// GET /api/registrations/calendar/:year/:month
-router.get('/calendar/:year/:month', authenticate, getCalendarHandler);
+// GET /api/v1/registrations - Get calendar (using ?year=&month=)
+router.get('/', authenticate, getCalendarHandler);
 
-// POST /api/registrations - Toggle registration
+// POST /api/v1/registrations - Toggle registration
 router.post('/', authenticate, toggleRegistrationHandler);
 
-// PUT /api/registrations/location - Update location
-router.put('/location', authenticate, updateLocationHandler);
+// PATCH /api/v1/registrations/location - Update location
+router.patch('/location', authenticate, updateLocationHandler);
 
-// POST /api/registrations/preset
-router.post('/preset', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+// PATCH /api/v1/registrations/:id - Admin toggle registration cancellation
+router.patch('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const { id } = req.params;
+        const { isCancelled } = req.body;
+
+        if (typeof isCancelled !== 'boolean') {
+            return res.status(400).json({ success: false, error: 'isCancelled must be a boolean' });
+        }
+
+        const registration = await prisma.registration.findUnique({
+            where: { id },
+            include: { mealEvent: true }
+        });
+
+        if (!registration) {
+            return res.status(404).json({ success: false, error: 'Registration not found' });
+        }
+
+        if (registration.mealEvent.status === 'COMPLETED') {
+            return res.status(400).json({ success: false, error: 'Cannot modify completed meal' });
+        }
+
+        const updated = await prisma.registration.update({
+            where: { id },
+            data: {
+                isCancelled,
+                cancelledAt: isCancelled ? new Date() : null
+            }
+        });
+
+        res.json({ success: true, data: updated });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// POST /api/v1/registrations/preset
+router.post('/preset', authenticate, async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const { presetId, year, month, locationId } = req.body as any;
         const employeeId = (req as unknown as AuthRequest).user!.employeeId;

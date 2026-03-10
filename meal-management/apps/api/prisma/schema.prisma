@@ -78,17 +78,17 @@ model MealEvent {
 }
 
 model Registration {
-  id          String    @id @default(cuid())
+  id          String        @id @default(cuid())
   mealEventId String
   employeeId  String
   locationId  String?
-  isCancelled Boolean   @default(false)
+  isCancelled Boolean       @default(false)
   cancelledBy String?
   cancelledAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  employee    Employee  @relation(fields: [employeeId], references: [id])
-  mealEvent   MealEvent @relation(fields: [mealEventId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  employee    Employee      @relation(fields: [employeeId], references: [id])
+  mealEvent   MealEvent     @relation(fields: [mealEventId], references: [id])
   location    MealLocation? @relation(fields: [locationId], references: [id])
   checkin     CheckinLog?
 
@@ -96,15 +96,15 @@ model Registration {
 }
 
 model CheckinLog {
-  id          String        @id @default(cuid())
-  mealEventId String
-  employeeId  String?
-  guestId     String?
-  checkinTime DateTime      @default(now())
-  method      CheckinMethod
-  employee    Employee?     @relation(fields: [employeeId], references: [id])
-  guest       Guest?        @relation(fields: [guestId], references: [id])
-  mealEvent   MealEvent     @relation(fields: [mealEventId], references: [id])
+  id           String        @id @default(cuid())
+  mealEventId  String
+  employeeId   String?
+  guestId      String?
+  checkinTime  DateTime      @default(now())
+  method       CheckinMethod
+  employee     Employee?     @relation(fields: [employeeId], references: [id])
+  guest        Guest?        @relation(fields: [guestId], references: [id])
+  mealEvent    MealEvent     @relation(fields: [mealEventId], references: [id])
   registration Registration? @relation(fields: [mealEventId, employeeId], references: [mealEventId, employeeId])
 
   @@unique([mealEventId, employeeId])
@@ -112,14 +112,26 @@ model CheckinLog {
 }
 
 model Guest {
-  id          String       @id @default(cuid())
+  id          String          @id @default(cuid())
   mealEventId String
   fullName    String
   note        String?
-  qrToken     String       @unique
-  createdAt   DateTime     @default(now())
+  qrToken     String          @unique
+  directoryId String?
+  createdAt   DateTime        @default(now())
   checkins    CheckinLog[]
-  mealEvent   MealEvent    @relation(fields: [mealEventId], references: [id])
+  mealEvent   MealEvent       @relation(fields: [mealEventId], references: [id])
+  directory   GuestDirectory? @relation(fields: [directoryId], references: [id])
+}
+
+model GuestDirectory {
+  id        String   @id @default(cuid())
+  fullName  String
+  note      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  guests    Guest[]
 }
 
 model Ingredient {
@@ -146,12 +158,12 @@ model IngredientCatalog {
 }
 
 model MenuItem {
-  id          String    @id @default(cuid())
+  id          String          @id @default(cuid())
   mealEventId String
   catalogId   String
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime        @default(now())
   catalog     MenuItemCatalog @relation(fields: [catalogId], references: [id])
-  mealEvent   MealEvent @relation(fields: [mealEventId], references: [id])
+  mealEvent   MealEvent       @relation(fields: [mealEventId], references: [id])
 }
 
 model MenuItemCatalog {
@@ -172,8 +184,8 @@ model SystemConfig {
 }
 
 model RegistrationPreset {
-  id         String @id @default(cuid())
-  name       String @unique
+  id         String        @id @default(cuid())
+  name       String        @unique
   mealType   String
   weekdays   String
   locationId String?

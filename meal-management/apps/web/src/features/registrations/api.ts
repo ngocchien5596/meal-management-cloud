@@ -20,7 +20,7 @@ export interface MealEvent {
 
 export const registrationApi = {
     getCalendar: async (year: number, month: number) => {
-        const response = await api.get<MealEvent[]>(`/registrations/calendar/${year}/${month}`);
+        const response = await api.get<MealEvent[]>('/registrations', { params: { year, month } });
         return response.data;
     },
 
@@ -33,10 +33,10 @@ export const registrationApi = {
     },
 
     async getServerTime(): Promise<APIResponse<{ serverTime: string; timezone: string }>> {
-        return api.get<{ serverTime: string; timezone: string }>('/config/server-time');
+        return api.get<{ serverTime: string; timezone: string }>('/system/time');
     },
 
     async updateRegistrationLocation(date: string, mealType: 'LUNCH' | 'DINNER', locationId?: string): Promise<APIResponse<any>> {
-        return api.put<any>('/registrations/location', { date, mealType, locationId });
+        return api.patch<any>('/registrations/location', { date, mealType, locationId });
     }
 };

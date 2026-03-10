@@ -12,14 +12,8 @@ router.get('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async 
         const where: any = {};
 
         // Status filter
-        if (status && status !== 'Tất cả trạng thái') {
-            // Map Vietnamese labels to Enum if necessary, or just use the enum directly if passed correctly
-            const statusMap: Record<string, string> = {
-                'Đang diễn ra': 'IN_PROGRESS',
-                'Nháp': 'DRAFT',
-                'Đã kết thúc': 'COMPLETED'
-            };
-            where.status = statusMap[status as string] || status;
+        if (status && status !== 'ALL') {
+            where.status = status;
         }
 
         // Search filter (by Menu Item name)
@@ -136,43 +130,8 @@ router.post('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async
     }
 });
 
-// POST /api/meals/registrations/:id/toggle - Admin toggle registration cancellation
-router.post('/registrations/:id/toggle', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
-    try {
-        const { id } = req.params;
-        const registration = await prisma.registration.findUnique({
-            where: { id },
-            include: { mealEvent: true }
-        });
-
-        if (!registration) {
-            return res.status(404).json({ success: false, error: 'Registration not found' });
-        }
-
-        // Only allow modification if meal is IN_PROGRESS (as per FR-MEAL-004 Checkbox logic) or DRAFT
-        // Actually FR says: "Trạng thái Đang diễn ra: Cho tích checkbox 'Hủy đăng ký'"
-        // So we might restrict it, but for flexibility let's allow it if not COMPLETED
-        if (registration.mealEvent.status === 'COMPLETED') {
-            return res.status(400).json({ success: false, error: 'Cannot modify completed meal' });
-        }
-
-        const updated = await prisma.registration.update({
-            where: { id },
-            data: {
-                isCancelled: !registration.isCancelled,
-                cancelledAt: !registration.isCancelled ? new Date() : null
-            }
-        });
-
-        res.json({ success: true, data: updated });
-    } catch (error) {
-        console.error('Toggle registration error:', error);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
-    }
-});
-
-// GET /api/meals/current - Get current active meal for display board
-router.get('/current', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
+// GET /api/v1/meals/active - Get current active meal for display board
+router.get('/active', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
     try {
         const today = new Date();
         const startOfDay = new Date(today);
@@ -353,17 +312,16 @@ router.get('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), asy
     }
 });
 
-// PATCH /api/meals/:id - Update meal event details
-// PATCH /api/meals/:id - Update meal event details
+// PATCH /api/v1/meals/:id - Update meal event details
 router.patch('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
     try {
         const { id } = req.params;
-        const { mealDate, mealType } = req.body;
+        const { mealDate, mealType, status } = req.body;
 
         // 1. Get current meal to merge missing fields
         const currentMeal = await prisma.mealEvent.findUnique({
             where: { id },
-            select: { mealDate: true, mealType: true }
+            select: { mealDate: true, mealType: true, status: true }
         });
 
         if (!currentMeal) {
@@ -402,6 +360,16 @@ router.patch('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), a
         const updateData: any = {};
         if (mealDate) updateData.mealDate = new Date(mealDate); // Keep strict input for update
         if (mealType) updateData.mealType = mealType;
+        if (status && status !== currentMeal.status) {
+            updateData.status = status;
+            if (status === 'IN_PROGRESS') {
+                updateData.startedAt = new Date();
+                updateData.qrToken = `MEAL-${id}`;
+                updateData.qrGeneratedAt = new Date();
+            } else if (status === 'COMPLETED') {
+                updateData.endedAt = new Date();
+            }
+        }
 
         const meal = await prisma.mealEvent.update({
             where: { id },
@@ -420,44 +388,6 @@ router.patch('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), a
             });
         }
 
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
-    }
-});
-
-// POST /api/meals/:id/start - Start the meal (Status -> IN_PROGRESS)
-router.post('/:id/start', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
-    try {
-        const { id } = req.params;
-        const meal = await prisma.mealEvent.update({
-            where: { id },
-            data: {
-                status: 'IN_PROGRESS',
-                startedAt: new Date(),
-                qrToken: `MEAL-${id}`,
-                qrGeneratedAt: new Date()
-            }
-        });
-        res.json({ success: true, data: meal });
-    } catch (error) {
-        console.error('Start meal error:', error);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
-    }
-});
-
-// POST /api/meals/:id/end - End the meal (Status -> COMPLETED)
-router.post('/:id/end', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
-    try {
-        const { id } = req.params;
-        const meal = await prisma.mealEvent.update({
-            where: { id },
-            data: {
-                status: 'COMPLETED',
-                endedAt: new Date()
-            }
-        });
-        res.json({ success: true, data: meal });
-    } catch (error) {
-        console.error('End meal error:', error);
         res.status(500).json({ success: false, error: 'Internal Server Error' });
     }
 });
@@ -637,34 +567,68 @@ router.patch('/menu-items/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_
 router.post('/:id/guests', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
     try {
         const { id } = req.params;
-        const { fullName, note } = req.body;
+        const { fullName, note, directoryId } = req.body;
+
+        if (!fullName || fullName.trim() === '') {
+            return res.status(400).json({ success: false, error: 'Tên khách mời không được để trống' });
+        }
+
+        const trimmedName = fullName.trim();
+        let finalDirectoryId = directoryId;
+
+        // Quick Add or Auto-link
+        if (!finalDirectoryId) {
+            const guestDir = await prisma.guestDirectory.findFirst({
+                where: { fullName: trimmedName }
+            });
+
+            if (guestDir) {
+                finalDirectoryId = guestDir.id;
+            } else {
+                const newDir = await prisma.guestDirectory.create({
+                    data: {
+                        fullName: trimmedName,
+                        note: note || ''
+                    }
+                });
+                finalDirectoryId = newDir.id;
+            }
+        }
+
         const guest = await prisma.guest.create({
             data: {
                 mealEventId: id,
-                fullName,
+                fullName: trimmedName,
                 note,
+                directoryId: finalDirectoryId,
                 qrToken: `GUEST-${id}-${Date.now()}` // Basic generator, can be improved
-            }
+            },
+            include: { directory: true }
         });
         res.json({ success: true, data: guest });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Create guest error:', error);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
+        res.status(500).json({
+            success: false,
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Lỗi hệ thống khi tạo khách mời'
+        });
     }
 });
 
 router.patch('/guests/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
     try {
         const { id } = req.params;
-        const { fullName, note } = req.body;
+        const { fullName, note, directoryId } = req.body;
 
         const updateData: any = {};
-        if (fullName) updateData.fullName = fullName;
+        if (fullName) updateData.fullName = fullName.trim();
         if (note !== undefined) updateData.note = note;
+        if (directoryId !== undefined) updateData.directoryId = directoryId;
 
         const guest = await prisma.guest.update({
             where: { id },
-            data: updateData
+            data: updateData,
+            include: { directory: true }
         });
         res.json({ success: true, data: guest });
     } catch (error) {

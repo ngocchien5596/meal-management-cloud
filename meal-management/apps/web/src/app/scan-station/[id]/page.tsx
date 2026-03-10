@@ -6,10 +6,11 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils/cn';
 import { useMealDetail } from '@/features/meals/hooks';
-import { useScanEmployee, useScanGuest } from '@/features/checkin/hooks';
+import { useScanEmployee, useScanGuest, useManualCheckin } from '@/features/checkin/hooks';
 import { playCheckinSuccess, playCheckinError } from '@/lib/utils/audio';
 import { Button } from '@/components/ui';
 import { MealDetail } from '@/features/meals/api';
+import toast from 'react-hot-toast';
 
 // --- Minimalism Icons ---
 const HistoryIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
@@ -54,10 +55,14 @@ export default function ScanStationPage() {
 
     const scanEmployee = useScanEmployee();
     const scanGuest = useScanGuest();
+    const manualCheckin = useManualCheckin();
 
     const [recentScans, setRecentScans] = useState<ScanResult[]>([]);
     const [flash, setFlash] = useState<'success' | 'error' | null>(null);
     const [time, setTime] = useState(new Date());
+
+    const [manualCode, setManualCode] = useState('');
+    const [manualSecret, setManualSecret] = useState('');
 
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const containerId = 'scan-station-viewport';
@@ -151,18 +156,47 @@ export default function ScanStationPage() {
             playCheckinError();
             setFlash('error');
 
-            const errorMsg = err?.data?.error || err?.message || 'Lỗi không xác định';
-            const employee = err?.data?.employee;
+            // The underlying hook (useScanGuest / useScanEmployee) already handles the toast.error
+            setTimeout(() => setFlash(null), 800);
+        }
+    };
+
+    const handleManualSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!manualCode || !manualSecret) {
+            toast.error('Vui lòng nhập đầy đủ Mã NV và Mã bí mật');
+            return;
+        }
+        if (flash) return;
+
+        try {
+            const result = await manualCheckin.mutateAsync({
+                mealEventId: id,
+                employeeCode: manualCode,
+                secretCode: manualSecret
+            });
 
             const scanObj: ScanResult = {
                 id: Math.random().toString(36).substr(2, 9),
-                type: 'ERROR',
-                message: errorMsg,
-                employee: employee,
+                type: 'SUCCESS',
+                message: `NV: ${result.data.employee.fullName} check-in thủ công`,
+                employee: result.data.employee,
                 timestamp: new Date()
             };
 
+            playCheckinSuccess();
+            setFlash('success');
             setRecentScans(prev => [scanObj, ...prev].slice(0, 20));
+            setManualCode('');
+            setManualSecret('');
+            setTimeout(() => setFlash(null), 800);
+
+        } catch (err: any) {
+            console.error('Manual check-in error:', err);
+            playCheckinError();
+            setFlash('error');
+
+            // The underlying hook (useManualCheckin) already handles the toast.error
             setTimeout(() => setFlash(null), 800);
         }
     };
@@ -193,8 +227,8 @@ export default function ScanStationPage() {
             <header className="h-20 bg-[#EE0033] flex items-center justify-between px-8 shadow-lg shrink-0">
                 <div className="flex items-center gap-10">
                     <div className="text-white">
-                        <h1 className="text-2xl font-black tracking-tight uppercase leading-none">VIETTEL SCAN STATION</h1>
-                        <p className="text-[11px] font-bold opacity-80 mt-1 uppercase tracking-widest">
+                        {/* <h1 className="text-2xl font-black tracking-tight uppercase leading-none">VIETTEL SCAN STATION</h1> */}
+                        <p className="text-2xl font-black tracking-tight uppercase leading-none">
                             {meal.mealType === 'LUNCH' ? 'Bữa Trưa' : 'Bữa Tối'} • {format(new Date(meal.mealDate), 'dd/MM/yyyy')}
                         </p>
                     </div>
@@ -234,9 +268,45 @@ export default function ScanStationPage() {
                     </div>
                 )}
 
-                {/* Left Panel: Camera Viewport */}
-                <div className="flex-[1.5] relative bg-slate-900 flex items-center justify-center">
-                    <div id={containerId} className="w-full h-full max-w-5xl rounded-3xl overflow-hidden border-2 border-slate-700 shadow-2xl scale-95" />
+                {/* Left Panel: Camera Viewport UI & Form */}
+                <div className="flex-[1.5] relative bg-slate-900 flex flex-col p-6 gap-6">
+
+                    {/* Manual Input Form */}
+                    <form onSubmit={handleManualSubmit} className="relative z-20 w-full max-w-5xl mx-auto bg-slate-800/80 backdrop-blur-md rounded-2xl p-4 border border-slate-700 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 shrink-0 self-start md:self-auto w-full md:w-auto text-white">
+                            <div>
+                                <h3 className="text-sm font-black uppercase tracking-wider">NHẬP MÃ THỦ CÔNG</h3>
+                                <p className="text-[10px] text-slate-400">Dành cho thiết bị hỏng camera</p>
+                            </div>
+                        </div>
+                        <div className="flex-1 flex gap-3 w-full md:max-w-xl">
+                            <input
+                                type="text"
+                                placeholder="Mã NV..."
+                                value={manualCode}
+                                onChange={(e) => setManualCode(e.target.value)}
+                                className="flex-1 min-w-0 h-10 md:h-12 px-4 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#EE0033]/50 focus:border-[#EE0033] uppercase font-mono transition-all text-sm shadow-inner"
+                            />
+                            <input
+                                type="password"
+                                placeholder="Mật mã..."
+                                value={manualSecret}
+                                onChange={(e) => setManualSecret(e.target.value)}
+                                className="flex-1 min-w-0 h-10 md:h-12 px-4 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#EE0033]/50 focus:border-[#EE0033] font-mono transition-all text-sm shadow-inner"
+                            />
+                            <button
+                                type="submit"
+                                disabled={manualCheckin.isPending}
+                                className="h-10 md:h-12 px-4 md:px-6 bg-[#EE0033] hover:bg-[#CC002D] text-white rounded-xl text-sm font-black uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#EE0033]/20 shrink-0 border border-white/10"
+                            >
+                                {manualCheckin.isPending ? "XỬ LÝ..." : "XÁC NHẬN"}
+                            </button>
+                        </div>
+                    </form>
+
+                    <div className="flex-1 w-full max-w-5xl mx-auto rounded-3xl overflow-hidden border-2 border-slate-700 shadow-2xl relative">
+                        <div id={containerId} className="w-full h-full" />
+                    </div>
 
                     {meal.status !== 'IN_PROGRESS' && (
                         <div className="absolute inset-0 bg-slate-900/95 z-40 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
@@ -253,17 +323,11 @@ export default function ScanStationPage() {
                 {/* Right Panel: Audit Feed with Top Stats */}
                 <div className="flex-1 bg-white flex flex-col relative z-20 border-l border-slate-100 shadow-2xl">
                     {/* Stats Panel moved to Top */}
-                    <div className="grid grid-cols-2 gap-4 p-6 bg-slate-50/50 border-b border-slate-100">
+                    <div className="p-6 bg-slate-50/50 border-b border-slate-100">
                         <div className="bg-emerald-500 p-5 rounded-2xl flex flex-col items-center shadow-lg shadow-emerald-500/20">
                             <p className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1">Thành công</p>
                             <p className="text-4xl font-black text-white leading-none">
                                 {recentScans.filter(s => s.type === 'SUCCESS').length}
-                            </p>
-                        </div>
-                        <div className="bg-[#EE0033] p-5 rounded-2xl flex flex-col items-center shadow-lg shadow-rose-500/20">
-                            <p className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1">Thất bại</p>
-                            <p className="text-4xl font-black text-white leading-none">
-                                {recentScans.filter(s => s.type === 'ERROR').length}
                             </p>
                         </div>
                     </div>

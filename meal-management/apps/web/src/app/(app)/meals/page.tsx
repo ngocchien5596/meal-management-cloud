@@ -204,7 +204,7 @@ export default function MealManagementPage() {
     const [startDateFilter, setStartDateFilter] = useState<string>(initialRange.start);
     const [endDateFilter, setEndDateFilter] = useState<string>(initialRange.end);
     const [searchTerm, setSearchTerm] = useState<string>('');
-    const [statusFilter, setStatusFilter] = useState<string>('Tất cả trạng thái');
+    const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
     // Construct local range for filter
     const range = React.useMemo(() => {
@@ -352,10 +352,10 @@ export default function MealManagementPage() {
                                 onChange={(e) => setStatusFilter(e.target.value)}
                                 className="h-10 pl-3 pr-8 bg-white border border-vtborder rounded-lg text-sm font-medium text-vttext-secondary focus:outline-none focus:ring-2 focus:ring-focus focus:border-brand appearance-none min-w-[150px]"
                             >
-                                <option>Tất cả trạng thái</option>
-                                <option>Đang diễn ra</option>
-                                <option>Nháp</option>
-                                <option>Đã kết thúc</option>
+                                <option value="ALL">Tất cả trạng thái</option>
+                                <option value="IN_PROGRESS">Đang diễn ra</option>
+                                <option value="DRAFT">Nháp</option>
+                                <option value="COMPLETED">Đã kết thúc</option>
                             </select>
                             <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
                                 <ChevronDown className="w-3 h-3 text-gray-400" />

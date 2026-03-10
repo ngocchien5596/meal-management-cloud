@@ -166,7 +166,7 @@ export const useUpdateGuest = () => {
 export const useToggleRegistration = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id }: { id: string }) => mealsApi.toggleRegistration(id),
+        mutationFn: ({ id, isCancelled }: { id: string; isCancelled: boolean }) => mealsApi.toggleRegistration(id, isCancelled),
         onSuccess: (_, { id }) => {
             queryClient.invalidateQueries({ queryKey: ['meal'] }); // Invalidate specific meal detail
             queryClient.invalidateQueries({ queryKey: ['registrations'] }); // Invalidate global calendar/summaries

@@ -18,14 +18,14 @@ export interface CheckinLog {
 
 export const checkinApi = {
     manualCheckin: (data: { mealEventId: string; employeeCode: string; secretCode: string }) =>
-        api.post<CheckinLog>('/checkin/manual', data),
+        api.post<CheckinLog>('/checkins', { ...data, method: 'MANUAL' }),
 
     scanEmployee: (data: { mealEventId: string; employeeId: string }) =>
-        api.post<CheckinLog>('/checkin/scan-employee', data),
+        api.post<CheckinLog>('/checkins', { ...data, method: 'QR_SCAN' }),
 
     scanGuest: (data: { mealEventId: string; guestId: string }) =>
-        api.post<CheckinLog>('/checkin/scan-guest', data),
+        api.post<CheckinLog>('/checkins', { ...data, method: 'QR_SCAN' }),
 
     selfScan: (data: { qrToken: string }) =>
-        api.post<CheckinLog & { meal?: { mealType: string; mealDate: string } }>('/checkin/self-scan', data),
+        api.post<CheckinLog & { meal?: { mealType: string; mealDate: string } }>('/checkins', { ...data, method: 'SELF_SCAN' }),
 };
