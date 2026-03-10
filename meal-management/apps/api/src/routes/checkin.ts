@@ -260,13 +260,29 @@ router.post('/self-scan', authenticate, async (req: AuthRequest, res) => {
             return res.status(401).json({ success: false, error: 'Không tìm thấy thông tin nhân viên đăng nhập' });
         }
 
-        // 1. Find Meal by QR Token & Check Status
-        const meal = await prisma.mealEvent.findUnique({
+        // 1. Find Meal by QR Token or Lazy Token (MEAL-id)
+        let meal = await prisma.mealEvent.findUnique({
             where: { qrToken }
         });
 
-        if (!meal || meal.status !== 'IN_PROGRESS') {
-            return res.status(400).json({ success: false, error: 'Mã QR không hợp lệ hoặc bữa ăn đã kết thúc' });
+        if (!meal && qrToken.startsWith('MEAL-')) {
+            const potentialId = qrToken.replace('MEAL-', '');
+            meal = await prisma.mealEvent.findUnique({ where: { id: potentialId } });
+        }
+
+        if (!meal) {
+            return res.status(400).json({ success: false, error: 'Mã QR không hợp lệ hoặc bữa ăn đã bị hủy' });
+        }
+
+        // Allow check-in if the meal is for TODAY (even if DRAFT/PREPARING) OR if it is actively IN_PROGRESS.
+        const now = new Date();
+        const mealDate = new Date(meal.mealDate);
+        const isToday = mealDate.getFullYear() === now.getFullYear() &&
+            mealDate.getMonth() === now.getMonth() &&
+            mealDate.getDate() === now.getDate();
+
+        if (meal.status !== 'IN_PROGRESS' && meal.status !== 'COMPLETED' && !isToday) {
+            return res.status(400).json({ success: false, error: 'Chỉ có thể quét mã điểm danh sớm cho các bữa ăn trong ngày hôm nay' });
         }
 
         const mealEventId = meal.id;

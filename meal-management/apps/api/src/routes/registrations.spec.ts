@@ -28,16 +28,16 @@ vi.mock('../lib/prisma.js', () => ({
 
 describe('Registrations Logic', () => {
     describe('canModify', () => {
-        it('should return false for past dates', () => {
+        it('should return false for past dates', async () => {
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
-            expect(canModify(yesterday)).toBe(false);
+            expect(await canModify(yesterday)).toBe(false);
         });
 
-        it('should return true for future dates (3 days later)', () => {
+        it('should return true for future dates (3 days later)', async () => {
             const future = new Date();
             future.setDate(future.getDate() + 3);
-            expect(canModify(future)).toBe(true);
+            expect(await canModify(future)).toBe(true);
         });
     });
 

@@ -79,27 +79,43 @@ async function main() {
 
     console.log('✅ System config created');
 
+    // Create locations
+    const locations = await Promise.all([
+        prisma.mealLocation.upsert({
+            where: { name: 'Nhà ăn' },
+            update: {},
+            create: { name: 'Nhà ăn', isDefault: true },
+        }),
+        prisma.mealLocation.upsert({
+            where: { name: 'Văn phòng' },
+            update: {},
+            create: { name: 'Văn phòng', isDefault: false },
+        }),
+    ]);
+
+    console.log('✅ Meal locations created');
+
     // Create presets
     await Promise.all([
         prisma.registrationPreset.upsert({
             where: { name: 'Hành chính – Trưa' },
             update: {},
-            create: { name: 'Hành chính – Trưa', mealType: 'LUNCH', weekdays: '1,2,3,4,5' },
+            create: { name: 'Hành chính – Trưa', mealType: 'LUNCH', weekdays: '1,2,3,4,5', locationId: locations[0].id },
         }),
         prisma.registrationPreset.upsert({
             where: { name: 'Hành chính – Trưa+Tối' },
             update: {},
-            create: { name: 'Hành chính – Trưa+Tối', mealType: 'LUNCH,DINNER', weekdays: '1,2,3,4,5' },
+            create: { name: 'Hành chính – Trưa+Tối', mealType: 'LUNCH,DINNER', weekdays: '1,2,3,4,5', locationId: locations[0].id },
         }),
         prisma.registrationPreset.upsert({
             where: { name: 'Full tháng – Trưa' },
             update: {},
-            create: { name: 'Full tháng – Trưa', mealType: 'LUNCH', weekdays: '0,1,2,3,4,5,6' },
+            create: { name: 'Full tháng – Trưa', mealType: 'LUNCH', weekdays: '0,1,2,3,4,5,6', locationId: locations[0].id },
         }),
         prisma.registrationPreset.upsert({
             where: { name: 'Full tháng – Trưa+Tối' },
             update: {},
-            create: { name: 'Full tháng – Trưa+Tối', mealType: 'LUNCH,DINNER', weekdays: '0,1,2,3,4,5,6' },
+            create: { name: 'Full tháng – Trưa+Tối', mealType: 'LUNCH,DINNER', weekdays: '0,1,2,3,4,5,6', locationId: locations[0].id },
         }),
     ]);
 

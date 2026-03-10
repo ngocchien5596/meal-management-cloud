@@ -81,6 +81,7 @@ model Registration {
   id          String    @id @default(cuid())
   mealEventId String
   employeeId  String
+  locationId  String?
   isCancelled Boolean   @default(false)
   cancelledBy String?
   cancelledAt DateTime?
@@ -88,6 +89,8 @@ model Registration {
   updatedAt   DateTime  @updatedAt
   employee    Employee  @relation(fields: [employeeId], references: [id])
   mealEvent   MealEvent @relation(fields: [mealEventId], references: [id])
+  location    MealLocation? @relation(fields: [locationId], references: [id])
+  checkin     CheckinLog?
 
   @@unique([mealEventId, employeeId])
 }
@@ -102,6 +105,7 @@ model CheckinLog {
   employee    Employee?     @relation(fields: [employeeId], references: [id])
   guest       Guest?        @relation(fields: [guestId], references: [id])
   mealEvent   MealEvent     @relation(fields: [mealEventId], references: [id])
+  registration Registration? @relation(fields: [mealEventId, employeeId], references: [mealEventId, employeeId])
 
   @@unique([mealEventId, employeeId])
   @@unique([mealEventId, guestId])
@@ -168,10 +172,22 @@ model SystemConfig {
 }
 
 model RegistrationPreset {
-  id       String @id @default(cuid())
-  name     String @unique
-  mealType String
-  weekdays String
+  id         String @id @default(cuid())
+  name       String @unique
+  mealType   String
+  weekdays   String
+  locationId String?
+  location   MealLocation? @relation(fields: [locationId], references: [id])
+}
+
+model MealLocation {
+  id                  String               @id @default(cuid())
+  name                String               @unique
+  isDefault           Boolean              @default(false)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  registrations       Registration[]
+  registrationPresets RegistrationPreset[]
 }
 
 model MealReview {

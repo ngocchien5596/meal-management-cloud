@@ -66,13 +66,38 @@ router.put('/:key', authenticate, authorize('ADMIN_SYSTEM'), async (req: AuthReq
 // GET /api/config/presets - Get registration presets
 router.get('/presets', authenticate, async (req, res, next) => {
     try {
-        const presets = await prisma.registrationPreset.findMany();
+        const presets = await prisma.registrationPreset.findMany({
+            include: { location: true }
+        });
 
         res.json({
             success: true,
             data: presets,
         });
     } catch (error) {
+        next(error);
+    }
+});
+
+// PUT /api/config/presets/:id - Update registration preset
+router.put('/presets/:id', authenticate, authorize('ADMIN_SYSTEM'), async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { locationId } = req.body;
+
+        const preset = await prisma.registrationPreset.update({
+            where: { id },
+            data: { locationId },
+            include: { location: true }
+        });
+
+        res.json({
+            success: true,
+            data: preset,
+            message: 'Cập nhật mẫu đăng ký thành công',
+        });
+    } catch (error) {
+        // e.g. record not found
         next(error);
     }
 });

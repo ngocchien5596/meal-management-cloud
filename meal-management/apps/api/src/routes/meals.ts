@@ -203,12 +203,14 @@ router.get('/current', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'),
                 checkins: {
                     include: {
                         employee: { select: { fullName: true, employeeCode: true } },
-                        guest: { select: { fullName: true } }
+                        guest: { select: { fullName: true } },
+                        registration: { include: { location: true } }
                     },
                     orderBy: { checkinTime: 'desc' }
                 },
                 registrations: {
                     include: {
+                        location: true,
                         employee: {
                             include: { department: true, position: true }
                         }
@@ -241,12 +243,14 @@ router.get('/current', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'),
                     checkins: {
                         include: {
                             employee: { select: { fullName: true, employeeCode: true } },
-                            guest: { select: { fullName: true } }
+                            guest: { select: { fullName: true } },
+                            registration: { include: { location: true } }
                         },
                         orderBy: { checkinTime: 'desc' }
                     },
                     registrations: {
                         include: {
+                            location: true,
                             employee: {
                                 include: { department: true, position: true }
                             }
@@ -311,7 +315,8 @@ router.get('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), asy
                             select: {
                                 fullName: true
                             }
-                        }
+                        },
+                        registration: { include: { location: true } }
                     },
                     orderBy: {
                         checkinTime: 'desc'
@@ -320,6 +325,7 @@ router.get('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), asy
                 registrations: {
                     // Fetch all registrations so we can manage cancellations in IN_PROGRESS mode
                     include: {
+                        location: true,
                         employee: {
                             include: {
                                 department: true,
@@ -427,7 +433,7 @@ router.post('/:id/start', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM
             data: {
                 status: 'IN_PROGRESS',
                 startedAt: new Date(),
-                qrToken: `MEAL-${id}-${Date.now()}`,
+                qrToken: `MEAL-${id}`,
                 qrGeneratedAt: new Date()
             }
         });
