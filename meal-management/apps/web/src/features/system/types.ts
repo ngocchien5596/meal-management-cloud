@@ -5,8 +5,14 @@ export interface SystemConfig {
 export interface RegistrationPreset {
     id: string;
     name: string;
-    mealType: string;
-    weekdays: string;
+    description: string;
+    presetType: string;
+    mealType: 'LUNCH' | 'DINNER' | 'BOTH';
+    locationId?: string | null;
+    location?: {
+        id: string;
+        name: string;
+    } | null;
 }
 
 export interface Department {
@@ -34,4 +40,10 @@ export interface MealPriceConfig {
     endDate: string | null;
     createdAt: string;
     updatedAt: string;
+}
+
+export interface MealLocation {
+    id: string;
+    name: string;
+    isDefault: boolean;
 }

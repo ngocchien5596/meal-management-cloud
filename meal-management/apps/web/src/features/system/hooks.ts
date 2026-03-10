@@ -22,8 +22,20 @@ export const useUpdateSystemConfig = () => {
 
 export const useRegistrationPresets = () => {
     return useQuery({
-        queryKey: ['registration-presets'],
+        queryKey: ['registration-presets'], // Assuming systemKeys is not defined, keeping original queryKey
         queryFn: systemApi.getPresets,
+        // staleTime: Infinity, // Not adding staleTime as it was not explicitly requested for this hook, only shown in example
+    });
+};
+
+export const useUpdateRegistrationPreset = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string, data: { locationId?: string | null } }) => systemApi.updatePreset(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['registration-presets'] }); // Assuming systemKeys is not defined, using original queryKey
+        },
     });
 };
 
@@ -118,5 +130,12 @@ export const useUpdatePrice = () => {
             queryClient.invalidateQueries({ queryKey: ['prices'] });
             queryClient.invalidateQueries({ queryKey: ['system-config'] });
         },
+    });
+};
+
+export const useLocations = () => {
+    return useQuery({
+        queryKey: ['locations'],
+        queryFn: systemApi.getLocations,
     });
 };

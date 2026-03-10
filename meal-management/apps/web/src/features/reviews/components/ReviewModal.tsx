@@ -326,7 +326,7 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
                         isLoading={createReview.isPending || isUploading || isCompressing}
                         className="rounded-xl h-11 px-8 font-bold bg-brand hover:bg-brand-hover text-white shadow-lg shadow-brand/20 transition-all active:scale-95"
                     >
-                        Gửi phản hồi ngay
+                        Gửi đánh giá
                     </Button>
                 </div>
                 {/* Extra spacer for mobile Safari address bar */}

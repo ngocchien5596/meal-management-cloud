@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils/cn';
-import { Users, DollarSign, Clock, Building2, Briefcase } from 'lucide-react';
+import { Users, DollarSign, Clock, Building2, Briefcase, MapPin } from 'lucide-react';
 
 const tabs = [
     {
@@ -31,6 +31,11 @@ const tabs = [
         name: 'Chức vụ',
         href: '/config/positions',
         icon: Briefcase
+    },
+    {
+        name: 'Địa điểm ăn',
+        href: '/config/locations',
+        icon: MapPin
     }
 ];
 

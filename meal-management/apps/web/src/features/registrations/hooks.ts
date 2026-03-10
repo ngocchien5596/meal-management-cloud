@@ -13,8 +13,8 @@ export const useToggleRegistration = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ date, mealType }: { date: string; mealType: 'LUNCH' | 'DINNER' }) =>
-            registrationApi.toggleRegistration(date, mealType),
+        mutationFn: ({ date, mealType, locationId }: { date: string; mealType: 'LUNCH' | 'DINNER', locationId?: string }) =>
+            registrationApi.toggleRegistration(date, mealType, locationId),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['registrations'] });
             const message = data.message || data.data?.message || 'Thao tác thành công';
@@ -32,8 +32,8 @@ export const useApplyPreset = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ presetId, year, month }: { presetId: string; year: number; month: number }) =>
-            registrationApi.applyPreset(presetId, year, month),
+        mutationFn: ({ presetId, year, month, locationId }: { presetId: string; year: number; month: number, locationId?: string }) =>
+            registrationApi.applyPreset(presetId, year, month, locationId),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['registrations'] });
             const message = data.message || data.data?.message || 'Áp dụng mẫu thành công';
@@ -46,3 +46,22 @@ export const useApplyPreset = () => {
         }
     });
 };
+
+export const useUpdateRegistrationLocation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ date, mealType, locationId }: { date: string; mealType: 'LUNCH' | 'DINNER', locationId?: string }) =>
+            registrationApi.updateRegistrationLocation(date, mealType, locationId),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['registrations'] });
+            const message = data.message || data.data?.message || 'Cập nhật địa điểm thành công';
+            toast.success(message);
+        },
+        onError: (error: any) => {
+            const msg = error.error?.message || error.message || (typeof error === 'string' ? error : 'Lỗi không xác định');
+            toast.error(msg);
+        }
+    });
+};
+

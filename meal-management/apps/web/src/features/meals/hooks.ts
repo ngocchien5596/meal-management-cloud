@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { io } from 'socket.io-client';
 import { mealsApi, MealDetail } from './api';
 
 export const useMeals = (startDate?: string, endDate?: string, search?: string, status?: string) => {
@@ -246,4 +248,30 @@ export const useDeleteMenuCatalogItem = () => {
             queryClient.invalidateQueries({ queryKey: ['menu-catalog'] });
         },
     });
+};
+
+export const useMealSocket = (mealEventId: string) => {
+    const queryClient = useQueryClient();
+
+    useEffect(() => {
+        if (!mealEventId) return;
+
+        const url = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:6000';
+        const socket = io(url);
+
+        socket.on('connect', () => {
+            socket.emit('join-meal', mealEventId);
+        });
+
+        socket.on('new-checkin', (checkin) => {
+            // Invalidate both specific meal detail and the generic 'current' meal queries
+            queryClient.invalidateQueries({ queryKey: ['meal', mealEventId] });
+            queryClient.invalidateQueries({ queryKey: ['meal', 'current'] });
+        });
+
+        return () => {
+            socket.emit('leave-meal', mealEventId);
+            socket.disconnect();
+        };
+    }, [mealEventId, queryClient]);
 };

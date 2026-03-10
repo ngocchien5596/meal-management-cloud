@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { MealDetail, MealEvent, MealReview } from '@/features/meals/api';
-import { useCurrentMeal, useMeals } from '@/features/meals/hooks';
+import { useCurrentMeal, useMeals, useMealSocket } from '@/features/meals/hooks';
 import clsx from 'clsx';
 import { ImagePreviewModal } from '@/features/reviews/components/ImagePreviewModal';
 import * as QRCode from 'qrcode';
@@ -94,6 +94,9 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
     const { data: allMeals } = useMeals();
 
     const currentMeal = (propCurrentMeal || fetchedMealRes) as MealDetail | null;
+
+    // Activate Realtime Socket Checkins
+    useMealSocket(currentMeal?.id || '');
 
     // Helper to get today and tomorrow meals from fetched list
     const getMealsByDate = (date: Date) => {
@@ -409,7 +412,7 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
 
                         {/* 4.1: TÌNH HÌNH CHECK-IN */}
                         <div className="bg-white rounded-lg border border-[#e5e7eb] shadow-xs p-5 flex flex-col gap-4 min-h-[140px] justify-center">
-                            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider text-center">TÌNH HÌNH CHECK-IN</h2>
+                            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider text-center">TIẾN ĐỘ CHECK-IN</h2>
                             <div className="flex justify-between items-end">
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-6xl font-bold text-[#E11D2E]">{totalCheckins}</span>
@@ -442,21 +445,25 @@ export const CanteenBoardContent: React.FC<CanteenBoardContentProps> = ({
                             </div>
                             <div className="flex flex-col flex-1 overflow-hidden">
                                 <div className="grid grid-cols-12 bg-[#f8fafc] px-4 py-3 border-b border-[#f1f5f9]">
-                                    <div className="col-span-12 text-sm font-bold text-slate-400 uppercase text-center mb-1">Tình hình check-in</div>
-                                    <div className="col-span-5 text-sm font-bold text-slate-400 uppercase">NHÂN VIÊN</div>
-                                    <div className="col-span-4 text-sm font-bold text-slate-400 uppercase text-center">MNV/LOẠI</div>
-                                    <div className="col-span-3 text-sm font-bold text-slate-400 uppercase text-right">GIỜ</div>
+                                    {/* <div className="col-span-12 text-sm font-bold text-slate-400 uppercase text-center mb-1">Tình hình check-in</div> */}
+                                    <div className="col-span-4 text-sm font-bold text-slate-400 uppercase">NHÂN VIÊN</div>
+                                    <div className="col-span-3 text-sm font-bold text-slate-400 uppercase text-center">MNV/LOẠI</div>
+                                    <div className="col-span-3 text-sm font-bold text-slate-400 uppercase">ĐỊA ĐIỂM</div>
+                                    <div className="col-span-2 text-sm font-bold text-slate-400 uppercase text-right">GIỜ</div>
                                 </div>
                                 <div className="divide-y divide-[#f1f5f9] overflow-y-auto flex-1 custom-scrollbar">
                                     {recentHistory.length > 0 ? recentHistory.map((checkin, idx) => (
                                         <div key={idx} className="grid grid-cols-12 px-4 py-4 animate-in fade-in slide-in-from-right duration-500 text-lg font-black hover:bg-slate-50 transition-colors">
-                                            <div className="col-span-5 text-[#334155] uppercase truncate pr-2">
+                                            <div className="col-span-4 text-[#334155] uppercase truncate pr-2">
                                                 {checkin.employee?.fullName || checkin.guest?.fullName || 'Khách'}
                                             </div>
-                                            <div className="col-span-4 text-center text-slate-400 uppercase underline decoration-red-200 underline-offset-4">
+                                            <div className="col-span-3 text-center text-slate-400 uppercase underline decoration-red-200 underline-offset-4">
                                                 {checkin.employee?.employeeCode || 'Khách'}
                                             </div>
-                                            <div className="col-span-3 text-right tabular-nums text-[#1e293b] font-black">
+                                            <div className="col-span-3 text-blue-600 truncate">
+                                                {checkin.registration?.location?.name || 'Nhà ăn'}
+                                            </div>
+                                            <div className="col-span-2 text-right tabular-nums text-[#1e293b] font-black">
                                                 {format(new Date(checkin.checkinTime), 'HH:mm:ss')}
                                             </div>
                                         </div>

@@ -9,6 +9,25 @@ import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils/cn';
 
+// --- Sub-component: Live Clock ---
+const LiveClock = () => {
+    const [time, setTime] = useState(new Date());
+
+    useEffect(() => {
+        const timer = setInterval(() => setTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    return (
+        <div className="flex items-center justify-center gap-1.5 px-4 py-1.5 bg-brand-soft/50 rounded-full border border-brand-soft">
+            <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />
+            <span className="text-xs font-black text-brand tracking-widest tabular-nums font-mono">
+                {format(time, 'HH:mm:ss')}
+            </span>
+        </div>
+    );
+};
+
 interface SelfScanModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -315,9 +334,12 @@ export function SelfScanModal({ isOpen, onClose }: SelfScanModalProps) {
                     </h4>
 
                     {/* UPDATED: Timestamp with Date */}
-                    <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-6 px-4 py-1 bg-emerald-50 rounded-full">
-                        Ghi nhận lúc: {formatDateSafe(successData.checkinTime, 'HH:mm:ss - dd/MM/yyyy')}
-                    </p>
+                    <div className="flex flex-col items-center gap-2 mb-6">
+                        <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest px-4 py-1 bg-emerald-50 rounded-full">
+                            Ghi nhận lúc: {formatDateSafe(successData.checkinTime, 'HH:mm:ss - dd/MM/yyyy')}
+                        </p>
+                        <LiveClock />
+                    </div>
 
                     <div className="w-full bg-slate-50 rounded-2xl p-5 border-2 border-dashed border-slate-200 relative overflow-hidden">
                         <div className="space-y-4">

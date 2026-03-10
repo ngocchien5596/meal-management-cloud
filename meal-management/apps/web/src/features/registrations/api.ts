@@ -15,6 +15,7 @@ export interface MealEvent {
     registrations: any[];
     checkins: any[];
     menuItems: MenuItem[];
+    qrToken?: string;
 }
 
 export const registrationApi = {
@@ -23,15 +24,19 @@ export const registrationApi = {
         return response.data;
     },
 
-    async toggleRegistration(date: string, mealType: 'LUNCH' | 'DINNER'): Promise<APIResponse<any>> {
-        return api.post<any>('/registrations', { date, mealType });
+    async toggleRegistration(date: string, mealType: 'LUNCH' | 'DINNER', locationId?: string): Promise<APIResponse<any>> {
+        return api.post<any>('/registrations', { date, mealType, locationId });
     },
 
-    async applyPreset(presetId: string, year: number, month: number): Promise<APIResponse<any>> {
-        return api.post<any>('/registrations/preset', { presetId, year, month });
+    async applyPreset(presetId: string, year: number, month: number, locationId?: string): Promise<APIResponse<any>> {
+        return api.post<any>('/registrations/preset', { presetId, year, month, locationId });
     },
 
     async getServerTime(): Promise<APIResponse<{ serverTime: string; timezone: string }>> {
         return api.get<{ serverTime: string; timezone: string }>('/config/server-time');
+    },
+
+    async updateRegistrationLocation(date: string, mealType: 'LUNCH' | 'DINNER', locationId?: string): Promise<APIResponse<any>> {
+        return api.put<any>('/registrations/location', { date, mealType, locationId });
     }
 };

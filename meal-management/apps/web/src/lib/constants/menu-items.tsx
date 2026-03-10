@@ -70,6 +70,13 @@ export const BriefcaseIcon = ({ className = "w-[18px] h-[18px]" }: { className?:
     </svg>
 );
 
+export const MapPinIcon = ({ className = "w-[18px] h-[18px]" }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+        <circle cx="12" cy="10" r="3" />
+    </svg>
+);
+
 export const QRCodeIcon = ({ className = "w-[18px] h-[18px]" }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="7" height="7" />
@@ -167,10 +174,11 @@ export const menuItems: MenuItem[] = [
             { key: 'config-accounts', label: 'Cấp tài khoản', href: '/config/accounts', icon: IdCardIcon },
             { key: 'config-prices', label: 'Lịch sử giá', href: '/config/prices', icon: DollarIcon },
             { key: 'config-deadline', label: 'Giờ chốt', href: '/config/deadline', icon: ClockIcon },
-            { key: 'config-ingredients', label: 'Từ điển nguyên liệu', href: '/config/ingredients', icon: PackageIcon },
-            { key: 'config-menu-items', label: 'Thực đơn mẫu', href: '/config/menu-items', icon: UtensilsIcon },
+            { key: 'config-ingredients', label: 'Danh mục nguyên liệu', href: '/config/ingredients', icon: PackageIcon },
+            { key: 'config-menu-items', label: 'Danh mục món ăn', href: '/config/menu-items', icon: UtensilsIcon },
             { key: 'config-departments', label: 'Phòng ban', href: '/config/departments', icon: BuildingIcon },
             { key: 'config-positions', label: 'Chức vụ', href: '/config/positions', icon: BriefcaseIcon },
+            { key: 'config-locations', label: 'Địa điểm ăn', href: '/config/locations', icon: MapPinIcon },
         ]
     },
     { key: 'myqr', label: 'Mã QR của tôi', href: '/my-qr', icon: QRCodeIcon },

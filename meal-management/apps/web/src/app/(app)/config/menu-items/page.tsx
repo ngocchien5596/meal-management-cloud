@@ -57,7 +57,7 @@ function CatalogForm({ onSuccess, initialData }: CatalogFormProps) {
                 className="w-full shadow-xl shadow-blue-200"
                 disabled={isLoading}
             >
-                {isLoading ? 'ĐANG LƯU...' : (isEditing ? 'CẬP NHẬT' : 'THÊM VÀO THỰC ĐƠN MẪU')}
+                {isLoading ? 'ĐANG LƯU...' : (isEditing ? 'CẬP NHẬT' : 'THÊM VÀO Danh mục món ăn')}
             </Button>
         </form>
     );
@@ -105,7 +105,7 @@ export default function MenuCatalogPage() {
                         <BookOpen className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black text-slate-900 leading-none">Thực đơn mẫu</h1>
+                        <h1 className="text-2xl font-black text-slate-900 leading-none">Danh mục món ăn</h1>
                         <p className="text-sm text-slate-500 mt-1.5 font-medium">Quản lý danh mục Món ăn chuẩn cho toàn hệ thống</p>
                     </div>
                 </div>
@@ -151,7 +151,7 @@ export default function MenuCatalogPage() {
                             ) : items.length === 0 ? (
                                 <tr>
                                     <td colSpan={3} className="py-20 text-center text-slate-400 font-bold italic">
-                                        Chưa có món ăn nào trong thực đơn mẫu.
+                                        Chưa có món ăn nào trong Danh mục món ăn.
                                     </td>
                                 </tr>
                             ) : (
@@ -199,7 +199,7 @@ export default function MenuCatalogPage() {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={editingItem ? "Sửa món ăn mẫu" : "Thêm vào thực đơn mẫu"}
+                title={editingItem ? "Sửa món ăn mẫu" : "Thêm vào Danh mục món ăn"}
             >
                 <CatalogForm
                     onSuccess={() => setIsModalOpen(false)}
@@ -211,7 +211,7 @@ export default function MenuCatalogPage() {
                 isOpen={!!deleteId}
                 onClose={() => setDeleteId(null)}
                 onConfirm={handleDelete}
-                title="Xóa khỏi thực đơn mẫu?"
+                title="Xóa khỏi Danh mục món ăn?"
                 description="Bạn có chắc muốn xóa món ăn này? Thao tác này có thể bị chặn nếu món ăn đang được sử dụng trong thực tế."
                 type="danger"
             />

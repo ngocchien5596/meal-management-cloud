@@ -17,6 +17,11 @@ export const systemApi = {
         return response.data;
     },
 
+    updatePreset: async (id: string, data: { locationId?: string | null }) => {
+        const response = await api.put<RegistrationPreset>(`/config/presets/${id}`, data);
+        return response.data;
+    },
+
     getDepartments: async () => {
         const response = await api.get<Department[]>('/config/departments');
         return response.data;
@@ -69,6 +74,11 @@ export const systemApi = {
 
     updatePrice: async (id: string, data: { price?: number; startDate?: string }) => {
         const response = await api.put<any>(`/prices/${id}`, data);
+        return response.data;
+    },
+
+    getLocations: async () => {
+        const response = await api.get<any[]>('/locations');
         return response.data;
     },
 };

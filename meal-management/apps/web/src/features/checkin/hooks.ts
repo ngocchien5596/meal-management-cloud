@@ -12,10 +12,10 @@ export const useManualCheckin = () => {
                 const msg = employee
                     ? `[NV: ${employee.employeeCode} - ${employee.fullName}] điểm danh thành công!`
                     : 'Check-in thành công!';
-                toast.success(msg);
+                toast.success(msg, { duration: 5000 });
                 queryClient.invalidateQueries({ queryKey: ['meal', variables.mealEventId] });
             } else {
-                toast.error(response.error || 'Check-in thất bại');
+                toast.error(response.error || 'Check-in thất bại', { duration: 5000 });
             }
         },
         onError: (err: any) => {
@@ -27,7 +27,7 @@ export const useManualCheckin = () => {
                 ? `[NV: ${employee.employeeCode} - ${employee.fullName}] ${baseError.toLowerCase()}`
                 : baseError;
 
-            toast.error(message);
+            toast.error(message, { duration: 5000 });
         }
     });
 };
@@ -42,10 +42,10 @@ export const useScanEmployee = () => {
                 const msg = employee
                     ? `[NV: ${employee.employeeCode} - ${employee.fullName}] quét mã thành công!`
                     : 'Quét mã thành công!';
-                toast.success(msg);
+                toast.success(msg, { duration: 5000 });
                 queryClient.invalidateQueries({ queryKey: ['meal', variables.mealEventId] });
             } else {
-                toast.error(response.error || 'Quét mã thất bại');
+                toast.error(response.error || 'Quét mã thất bại', { duration: 5000 });
             }
         },
         onError: (err: any) => {
@@ -57,7 +57,7 @@ export const useScanEmployee = () => {
                 ? `[NV: ${employee.employeeCode} - ${employee.fullName}] ${baseError.toLowerCase()}`
                 : baseError;
 
-            toast.error(message);
+            toast.error(message, { duration: 5000 });
         }
     });
 };
@@ -72,10 +72,10 @@ export const useScanGuest = () => {
                 const msg = guest
                     ? `[Khách: ${guest.fullName}] quét mã thành công!`
                     : 'Khách quét mã thành công!';
-                toast.success(msg);
+                toast.success(msg, { duration: 5000 });
                 queryClient.invalidateQueries({ queryKey: ['meal', variables.mealEventId] });
             } else {
-                toast.error(response.error || 'Quét mã khách thất bại');
+                toast.error(response.error || 'Quét mã khách thất bại', { duration: 5000 });
             }
         },
         onError: (err: any) => {
@@ -86,7 +86,7 @@ export const useScanGuest = () => {
                 ? `[Khách: ${guest.fullName}] ${baseError.toLowerCase()}`
                 : baseError;
 
-            toast.error(message);
+            toast.error(message, { duration: 5000 });
         }
     });
 };

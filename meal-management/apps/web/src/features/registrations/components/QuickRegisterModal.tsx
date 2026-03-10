@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
@@ -14,19 +16,35 @@ const PRESETS = [
     { id: '4', name: 'Full tháng – Trưa+Tối', desc: 'Đăng ký cả ngày tất cả các ngày', icon: '🔥' },
 ];
 
+export interface MealLocation {
+    id: string;
+    name: string;
+    isDefault: boolean;
+}
+
 interface QuickRegisterModalProps {
     year: number;
     month: number;
     isOpen: boolean;
     onClose: () => void;
+    locations: MealLocation[];
 }
 
-export const QuickRegisterModal = ({ year, month, isOpen, onClose }: QuickRegisterModalProps) => {
+export const QuickRegisterModal = ({ year, month, isOpen, onClose, locations }: QuickRegisterModalProps) => {
     const applyPreset = useApplyPreset();
+    const defaultLocationId = locations.find(l => l.isDefault)?.id || locations[0]?.id || '';
+    const [selectedLocationId, setSelectedLocationId] = React.useState<string>(defaultLocationId);
+
+    // Update state when modal opens or locations change
+    React.useEffect(() => {
+        if (isOpen && !selectedLocationId) {
+            setSelectedLocationId(defaultLocationId);
+        }
+    }, [isOpen, locations, defaultLocationId]);
 
     const handleApply = async (presetId: string) => {
         try {
-            await applyPreset.mutateAsync({ presetId, year, month });
+            await applyPreset.mutateAsync({ presetId, year, month, locationId: selectedLocationId });
             onClose();
         } catch (err) {
             // Error handled by hook toast
@@ -51,6 +69,20 @@ export const QuickRegisterModal = ({ year, month, isOpen, onClose }: QuickRegist
                         <button onClick={onClose} className="p-2 rounded-xl hover:bg-white transition-colors text-slate-400">
                             <X className="w-5 h-5" />
                         </button>
+                    </div>
+
+                    <div className="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between">
+                        <label className="text-sm font-bold text-slate-700">Điểm ăn mặc định</label>
+                        <select
+                            className="text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 min-w-[150px] font-medium"
+                            value={selectedLocationId}
+                            onChange={(e) => setSelectedLocationId(e.target.value)}
+                        >
+                            <option value="">(Không chọn)</option>
+                            {locations.map(loc => (
+                                <option key={loc.id} value={loc.id}>{loc.name}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="p-6 grid gap-3">

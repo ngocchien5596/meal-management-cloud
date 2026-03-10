@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils/cn';
-import { useMealDetail, useStartMeal, useEndMeal } from '@/features/meals/hooks';
+import { useMealDetail, useStartMeal, useEndMeal, useMealSocket } from '@/features/meals/hooks';
 import { useManualCheckin, useScanEmployee, useScanGuest } from '@/features/checkin/hooks';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -121,6 +121,10 @@ export default function MealDetailLayout({
     }, [user, isAdmin, router]);
 
     const { data: meal, isLoading } = useMealDetail(id) as { data: MealDetail | undefined, isLoading: boolean };
+
+    // Activate Realtime Socket Checkins
+    useMealSocket(id);
+
     const startMutation = useStartMeal();
     const endMutation = useEndMeal();
     const manualCheckin = useManualCheckin();
@@ -413,7 +417,7 @@ export default function MealDetailLayout({
                                 className="flex-1 md:flex-none h-9 px-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
                             >
                                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" /><path d="M2 2h20v20H2z" opacity="0.1" /><path d="M16 16h.01" /><path d="M12 12h.01" /><path d="M8 8h.01" /></svg>
-                                <span>QR Code</span>
+                                <span>Mã QR bữa ăn</span>
                             </button>
                         </div>
                     </div>

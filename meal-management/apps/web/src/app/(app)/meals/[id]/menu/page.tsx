@@ -165,7 +165,7 @@ export default function MenuPage({ params }: { params: { id: string } }) {
                 </div>
                 {meal?.status === 'DRAFT' && (
                     <CreateButton onClick={handleAdd}>
-                        THÊM MÓN MỚI
+                        THÊM MỚI
                     </CreateButton>
                 )}
             </div>

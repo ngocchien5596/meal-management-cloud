@@ -1,12 +1,19 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import * as QRCode from 'qrcode';
 import { cn } from '@/lib/utils/cn';
 import { Modal } from '@/components/ui';
 import { MenuItem, registrationApi } from '@/features/registrations/api';
-import { useRegistrationCalendar, useToggleRegistration } from '@/features/registrations/hooks';
-import { usePrices } from '@/features/system/hooks';
+import { useRegistrationCalendar, useToggleRegistration, useUpdateRegistrationLocation } from '@/features/registrations/hooks';
+import { usePrices, useSystemConfig } from '@/features/system/hooks';
+import { useUser } from '@/features/auth/hooks';
 import { QuickRegisterModal } from '@/features/registrations/components/QuickRegisterModal';
+import { SingleRegistrationModal } from '@/features/registrations/components/SingleRegistrationModal';
+import type { MealLocation } from '@/features/registrations/components/QuickRegisterModal';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 const CUTOFF_HOUR = 16;
 
@@ -118,8 +125,12 @@ interface DayData {
     nextMonth?: boolean;
     lunch: MealState;
     dinner: MealState;
+    lunchLocationId?: string;
+    dinnerLocationId?: string;
     lunchMenu?: MenuItem[];
     dinnerMenu?: MenuItem[];
+    lunchQrToken?: string;
+    dinnerQrToken?: string;
 }
 
 const generateCalendarData = (year: number, month: number, now: Date): DayData[] => {
@@ -208,9 +219,18 @@ const formatCurrency = (amount: number): string => new Intl.NumberFormat('vi-VN'
 
 const MONTH_NAMES = ['Tháng 01', 'Tháng 02', 'Tháng 03', 'Tháng 04', 'Tháng 05', 'Tháng 06', 'Tháng 07', 'Tháng 08', 'Tháng 09', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
 
-const MealMenuModal = ({ isOpen, onClose, lunchMenu, dinnerMenu, date }: { isOpen: boolean, onClose: () => void, lunchMenu: MenuItem[], dinnerMenu: MenuItem[], date: Date }) => {
+const MealMenuModal = ({ isOpen, onClose, lunchMenu, dinnerMenu, date, lunchQrToken, dinnerQrToken }: { isOpen: boolean, onClose: () => void, lunchMenu: MenuItem[], dinnerMenu: MenuItem[], date: Date, lunchQrToken?: string, dinnerQrToken?: string }) => {
     const hasLunch = lunchMenu.length > 0;
     const hasDinner = dinnerMenu.length > 0;
+
+    const [lunchQrUrl, setLunchQrUrl] = useState('');
+    const [dinnerQrUrl, setDinnerQrUrl] = useState('');
+
+    useEffect(() => {
+        if (!isOpen) return;
+        if (lunchQrToken) QRCode.toDataURL(lunchQrToken, { width: 150, margin: 1 }).then(setLunchQrUrl).catch(console.error);
+        if (dinnerQrToken) QRCode.toDataURL(dinnerQrToken, { width: 150, margin: 1 }).then(setDinnerQrUrl).catch(console.error);
+    }, [isOpen, lunchQrToken, dinnerQrToken]);
 
     return (
         <Modal
@@ -226,15 +246,22 @@ const MealMenuModal = ({ isOpen, onClose, lunchMenu, dinnerMenu, date }: { isOpe
                         <h3 className="font-black text-slate-800 uppercase tracking-wider text-xs">Bữa Trưa</h3>
                     </div>
                     {hasLunch ? (
-                        <div className="grid grid-cols-1 gap-2">
-                            {lunchMenu.map((item, idx) => (
-                                <div key={idx} className="flex items-center gap-3 p-3 bg-orange-50/50 rounded-xl border border-orange-100/50">
-                                    <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center text-[10px] font-black">
-                                        {idx + 1}
+                        <div className="flex flex-col md:flex-row gap-4 items-start">
+                            <div className="grid grid-cols-1 gap-2 flex-1 w-full">
+                                {lunchMenu.map((item, idx) => (
+                                    <div key={idx} className="flex items-center gap-3 p-3 bg-orange-50/50 rounded-xl border border-orange-100/50">
+                                        <div className="w-5 h-5 rounded-full bg-orange-500 text-white flex items-center justify-center text-[10px] font-black">
+                                            {idx + 1}
+                                        </div>
+                                        <span className="font-bold text-slate-700 uppercase tracking-tight text-sm">{item.catalog.name}</span>
                                     </div>
-                                    <span className="font-bold text-slate-700 uppercase tracking-tight text-sm">{item.catalog.name}</span>
+                                ))}
+                            </div>
+                            {lunchQrUrl && (
+                                <div className="p-2 border border-slate-100 rounded-xl bg-white shadow-sm shrink-0 mx-auto md:mx-0">
+                                    <img src={lunchQrUrl} alt="Lunch QR Code" className="w-[120px] h-[120px] object-contain" />
                                 </div>
-                            ))}
+                            )}
                         </div>
                     ) : (
                         <p className="text-xs text-slate-400 italic px-1">Chưa có thực đơn cho bữa trưa.</p>
@@ -250,15 +277,22 @@ const MealMenuModal = ({ isOpen, onClose, lunchMenu, dinnerMenu, date }: { isOpe
                         <h3 className="font-black text-slate-800 uppercase tracking-wider text-xs">Bữa Tối</h3>
                     </div>
                     {hasDinner ? (
-                        <div className="grid grid-cols-1 gap-2">
-                            {dinnerMenu.map((item, idx) => (
-                                <div key={idx} className="flex items-center gap-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100/50">
-                                    <div className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-black">
-                                        {idx + 1}
+                        <div className="flex flex-col md:flex-row gap-4 items-start">
+                            <div className="grid grid-cols-1 gap-2 flex-1 w-full">
+                                {dinnerMenu.map((item, idx) => (
+                                    <div key={idx} className="flex items-center gap-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100/50">
+                                        <div className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-black">
+                                            {idx + 1}
+                                        </div>
+                                        <span className="font-bold text-slate-700 uppercase tracking-tight text-sm">{item.catalog.name}</span>
                                     </div>
-                                    <span className="font-bold text-slate-700 uppercase tracking-tight text-sm">{item.catalog.name}</span>
+                                ))}
+                            </div>
+                            {dinnerQrUrl && (
+                                <div className="p-2 border border-slate-100 rounded-xl bg-white shadow-sm shrink-0 mx-auto md:mx-0">
+                                    <img src={dinnerQrUrl} alt="Dinner QR Code" className="w-[120px] h-[120px] object-contain" />
                                 </div>
-                            ))}
+                            )}
                         </div>
                     ) : (
                         <p className="text-xs text-slate-400 italic px-1">Chưa có thực đơn cho bữa tối.</p>
@@ -279,7 +313,7 @@ const InfoIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
 
 // --- Day Cell Component ---
 
-const DayCell = ({ data, now, onToggle, onShowMenu }: { data: DayData; now: Date; onToggle: (day: number, meal: 'lunch' | 'dinner') => void; onShowMenu: (lunchMenu: MenuItem[], dinnerMenu: MenuItem[], date: Date) => void; }) => {
+const DayCell = ({ data, now, onToggle, onShowMenu }: { data: DayData; now: Date; onToggle: (day: number, meal: 'lunch' | 'dinner') => void; onShowMenu: (lunchMenu: MenuItem[], dinnerMenu: MenuItem[], date: Date, lunchQrToken?: string, dinnerQrToken?: string) => void; }) => {
     const { day, date, disabled, prevMonth, nextMonth, lunch, dinner, lunchMenu, dinnerMenu } = data;
     const available = !prevMonth && !nextMonth && !disabled && isDateAvailable(date, now);
     const isTodayDate = !prevMonth && !nextMonth && isToday(date, now);
@@ -337,7 +371,7 @@ const DayCell = ({ data, now, onToggle, onShowMenu }: { data: DayData; now: Date
                 <div className="flex items-center gap-1.5">
                     {hasMenu && (
                         <button
-                            onClick={() => onShowMenu(lunchMenu || [], dinnerMenu || [], date)}
+                            onClick={() => onShowMenu(lunchMenu || [], dinnerMenu || [], date, data.lunchQrToken, data.dinnerQrToken)}
                             className="p-1.5 bg-brand-soft text-brand rounded-xl hover:bg-brand hover:text-white transition-all shadow-sm"
                             title="Xem thực đơn ngày"
                         >
@@ -369,7 +403,7 @@ const DayCell = ({ data, now, onToggle, onShowMenu }: { data: DayData; now: Date
     );
 };
 
-const MobileDayItem = ({ data, now, onToggle, onShowMenu }: { data: DayData; now: Date; onToggle: (day: number, meal: 'lunch' | 'dinner') => void; onShowMenu: (lunchMenu: MenuItem[], dinnerMenu: MenuItem[], date: Date) => void; }) => {
+const MobileDayItem = ({ data, now, onToggle, onShowMenu }: { data: DayData; now: Date; onToggle: (day: number, meal: 'lunch' | 'dinner') => void; onShowMenu: (lunchMenu: MenuItem[], dinnerMenu: MenuItem[], date: Date, lunchQrToken?: string, dinnerQrToken?: string) => void; }) => {
     const { day, date, disabled, prevMonth, nextMonth, lunch, dinner, lunchMenu, dinnerMenu } = data;
     if (prevMonth || nextMonth) return null;
 
@@ -429,7 +463,7 @@ const MobileDayItem = ({ data, now, onToggle, onShowMenu }: { data: DayData; now
                     <div className="flex items-center gap-1.5">
                         {hasMenu && (
                             <button
-                                onClick={() => onShowMenu(lunchMenu || [], dinnerMenu || [], date)}
+                                onClick={() => onShowMenu(lunchMenu || [], dinnerMenu || [], date, data.lunchQrToken, data.dinnerQrToken)}
                                 className="p-1.5 bg-brand-soft text-brand rounded-xl border border-brand/10 transition-all shadow-sm"
                             >
                                 <InfoIcon className="w-4 h-4" />
@@ -469,12 +503,28 @@ export default function DashboardPage() {
     const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
     const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth());
     const [isPresetOpen, setIsPresetOpen] = useState(false);
-    const [activeMenu, setActiveMenu] = useState<{ lunch: MenuItem[], dinner: MenuItem[], date: Date } | null>(null);
+    const [editingRegistration, setEditingRegistration] = useState<{ day: number, date: Date, meal: 'lunch' | 'dinner', isRegistered: boolean, currentLocationId?: string } | null>(null);
+    const [activeMenu, setActiveMenu] = useState<{ lunch: MenuItem[], dinner: MenuItem[], date: Date, lunchQrToken?: string, dinnerQrToken?: string } | null>(null);
 
-    // API Data
     const { data: apiResponse, isLoading } = useRegistrationCalendar(selectedYear, selectedMonth);
     const { data: prices } = usePrices();
+    const { data: config } = useSystemConfig();
+    const { user } = useUser();
     const toggleReg = useToggleRegistration();
+    const updateLocation = useUpdateRegistrationLocation();
+
+    const cutoffHour = parseInt((config as any)?.['CUT_OFF_HOUR'] || '16', 10);
+    const userRole = user?.role;
+
+    // Fetch locations for selection
+    const { data: locationsResponse } = useQuery({
+        queryKey: ['locations'],
+        queryFn: async () => {
+            const res = await api.get<MealLocation[]>('/locations');
+            return res.data;
+        }
+    });
+    const locations = locationsResponse || [];
 
     // Sync with server time
     useEffect(() => {
@@ -483,6 +533,8 @@ export default function DashboardPage() {
             if (res.success && res.data?.serverTime) {
                 setCurrentTime(new Date(res.data.serverTime));
             }
+        }).catch((error: any) => {
+            toast.error(`Tải lại thất bại: ${(error as any)?.response?.data?.error?.message || error.message}`);
         });
 
         const timer = setInterval(() => {
@@ -540,14 +592,18 @@ export default function DashboardPage() {
                 ...day,
                 lunch: getMealState(lunchEvent, day.date),
                 dinner: getMealState(dinnerEvent, day.date),
+                lunchLocationId: lunchEvent?.registrations?.[0]?.locationId,
+                dinnerLocationId: dinnerEvent?.registrations?.[0]?.locationId,
                 lunchMenu: lunchEvent?.menuItems || [],
                 dinnerMenu: dinnerEvent?.menuItems || [],
+                lunchQrToken: lunchEvent ? (lunchEvent.qrToken || `MEAL-${lunchEvent.id}`) : undefined,
+                dinnerQrToken: dinnerEvent ? (dinnerEvent.qrToken || `MEAL-${dinnerEvent.id}`) : undefined,
             };
         });
     }, [selectedYear, selectedMonth, apiResponse, currentTime]);
 
-    const handleShowMenu = (lunch: MenuItem[], dinner: MenuItem[], date: Date) => {
-        setActiveMenu({ lunch, dinner, date });
+    const handleShowMenu = (lunch: MenuItem[], dinner: MenuItem[], date: Date, lunchQrToken?: string, dinnerQrToken?: string) => {
+        setActiveMenu({ lunch, dinner, date, lunchQrToken, dinnerQrToken });
     };
 
     const kpi = useMemo(() => calculateKPI(calendarData, prices), [calendarData, prices]);
@@ -584,13 +640,51 @@ export default function DashboardPage() {
         setSelectedYear(newYear);
     };
 
-    const handleToggle = async (day: number, meal: 'lunch' | 'dinner') => {
-        const month = String(selectedMonth + 1).padStart(2, '0');
-        const dayStr = String(day).padStart(2, '0');
-        const dateStr = `${selectedYear}-${month}-${dayStr}`;
+    const handleToggle = (dayNum: number, meal: 'lunch' | 'dinner') => {
+        const dayData = calendarData.find(d => d.day === dayNum && !d.prevMonth && !d.nextMonth);
+        if (!dayData) return;
 
-        const mealType = meal.toUpperCase() as 'LUNCH' | 'DINNER';
-        await toggleReg.mutateAsync({ date: dateStr, mealType });
+        const isRegistered = meal === 'lunch' ? dayData.lunch === 'registered' : dayData.dinner === 'registered';
+        const currentLocationId = meal === 'lunch' ? dayData.lunchLocationId : dayData.dinnerLocationId;
+
+        setEditingRegistration({
+            day: dayNum,
+            date: dayData.date,
+            meal,
+            isRegistered,
+            currentLocationId
+        });
+    };
+
+    const handleConfirmRegistration = async (locationId: string) => {
+        if (!editingRegistration) return;
+        const { date, meal } = editingRegistration;
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const dayStr = String(date.getDate()).padStart(2, '0');
+        const dateStr = `${date.getFullYear()}-${month}-${dayStr}`;
+
+        await toggleReg.mutateAsync({ date: dateStr, mealType: meal.toUpperCase() as 'LUNCH' | 'DINNER', locationId });
+    };
+
+    const handleUpdateLocation = async (locationId: string) => {
+        if (!editingRegistration) return;
+        const { date, meal } = editingRegistration;
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const dayStr = String(date.getDate()).padStart(2, '0');
+        const dateStr = `${date.getFullYear()}-${month}-${dayStr}`;
+
+        await updateLocation.mutateAsync({ date: dateStr, mealType: meal.toUpperCase() as 'LUNCH' | 'DINNER', locationId });
+    };
+
+    const handleCancelRegistration = async () => {
+        if (!editingRegistration) return;
+        const { date, meal } = editingRegistration;
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const dayStr = String(date.getDate()).padStart(2, '0');
+        const dateStr = `${date.getFullYear()}-${month}-${dayStr}`;
+
+        // Toggle functionality will delete if it already exists
+        await toggleReg.mutateAsync({ date: dateStr, mealType: meal.toUpperCase() as 'LUNCH' | 'DINNER' });
     };
 
     if (!mounted) return <div className="p-12 text-center text-slate-400 font-medium">Đang khởi tạo lịch biểu...</div>;
@@ -713,6 +807,7 @@ export default function DashboardPage() {
                     onClose={() => setIsPresetOpen(false)}
                     year={selectedYear}
                     month={selectedMonth}
+                    locations={locations}
                 />
 
                 {activeMenu && (
@@ -722,6 +817,25 @@ export default function DashboardPage() {
                         lunchMenu={activeMenu.lunch}
                         dinnerMenu={activeMenu.dinner}
                         date={activeMenu.date}
+                        lunchQrToken={activeMenu.lunchQrToken}
+                        dinnerQrToken={activeMenu.dinnerQrToken}
+                    />
+                )}
+
+                {editingRegistration && (
+                    <SingleRegistrationModal
+                        isOpen={!!editingRegistration}
+                        onClose={() => setEditingRegistration(null)}
+                        date={editingRegistration.date}
+                        mealType={editingRegistration.meal.toUpperCase() as 'LUNCH' | 'DINNER'}
+                        locations={locations}
+                        isRegistered={editingRegistration.isRegistered}
+                        currentLocationId={editingRegistration.currentLocationId}
+                        cutoffHour={cutoffHour}
+                        userRole={userRole}
+                        onConfirm={handleConfirmRegistration}
+                        onUpdate={handleUpdateLocation}
+                        onCancel={handleCancelRegistration}
                     />
                 )}
             </div>

@@ -1,9 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 import {
     useSystemConfig,
-    useUpdateSystemConfig
+    useUpdateSystemConfig,
+    useRegistrationPresets,
+    useUpdateRegistrationPreset
 } from '@/features/system';
 import toast from 'react-hot-toast';
 
@@ -30,17 +34,35 @@ const SaveIcon = () => (
 );
 
 export default function DeadlinePage() {
-    const { data: config, isLoading } = useSystemConfig();
+    const { data: config, isLoading: isConfigLoading } = useSystemConfig();
     const updateConfig = useUpdateSystemConfig();
+    const { data: presets, isLoading: isPresetsLoading } = useRegistrationPresets();
+    const updatePreset = useUpdateRegistrationPreset();
+
+    // Fetch locations for selection
+    const { data: locationsResponse } = useQuery({
+        queryKey: ['locations'],
+        queryFn: async () => {
+            const res = await api.get<any[]>('/locations');
+            return res.data;
+        }
+    });
+    const [locations, setLocations] = useState<any[]>([]);
 
     const [cutOffHour, setCutOffHour] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (config) {
-            setCutOffHour(config['CUT_OFF_HOUR'] || '16');
+            setCutOffHour((config as Record<string, string>)['CUT_OFF_HOUR'] || '16');
         }
     }, [config]);
+
+    useEffect(() => {
+        if (locationsResponse) {
+            setLocations(locationsResponse || []);
+        }
+    }, [locationsResponse]);
 
     const handleSaveConfig = async () => {
         if (!cutOffHour) return;
@@ -49,14 +71,24 @@ export default function DeadlinePage() {
             await updateConfig.mutateAsync({ key: 'CUT_OFF_HOUR', value: cutOffHour });
             toast.success('Lưu cấu hình thành công!');
         } catch (error: any) {
-            const msg = error?.response?.data?.error?.message || error?.message || 'Lỗi không xác định';
+            const msg = (error as any)?.response?.data?.error?.message || error?.message || 'Lỗi không xác định';
             toast.error(`Không thể lưu cấu hình: ${msg}`);
         } finally {
             setIsSaving(false);
         }
     };
 
-    if (isLoading) return <div className="p-8 text-center text-vttext-muted">Đang tải cấu hình...</div>;
+    const handleUpdatePresetLocation = async (presetId: string, locationId: string) => {
+        try {
+            await updatePreset.mutateAsync({ id: presetId, data: { locationId: locationId || null } });
+            toast.success('Cập nhật địa điểm mẫu thành công!');
+        } catch (error: any) {
+            const msg = (error as any)?.response?.data?.error?.message || error?.message || 'Lỗi không xác định';
+            toast.error(`Bị lỗi: ${msg}`);
+        }
+    };
+
+    if (isConfigLoading || isPresetsLoading) return <div className="p-8 text-center text-vttext-muted">Đang tải cấu hình...</div>;
 
     return (
         <div className="w-full min-h-screen bg-[#f8fafc] px-4 pb-12 animate-in fade-in duration-500">
@@ -103,6 +135,37 @@ export default function DeadlinePage() {
                                 Lưu thiết lập
                             </button>
                         </div>
+
+                        {/* Presets Configuration Section */}
+                        {presets && presets.length > 0 && (
+                            <div className="w-full mt-10 pt-10 border-t border-slate-100">
+                                <h3 className="text-xl font-bold text-vttext-primary mb-4 text-left">Địa điểm ưu tiên cho mẫu</h3>
+                                <p className="text-sm text-vttext-muted mb-6 text-left">
+                                    Thiết lập địa điểm mặc định khi nhân viên chọn mẫu đăng ký tương ứng.
+                                </p>
+                                <div className="space-y-4 text-left">
+                                    {presets.map((preset: any) => (
+                                        <div key={preset.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50 gap-4">
+                                            <div>
+                                                <div className="font-bold text-slate-800">{preset.name}</div>
+                                                <div className="text-xs text-slate-500 mt-0.5">{preset.description}</div>
+                                            </div>
+                                            <select
+                                                className="text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 min-w-[150px] font-medium"
+                                                value={preset.locationId || ''}
+                                                onChange={(e) => handleUpdatePresetLocation(preset.id, e.target.value)}
+                                                disabled={updatePreset.isPending}
+                                            >
+                                                <option value="">(Không chọn)</option>
+                                                {locations.map((loc: any) => (
+                                                    <option key={loc.id} value={loc.id}>{loc.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils/cn';
 import { useMealDetail, useToggleRegistration } from '@/features/meals/hooks';
 import { MealDetail, Registration } from '@/features/meals/api';
+import { useLocations } from '@/features/system/hooks';
+import { MealLocation } from '@/features/system/types';
 
 const SearchIcon = () => (
     <svg className="w-4 h-4 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
@@ -12,15 +14,32 @@ const SearchIcon = () => (
 export default function StaffPage({ params }: { params: { id: string } }) {
     const { id } = params;
     const { data: response, isLoading } = useMealDetail(id);
+    const { data: locations } = useLocations();
     const meal: MealDetail | undefined = response;
     const toggleMutation = useToggleRegistration();
     const [search, setSearch] = useState('');
+    const [locationFilter, setLocationFilter] = useState<string>('all');
 
     const staff = meal?.registrations || [];
-    const filteredStaff = staff.filter((reg: Registration) =>
-        reg.employee.fullName.toLowerCase().includes(search.toLowerCase()) ||
-        reg.employee.employeeCode.toLowerCase().includes(search.toLowerCase())
-    );
+
+    const locationCounts = useMemo(() => {
+        const counts: Record<string, number> = {};
+        staff.forEach((reg: Registration) => {
+            if (!reg.isCancelled && reg.location?.id) {
+                counts[reg.location.id] = (counts[reg.location.id] || 0) + 1;
+            }
+        });
+        return counts;
+    }, [staff]);
+
+    const filteredStaff = staff.filter((reg: Registration) => {
+        const matchesSearch = reg.employee.fullName.toLowerCase().includes(search.toLowerCase()) ||
+            reg.employee.employeeCode.toLowerCase().includes(search.toLowerCase());
+        
+        const matchesLocation = locationFilter === 'all' || reg.location?.id === locationFilter;
+        
+        return matchesSearch && matchesLocation;
+    });
 
     const isEditable = meal?.status === 'IN_PROGRESS';
 
@@ -35,17 +54,39 @@ export default function StaffPage({ params }: { params: { id: string } }) {
                     <p className="text-[15px] text-gray-500 mt-1">Tổng cộng {staff.filter(r => !r.isCancelled).length} nhân viên đăng ký suất ăn này</p>
                 </div>
 
-                <div className="relative w-full md:w-72">
-                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                        <SearchIcon />
+                <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                    <div className="relative w-full md:w-48">
+                        <select
+                            value={locationFilter}
+                            onChange={(e) => setLocationFilter(e.target.value)}
+                            className="w-full h-10 px-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none transition-all"
+                        >
+                            <option value="all">Tất cả địa điểm ({staff.filter(r => !r.isCancelled).length})</option>
+                            {locations?.map((loc: MealLocation) => (
+                                <option key={loc.id} value={loc.id}>
+                                    {loc.name} ({locationCounts[loc.id] || 0})
+                                </option>
+                            ))}
+                        </select>
+                        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
+                            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                        </div>
                     </div>
-                    <input
-                        type="text"
-                        placeholder="Tìm tên hoặc MNV..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full h-10 pl-10 pr-4 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    />
+
+                    <div className="relative w-full md:w-72">
+                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                            <SearchIcon />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Tìm tên hoặc MNV..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full h-10 pl-10 pr-4 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -59,13 +100,14 @@ export default function StaffPage({ params }: { params: { id: string } }) {
                                 <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">HỌ TÊN</th>
                                 <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">PHÒNG BAN</th>
                                 <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">CHỨC VỤ</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">ĐỊA ĐIỂM ĂN</th>
                                 <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider text-center">HỦY SUẤT</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white">
                             {filteredStaff.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="py-12 text-center text-gray-500 italic text-[15px]">
+                                <td colSpan={7} className="py-12 text-center text-gray-500 italic text-[15px]">
                                         Không tìm thấy nhân viên nào phù hợp.
                                     </td>
                                 </tr>
@@ -92,6 +134,14 @@ export default function StaffPage({ params }: { params: { id: string } }) {
                                             <span className="text-[12px] font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 uppercase">
                                                 {reg.employee.position.name}
                                             </span>
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-brand" />
+                                                <span className="text-[14px] font-semibold text-slate-700">
+                                                    {reg.location?.name || 'Chưa chọn'}
+                                                </span>
+                                            </div>
                                         </td>
                                         <td className="py-4 px-6 text-center">
                                             {isEditable ? (

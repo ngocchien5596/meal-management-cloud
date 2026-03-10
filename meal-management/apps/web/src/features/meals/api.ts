@@ -68,6 +68,7 @@ export interface Guest {
 export interface Registration {
     id: string;
     isCancelled: boolean;
+    location?: { id: string, name: string } | null;
     employee: {
         id: string;
         fullName: string;
@@ -81,6 +82,9 @@ export interface CheckinLog {
     id: string;
     checkinTime: string;
     method: 'QR_SCAN' | 'MANUAL' | 'SELF_SCAN';
+    registration?: {
+        location?: { id: string, name: string } | null;
+    } | null;
     employee?: {
         fullName: string;
         employeeCode: string;
