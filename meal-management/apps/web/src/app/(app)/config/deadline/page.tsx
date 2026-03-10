@@ -1,53 +1,16 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
 import {
     useSystemConfig,
-    useUpdateSystemConfig,
-    useRegistrationPresets,
-    useUpdateRegistrationPreset
+    useUpdateSystemConfig
 } from '@/features/system';
 import toast from 'react-hot-toast';
-
-const ClockIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500">
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
-    </svg>
-);
-
-const SmallClockIcon = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
-    </svg>
-);
-
-const SaveIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-        <polyline points="17 21 17 13 7 13 7 21" />
-        <polyline points="7 3 7 8 15 8" />
-    </svg>
-);
+import { Clock, Save, Loader2 } from 'lucide-react';
 
 export default function DeadlinePage() {
     const { data: config, isLoading: isConfigLoading } = useSystemConfig();
     const updateConfig = useUpdateSystemConfig();
-    const { data: presets, isLoading: isPresetsLoading } = useRegistrationPresets();
-    const updatePreset = useUpdateRegistrationPreset();
-
-    // Fetch locations for selection
-    const { data: locationsResponse } = useQuery({
-        queryKey: ['locations'],
-        queryFn: async () => {
-            const res = await api.get<any[]>('/locations');
-            return res.data;
-        }
-    });
-    const [locations, setLocations] = useState<any[]>([]);
 
     const [cutOffHour, setCutOffHour] = useState('');
     const [isSaving, setIsSaving] = useState(false);
@@ -58,17 +21,19 @@ export default function DeadlinePage() {
         }
     }, [config]);
 
-    useEffect(() => {
-        if (locationsResponse) {
-            setLocations(locationsResponse || []);
-        }
-    }, [locationsResponse]);
-
     const handleSaveConfig = async () => {
-        if (!cutOffHour) return;
+        if (!cutOffHour.trim()) return;
+
+        // Simple validation for HH or HH:mm
+        const timeRegex = /^([01]?[0-9]|2[0-3])(:[0-5][0-9])?$/;
+        if (!timeRegex.test(cutOffHour.trim())) {
+            toast.error('Định dạng thời gian không hợp lệ (VD: 16 hoặc 15:30)');
+            return;
+        }
+
         setIsSaving(true);
         try {
-            await updateConfig.mutateAsync({ key: 'CUT_OFF_HOUR', value: cutOffHour });
+            await updateConfig.mutateAsync({ key: 'CUT_OFF_HOUR', value: cutOffHour.trim() });
             toast.success('Lưu cấu hình thành công!');
         } catch (error: any) {
             const msg = (error as any)?.response?.data?.error?.message || error?.message || 'Lỗi không xác định';
@@ -78,95 +43,74 @@ export default function DeadlinePage() {
         }
     };
 
-    const handleUpdatePresetLocation = async (presetId: string, locationId: string) => {
-        try {
-            await updatePreset.mutateAsync({ id: presetId, data: { locationId: locationId || null } });
-            toast.success('Cập nhật địa điểm mẫu thành công!');
-        } catch (error: any) {
-            const msg = (error as any)?.response?.data?.error?.message || error?.message || 'Lỗi không xác định';
-            toast.error(`Bị lỗi: ${msg}`);
-        }
-    };
-
-    if (isConfigLoading || isPresetsLoading) return <div className="p-8 text-center text-vttext-muted">Đang tải cấu hình...</div>;
+    if (isConfigLoading) return <div className="p-8 text-center text-vttext-muted font-medium italic">Đang tải cấu hình...</div>;
 
     return (
-        <div className="w-full min-h-screen bg-[#f8fafc] px-4 pb-12 animate-in fade-in duration-500">
-            <div className="max-w-[1280px] mx-auto pt-6">
-                <div className="max-w-2xl mx-auto">
-                    <div className="bg-white rounded-xl border border-vtborder shadow-sm p-8 flex flex-col items-center text-center">
-                        <div className="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center mb-6">
-                            <ClockIcon />
-                        </div>
+        <div className="w-full min-h-screen bg-[#f8fafc] px-7 py-6 animate-in fade-in duration-500">
 
-                        <h2 className="text-2xl font-bold text-vttext-primary mb-2">Giờ chốt đăng ký</h2>
-                        <p className="text-vttext-muted mb-8 max-w-md">
-                            Thiết lập thời gian hết hạn đăng ký suất ăn cho ngày hôm sau. Sau giờ này, nhân viên sẽ không thể đăng ký hoặc hủy phần ăn.
-                        </p>
-
-                        <div className="w-full max-w-sm space-y-6">
-                            <div className="space-y-2 text-left">
-                                <label className="block text-sm font-bold text-vttext-primary pl-1">Thời gian chốt hằng ngày</label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        value={cutOffHour}
-                                        onChange={(e) => setCutOffHour(e.target.value)}
-                                        className="w-full h-12 pl-5 pr-12 bg-vtbg-secondary/30 border border-vtborder rounded-xl text-vttext-primary text-lg font-bold focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
-                                        placeholder="16"
-                                    />
-                                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                                        <SmallClockIcon />
-                                    </div>
-                                </div>
-                                <p className="text-[11px] text-vttext-muted pl-1">Nhập giờ theo định dạng 24h (ví dụ: 16 cho 4:00 PM).</p>
-                            </div>
-
-                            <button
-                                onClick={handleSaveConfig}
-                                disabled={isSaving || !cutOffHour}
-                                className="w-full py-3.5 bg-brand hover:bg-brand-hover text-white font-bold rounded-xl transition-all shadow-lg shadow-brand/20 disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {isSaving ? (
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                ) : (
-                                    <SaveIcon />
-                                )}
-                                Lưu thiết lập
-                            </button>
-                        </div>
-
-                        {/* Presets Configuration Section */}
-                        {presets && presets.length > 0 && (
-                            <div className="w-full mt-10 pt-10 border-t border-slate-100">
-                                <h3 className="text-xl font-bold text-vttext-primary mb-4 text-left">Địa điểm ưu tiên cho mẫu</h3>
-                                <p className="text-sm text-vttext-muted mb-6 text-left">
-                                    Thiết lập địa điểm mặc định khi nhân viên chọn mẫu đăng ký tương ứng.
-                                </p>
-                                <div className="space-y-4 text-left">
-                                    {presets.map((preset: any) => (
-                                        <div key={preset.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50 gap-4">
-                                            <div>
-                                                <div className="font-bold text-slate-800">{preset.name}</div>
-                                                <div className="text-xs text-slate-500 mt-0.5">{preset.description}</div>
-                                            </div>
-                                            <select
-                                                className="text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 min-w-[150px] font-medium"
-                                                value={preset.locationId || ''}
-                                                onChange={(e) => handleUpdatePresetLocation(preset.id, e.target.value)}
-                                                disabled={updatePreset.isPending}
-                                            >
-                                                <option value="">(Không chọn)</option>
-                                                {locations.map((loc: any) => (
-                                                    <option key={loc.id} value={loc.id}>{loc.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+            {/* 1. Header (Standardized - Left Aligned) */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div className="flex items-center gap-4 mb-4 md:mb-0">
+                    <div className="w-12 h-12 bg-brand rounded-2xl flex items-center justify-center shadow-xl shadow-brand/20">
+                        <Clock className="w-6 h-6 text-white" />
                     </div>
+                    <div>
+                        <h1 className="text-2xl font-black text-vttext-primary leading-none">Giờ chốt đăng ký</h1>
+                        <p className="text-sm text-vttext-muted mt-1.5 font-medium">Thiết lập thời gian hết hạn đăng ký hằng ngày</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* 2. Main Content (Centered Content Card only) */}
+            <div className="flex flex-col items-center pt-8">
+                <div className="bg-white rounded-xl border border-[#eef2f7] shadow-sm w-full max-w-xl overflow-hidden">
+                    <div className="p-8 border-b border-gray-100 bg-slate-50/30">
+                        <h2 className="text-lg font-bold text-vttext-primary mb-1">Cấu hình thời gian</h2>
+                        <p className="text-sm text-vttext-muted">
+                            Sau giờ này (trong ngày hôm nay), hệ thống sẽ tự động khóa chức năng đăng ký hoặc hủy phần ăn cho ngày mai.
+                        </p>
+                    </div>
+
+                    <div className="p-8 space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold text-slate-700 ml-1">Thời gian chốt hằng ngày</label>
+                            <div className="relative group">
+                                <input
+                                    type="text"
+                                    value={cutOffHour}
+                                    onChange={(e) => setCutOffHour(e.target.value)}
+                                    className="w-full h-12 px-5 pr-12 bg-white border border-vtborder rounded-xl text-lg font-bold text-vttext-primary focus:outline-none focus:ring-4 focus:ring-focus/30 focus:border-brand transition-all shadow-sm"
+                                    placeholder="VD: 16 hoặc 15:30"
+                                />
+                                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-vttext-muted group-focus-within:text-brand transition-colors">
+                                    <Clock className="w-5 h-5" />
+                                </div>
+                            </div>
+                            <p className="text-[11px] text-vttext-muted ml-1 font-medium italic">
+                                Hỗ trợ định dạng 24h (VD: 16 cho 4:00 PM hoặc 15:30).
+                            </p>
+                        </div>
+
+                        <button
+                            onClick={handleSaveConfig}
+                            disabled={isSaving || !cutOffHour.trim()}
+                            className="w-full h-12 bg-brand hover:bg-brand-hover text-white text-sm font-black rounded-xl transition-all shadow-lg shadow-brand/20 disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95"
+                        >
+                            {isSaving ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <Save className="w-5 h-5" />
+                            )}
+                            LƯU THIẾT LẬP
+                        </button>
+                    </div>
+                </div>
+
+                {/* Decoration under centered card */}
+                <div className="mt-8 opacity-20">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-vttext-muted">
+                        System Configuration &bull; v2.0
+                    </p>
                 </div>
             </div>
         </div>

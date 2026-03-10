@@ -13,44 +13,78 @@ const DEFAULT_CUTOFF_HOUR = 16;
  *       From CUT_OFF_HOUR today, can only register for the day after tomorrow onwards.
  */
 // Export for testing
-export const canModifyWithCutoff = (mealDate: Date, cutoffHour: number): boolean => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+export const canModifyWithCutoff = (mealDate: Date, cutoffTime: string | number): boolean => {
+    // 1. Get Vietnam Time parts reliably
+    const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hour12: false
+    });
 
-    // Normalize targetDate to 00:00 LOCAL
+    const parts = formatter.formatToParts(new Date());
+    const vn: any = {};
+    parts.forEach(p => { if (p.type !== 'literal') vn[p.type] = parseInt(p.value, 10); });
+
+    // 2. Reconstruct "now" in Vietnam context
+    const now = new Date(vn.year, vn.month - 1, vn.day, vn.hour, vn.minute, vn.second);
+    const today = new Date(vn.year, vn.month - 1, vn.day);
+
+    // 3. Normalize targetDate to 00:00 (of the target date)
     const targetDate = new Date(mealDate.getFullYear(), mealDate.getMonth(), mealDate.getDate());
 
-    // Difference in days (using simplified comparison)
+    // 4. Difference in days
     const diffTime = targetDate.getTime() - today.getTime();
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
+    console.log(`[Cutoff Check] Now(VN): ${vn.hour}:${vn.minute}, Today(VN): ${vn.day}/${vn.month}, TargetDate: ${mealDate.getDate()}/${mealDate.getMonth() + 1}, diffDays: ${diffDays}`);
+
     if (diffDays < 1) return false; // Past or today: cannot modify
     if (diffDays === 1) {
-        // Target is tomorrow: can only modify if before cutoffHour today
-        return now.getHours() < cutoffHour;
+        // Target is tomorrow: can only modify if before cutoffTime today (in VN time)
+        let cutoffHour = 16;
+        let cutoffMinute = 0;
+
+        if (typeof cutoffTime === 'string' && cutoffTime.includes(':')) {
+            const parts = cutoffTime.split(':');
+            cutoffHour = parseInt(parts[0], 10);
+            cutoffMinute = parseInt(parts[1], 10);
+            if (isNaN(cutoffHour)) cutoffHour = 16;
+            if (isNaN(cutoffMinute)) cutoffMinute = 0;
+        } else {
+            cutoffHour = typeof cutoffTime === 'number' ? cutoffTime : parseInt(cutoffTime as string, 10);
+            if (isNaN(cutoffHour)) cutoffHour = 16;
+        }
+
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+
+        console.log(`[Cutoff Check] Tomorrow logic: Current VN ${currentHour}:${currentMinute} vs Cutoff ${cutoffHour}:${cutoffMinute}`);
+
+        const result = (currentHour < cutoffHour) || (currentHour === cutoffHour && currentMinute < cutoffMinute);
+        console.log(`[Cutoff Check] Result: ${result ? 'ALLOWED' : 'BLOCKED'}`);
+        return result;
     }
     return true; // Further in the future: can modify
 };
 
 export const canModify = async (mealDate: Date, userRole?: string): Promise<boolean> => {
-    // Admin can always modify
-    if (userRole === 'ADMIN_SYSTEM' || userRole === 'ADMIN_KITCHEN') {
-        return true;
-    }
-
-    let cutoffHour = DEFAULT_CUTOFF_HOUR;
+    let cutoffValue: string | number = DEFAULT_CUTOFF_HOUR;
     try {
         const config = await prisma.systemConfig.findUnique({
             where: { key: 'CUT_OFF_HOUR' }
         });
         if (config && config.value) {
-            cutoffHour = parseInt(config.value, 10);
-            if (isNaN(cutoffHour)) cutoffHour = DEFAULT_CUTOFF_HOUR;
+            cutoffValue = config.value;
         }
     } catch (err) {
-        console.error('Failed to parse CUT_OFF_HOUR, using default', err);
+        console.error('Failed to get CUT_OFF_HOUR configuration', err);
     }
-    return canModifyWithCutoff(mealDate, cutoffHour);
+    return canModifyWithCutoff(mealDate, cutoffValue);
 };
 
 export const getCalendarHandler = async (req: Request, res: Response, next: NextFunction) => {
@@ -213,7 +247,7 @@ export const updateLocationHandler = async (req: Request, res: Response, next: N
         }
 
         if (registration.isCancelled) {
-             return res.status(400).json({
+            return res.status(400).json({
                 success: false,
                 error: 'Suất ăn đã bị nhà bếp hủy, không thể thay đổi địa điểm.'
             });
@@ -277,19 +311,18 @@ router.post('/preset', authenticate, async (req: Request, res: Response, next: N
         const registrationsToCreate: any[] = [];
 
         // Get cutoff once for performance
-        let cutoffHour = DEFAULT_CUTOFF_HOUR;
+        let cutoffValue: string | number = DEFAULT_CUTOFF_HOUR;
         try {
             const currentConfig = await prisma.systemConfig.findUnique({ where: { key: 'CUT_OFF_HOUR' } });
             if (currentConfig && currentConfig.value) {
-                cutoffHour = parseInt(currentConfig.value, 10);
-                if (isNaN(cutoffHour)) cutoffHour = DEFAULT_CUTOFF_HOUR;
+                cutoffValue = currentConfig.value;
             }
         } catch (e) { }
 
         for (let day = 1; day <= daysInMonth; day++) {
             // Use 12:00 PM to ensure the date remains the same across all timezone offsets
             const date = new Date(parseInt(year as string), parseInt(month as string), day, 12, 0, 0);
-            if (!canModifyWithCutoff(date, cutoffHour)) continue;
+            if (!canModifyWithCutoff(date, cutoffValue)) continue;
 
             const dayOfWeek = date.getDay();
             if (presetInfo.days.includes(dayOfWeek)) {
@@ -316,7 +349,7 @@ router.post('/preset', authenticate, async (req: Request, res: Response, next: N
 
             for (const reg of existingRegs) {
                 const regEvent = await tx.mealEvent.findUnique({ where: { id: reg.mealEventId } });
-                if (regEvent && canModifyWithCutoff(regEvent.mealDate, cutoffHour)) {
+                if (regEvent && canModifyWithCutoff(regEvent.mealDate, cutoffValue)) {
                     await tx.registration.delete({
                         where: { id: reg.id }
                     });

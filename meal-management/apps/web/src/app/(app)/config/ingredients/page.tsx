@@ -59,7 +59,7 @@ function CatalogForm({ onSuccess, initialData }: CatalogFormProps) {
                         name="defaultUnit"
                         required
                         defaultValue={initialData?.defaultUnit || 'kg'}
-                        className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none appearance-none"
+                        className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:bg-white focus:border-brand focus:ring-4 focus:ring-brand/10 transition-all outline-none appearance-none"
                     >
                         <option value="kg">kg</option>
                         <option value="l">lít</option>
@@ -78,7 +78,7 @@ function CatalogForm({ onSuccess, initialData }: CatalogFormProps) {
             <Button
                 type="submit"
                 size="lg"
-                className="w-full shadow-xl shadow-blue-200"
+                className="w-full shadow-xl shadow-brand/20"
                 disabled={isLoading}
             >
                 {isLoading ? 'ĐANG LƯU...' : (isEditing ? 'CẬP NHẬT' : 'THÊM VÀO TỪ ĐIỂN')}
@@ -125,7 +125,7 @@ export default function IngredientCatalogPage() {
         <div className="flex flex-col h-full animate-in fade-in duration-500 px-4 pb-12">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pt-6">
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-200">
+                    <div className="w-12 h-12 bg-brand rounded-2xl flex items-center justify-center shadow-xl shadow-brand/20">
                         <Book className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -147,13 +147,13 @@ export default function IngredientCatalogPage() {
                             placeholder="Tìm kiếm nguyên liệu..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full h-11 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
+                            className="w-full h-11 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand transition-all"
                         />
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                         <div className="h-10 px-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-2.5">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng số mục</span>
-                            <span className="text-sm font-black text-blue-600">{items.length}</span>
+                            <span className="text-sm font-black text-brand">{items.length}</span>
                         </div>
                     </div>
                 </div>
@@ -189,8 +189,8 @@ export default function IngredientCatalogPage() {
                                         </td>
                                         <td className="py-4 px-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                                                    <Package className="w-4 h-4 text-blue-600" />
+                                                <div className="w-8 h-8 rounded-lg bg-brand-soft flex items-center justify-center">
+                                                    <Package className="w-4 h-4 text-brand" />
                                                 </div>
                                                 <span className="text-[15px] font-bold text-slate-800">{item.name}</span>
                                             </div>
@@ -204,7 +204,7 @@ export default function IngredientCatalogPage() {
                                             <div className="flex items-center justify-end gap-2 outline-none">
                                                 <button
                                                     onClick={() => handleOpenEdit(item)}
-                                                    className="p-2 hover:bg-blue-50 rounded-xl text-slate-400 hover:text-blue-600 transition-all"
+                                                    className="p-2 hover:bg-brand-soft rounded-xl text-slate-400 hover:text-brand transition-all"
                                                     title="Chỉnh sửa"
                                                 >
                                                     <Edit className="w-4 h-4" />

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui';
 import { MealLocation } from './QuickRegisterModal';
 import { cn } from '@/lib/utils/cn';
+import { isDateAvailable } from '@/lib/utils/date';
 
 interface SingleRegistrationModalProps {
     isOpen: boolean;
@@ -13,7 +14,7 @@ interface SingleRegistrationModalProps {
     locations: MealLocation[];
     currentLocationId?: string;
     isRegistered: boolean;
-    cutoffHour?: number;
+    cutoffValue?: string | number;
     userRole?: string;
     onConfirm: (locationId: string) => Promise<void>;
     onUpdate: (locationId: string) => Promise<void>;
@@ -48,7 +49,7 @@ export const SingleRegistrationModal = ({
     locations,
     currentLocationId,
     isRegistered,
-    cutoffHour = 16,
+    cutoffValue = '16',
     userRole,
     onConfirm,
     onUpdate,
@@ -64,23 +65,15 @@ export const SingleRegistrationModal = ({
         }
     }, [isOpen, currentLocationId, locations]);
 
-    const isDeadlinePassed = () => {
-        if (userRole === 'ADMIN_SYSTEM' || userRole === 'ADMIN_KITCHEN') return false;
-        
-        const now = new Date();
-        const deadline = new Date(date);
-        deadline.setDate(deadline.getDate() - 1);
-        deadline.setHours(cutoffHour, 0, 0, 0);
-        
-        return now > deadline;
-    };
-
-    const deadlinePassed = isDeadlinePassed();
+    // Centralized check: it's unavailable if isDateAvailable returns false
+    const deadlinePassed = !isDateAvailable(date, new Date(), cutoffValue);
 
     const handleAction = async (action: 'confirm' | 'update' | 'cancel') => {
         if (deadlinePassed && action !== 'cancel') {
-             // In case button is enabled via inspection, double check
-             return;
+            // Block confirm/update if deadline passed
+            // We allow cancellation if needed or if the backend allows it (backend has the final say)
+            // But usually deadline applies to both.
+            return;
         }
 
         setIsSubmitting(true);
@@ -131,7 +124,7 @@ export const SingleRegistrationModal = ({
                         <div>
                             <div className="text-sm font-bold text-rose-800 leading-tight">Đã quá hạn đăng ký/thay đổi</div>
                             <div className="text-xs text-rose-600 mt-1 leading-relaxed">
-                                Hạn chót là <b>{cutoffHour}:00</b> của ngày hôm trước. 
+                                Hạn chót là <b>{cutoffValue}</b> của ngày hôm trước.
                                 {userRole?.startsWith('ADMIN') ? " Bạn là Admin nên có thể thay đổi." : " Vui lòng liên hệ quản lý nếu cần hỗ trợ."}
                             </div>
                         </div>

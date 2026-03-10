@@ -2,7 +2,8 @@ export class APIError extends Error {
     constructor(
         public code: string,
         public message: string,
-        public status: number
+        public status: number,
+        public data?: any
     ) {
         super(message);
         this.name = 'APIError';

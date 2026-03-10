@@ -134,7 +134,6 @@ export default function MealDetailLayout({
     // Checkin State
     const [manualCode, setManualCode] = useState('');
     const [manualSecret, setManualSecret] = useState('');
-    const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [isMealQrOpen, setIsMealQrOpen] = useState(false);
     const [mealQrUrl, setMealQrUrl] = useState('');
 
@@ -197,42 +196,6 @@ export default function MealDetailLayout({
         } catch (err) {
             console.error(err);
             toast.error('Không thể tạo mã QR bữa ăn');
-        }
-    };
-
-    const handleScanSuccess = async (decodedText: string) => {
-        try {
-            // QR format: {"id": "...", "type": "EMPLOYEE" | "GUEST", ...}
-            const data = JSON.parse(decodedText);
-
-            if (data.type === 'GUEST') {
-                try {
-                    await scanGuest.mutateAsync({
-                        mealEventId: id,
-                        guestId: data.id
-                    });
-                    playCheckinSuccess();
-                    setIsScannerOpen(false);
-                } catch (error) {
-                    playCheckinError();
-                }
-            } else {
-                // Default to employee if type is missing or is EMPLOYEE
-                try {
-                    await scanEmployee.mutateAsync({
-                        mealEventId: id,
-                        employeeId: data.id
-                    });
-                    playCheckinSuccess();
-                    setIsScannerOpen(false);
-                } catch (error) {
-                    playCheckinError();
-                }
-            }
-        } catch (err) {
-            console.error('Scan parse error:', err);
-            playCheckinError();
-            toast.error('Mã QR không hợp lệ');
         }
     };
 
@@ -406,7 +369,7 @@ export default function MealDetailLayout({
                         {/* Quick Actions */}
                         <div className="flex items-center gap-2 w-full md:w-auto">
                             <button
-                                onClick={() => setIsScannerOpen(true)}
+                                onClick={() => window.open(`${baseUrl}/scan-station`, '_blank')}
                                 className="flex-1 md:flex-none h-9 px-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
                             >
                                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" /><rect width="7" height="7" x="7" y="7" rx="1" /></svg>
@@ -491,11 +454,6 @@ export default function MealDetailLayout({
                 </div>
             </Modal>
 
-            <ScannerModal
-                isOpen={isScannerOpen}
-                onClose={() => setIsScannerOpen(false)}
-                onScan={handleScanSuccess}
-            />
 
             <ConfirmDialog
                 isOpen={isStartConfirmOpen}
@@ -522,37 +480,3 @@ export default function MealDetailLayout({
     );
 }
 
-// Compact Scanner Component
-function ScannerModal({ isOpen, onClose, onScan }: { isOpen: boolean; onClose: () => void; onScan: (text: string) => void }) {
-    const [scanner, setScanner] = React.useState<Html5Qrcode | null>(null);
-
-    React.useEffect(() => {
-        if (isOpen) {
-            const newScanner = new Html5Qrcode('qr-reader');
-            setScanner(newScanner);
-            newScanner.start(
-                { facingMode: 'environment' },
-                { fps: 10, qrbox: { width: 250, height: 250 } },
-                onScan,
-                () => { } // Error silencer
-            );
-        } else if (scanner) {
-            scanner.stop().then(() => scanner.clear());
-            setScanner(null);
-        }
-        return () => {
-            if (scanner && isOpen) {
-                scanner.stop().then(() => scanner.clear());
-            }
-        };
-    }, [isOpen]);
-
-    return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Quét mã QR Nhân viên">
-            <div className="py-4">
-                <div id="qr-reader" className="w-full aspect-square rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-200"></div>
-                <p className="text-center text-xs font-medium text-slate-400 mt-4 uppercase tracking-widest">Đang tìm mã QR...</p>
-            </div>
-        </Modal>
-    );
-}

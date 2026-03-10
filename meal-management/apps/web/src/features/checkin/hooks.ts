@@ -19,12 +19,12 @@ export const useManualCheckin = () => {
             }
         },
         onError: (err: any) => {
-            // Because lib/api interceptor rejects with error.response.data
-            const employee = err?.employee;
-            const baseError = err?.error || 'Có lỗi xảy ra khi check-in';
+            const data = err?.data;
+            const employee = data?.employee;
+            const baseError = data?.error || err?.message || 'Có lỗi xảy ra khi check-in';
 
             const message = employee
-                ? `[NV: ${employee.employeeCode} - ${employee.fullName}] ${baseError.toLowerCase()}`
+                ? `[NV: ${employee.employeeCode} - ${employee.fullName}] ${baseError}`
                 : baseError;
 
             toast.error(message, { duration: 5000 });
@@ -49,12 +49,12 @@ export const useScanEmployee = () => {
             }
         },
         onError: (err: any) => {
-            // Because lib/api interceptor rejects with error.response.data
-            const employee = err?.employee;
-            const baseError = err?.error || 'Có lỗi xảy ra khi quét mã';
+            const data = err?.data;
+            const employee = data?.employee;
+            const baseError = data?.error || err?.message || 'Có lỗi xảy ra khi quét mã';
 
             const message = employee
-                ? `[NV: ${employee.employeeCode} - ${employee.fullName}] ${baseError.toLowerCase()}`
+                ? `[NV: ${employee.employeeCode} - ${employee.fullName}] ${baseError}`
                 : baseError;
 
             toast.error(message, { duration: 5000 });
@@ -79,11 +79,12 @@ export const useScanGuest = () => {
             }
         },
         onError: (err: any) => {
-            const guest = err?.guest;
-            const baseError = err?.error || 'Có lỗi xảy ra khi quét mã khách';
+            const data = err?.data;
+            const guest = data?.guest;
+            const baseError = data?.error || err?.message || 'Có lỗi xảy ra khi quét mã khách';
 
             const message = guest
-                ? `[Khách: ${guest.fullName}] ${baseError.toLowerCase()}`
+                ? `[Khách: ${guest.fullName}] ${baseError}`
                 : baseError;
 
             toast.error(message, { duration: 5000 });
@@ -104,11 +105,12 @@ export const useSelfScan = () => {
             }
         },
         onError: (err: any) => {
-            const employee = err?.employee;
-            const baseError = err?.error || 'Có lỗi xảy ra khi quét mã';
+            const data = err?.data;
+            const employee = data?.employee;
+            const baseError = data?.error || err?.message || 'Có lỗi xảy ra khi quét mã';
 
             const message = employee
-                ? `[NV: ${employee.employeeCode} - ${employee.fullName}] ${baseError.toLowerCase()}`
+                ? `[NV: ${employee.employeeCode} - ${employee.fullName}] ${baseError}`
                 : baseError;
 
             toast.error(message);

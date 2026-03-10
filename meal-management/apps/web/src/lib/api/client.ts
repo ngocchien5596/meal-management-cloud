@@ -92,7 +92,8 @@ async function request<T>(
             throw new APIError(
                 errorCode,
                 errorMessage,
-                response.status
+                response.status,
+                data
             );
         }
 
@@ -111,7 +112,8 @@ async function request<T>(
             throw new APIError(
                 errorCode,
                 errorMessage,
-                response.status
+                response.status,
+                data
             );
         }
 

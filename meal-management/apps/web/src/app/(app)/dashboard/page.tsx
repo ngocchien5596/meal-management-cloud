@@ -15,7 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 
-const CUTOFF_HOUR = 16;
+import { isDateAvailable } from '@/lib/utils/date';
 
 // --- Updated Premium Icons ---
 
@@ -92,20 +92,7 @@ const PlusIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
 
 // --- Helper Logic ---
 
-const isDateAvailable = (dayDate: Date, now: Date): boolean => {
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const checkDate = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate());
-
-    const diffTime = checkDate.getTime() - today.getTime();
-    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 1) return false; // Không cho phép ngày quá khứ hoặc hôm nay
-    if (diffDays === 1) {
-        // Ngày mai: chỉ cho phép nếu trước 16:00 hôm nay
-        return now.getHours() < CUTOFF_HOUR;
-    }
-    return true; // Các ngày xa hơn: cho phép
-};
+// Local implementation removed, using synchronized version from @/lib/utils/date
 
 const isToday = (dayDate: Date, now: Date): boolean => {
     return dayDate.getDate() === now.getDate() && dayDate.getMonth() === now.getMonth() && dayDate.getFullYear() === now.getFullYear();
@@ -131,9 +118,10 @@ interface DayData {
     dinnerMenu?: MenuItem[];
     lunchQrToken?: string;
     dinnerQrToken?: string;
+    cutoffValue?: string | number;
 }
 
-const generateCalendarData = (year: number, month: number, now: Date): DayData[] => {
+const generateCalendarData = (year: number, month: number, now: Date, cutoffValue: string | number = 16): DayData[] => {
     const data: DayData[] = [];
     const daysInMonth = getDaysInMonth(year, month);
     const firstDayOfMonth = getFirstDayOfMonth(year, month);
@@ -150,7 +138,7 @@ const generateCalendarData = (year: number, month: number, now: Date): DayData[]
 
     for (let d = 1; d <= daysInMonth; d++) {
         const date = new Date(year, month, d);
-        const canReg = isDateAvailable(date, now);
+        const canReg = isDateAvailable(date, now, cutoffValue);
         // Default to 'available' if can still register, 'missed' if past cutoff
         const defaultState = canReg ? 'available' : 'missed';
         data.push({ day: d, date, lunch: defaultState, dinner: defaultState });
@@ -313,9 +301,9 @@ const InfoIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
 
 // --- Day Cell Component ---
 
-const DayCell = ({ data, now, onToggle, onShowMenu }: { data: DayData; now: Date; onToggle: (day: number, meal: 'lunch' | 'dinner') => void; onShowMenu: (lunchMenu: MenuItem[], dinnerMenu: MenuItem[], date: Date, lunchQrToken?: string, dinnerQrToken?: string) => void; }) => {
+const DayCell = ({ data, now, onToggle, onShowMenu, cutoffValue }: { data: DayData; now: Date; onToggle: (day: number, meal: 'lunch' | 'dinner') => void; onShowMenu: (lunchMenu: MenuItem[], dinnerMenu: MenuItem[], date: Date, lunchQrToken?: string, dinnerQrToken?: string) => void; cutoffValue?: string | number; }) => {
     const { day, date, disabled, prevMonth, nextMonth, lunch, dinner, lunchMenu, dinnerMenu } = data;
-    const available = !prevMonth && !nextMonth && !disabled && isDateAvailable(date, now);
+    const available = !prevMonth && !nextMonth && !disabled && isDateAvailable(date, now, cutoffValue);
     const isTodayDate = !prevMonth && !nextMonth && isToday(date, now);
     const hasMenu = (lunchMenu && lunchMenu.length > 0) || (dinnerMenu && dinnerMenu.length > 0);
 
@@ -403,11 +391,11 @@ const DayCell = ({ data, now, onToggle, onShowMenu }: { data: DayData; now: Date
     );
 };
 
-const MobileDayItem = ({ data, now, onToggle, onShowMenu }: { data: DayData; now: Date; onToggle: (day: number, meal: 'lunch' | 'dinner') => void; onShowMenu: (lunchMenu: MenuItem[], dinnerMenu: MenuItem[], date: Date, lunchQrToken?: string, dinnerQrToken?: string) => void; }) => {
+const MobileDayItem = ({ data, now, onToggle, onShowMenu, cutoffValue }: { data: DayData; now: Date; onToggle: (day: number, meal: 'lunch' | 'dinner') => void; onShowMenu: (lunchMenu: MenuItem[], dinnerMenu: MenuItem[], date: Date, lunchQrToken?: string, dinnerQrToken?: string) => void; cutoffValue?: string | number; }) => {
     const { day, date, disabled, prevMonth, nextMonth, lunch, dinner, lunchMenu, dinnerMenu } = data;
     if (prevMonth || nextMonth) return null;
 
-    const available = !disabled && isDateAvailable(date, now);
+    const available = !disabled && isDateAvailable(date, now, cutoffValue);
     const isTodayDate = isToday(date, now);
     const hasMenu = (lunchMenu && lunchMenu.length > 0) || (dinnerMenu && dinnerMenu.length > 0);
 
@@ -513,7 +501,7 @@ export default function DashboardPage() {
     const toggleReg = useToggleRegistration();
     const updateLocation = useUpdateRegistrationLocation();
 
-    const cutoffHour = parseInt((config as any)?.['CUT_OFF_HOUR'] || '16', 10);
+    const cutoffValue = (config as any)?.['CUT_OFF_HOUR'] || '16';
     const userRole = user?.role;
 
     // Fetch locations for selection
@@ -544,7 +532,7 @@ export default function DashboardPage() {
     }, []);
 
     const calendarData = useMemo(() => {
-        const baseData = generateCalendarData(selectedYear, selectedMonth, currentTime);
+        const baseData = generateCalendarData(selectedYear, selectedMonth, currentTime, cutoffValue);
         if (!apiResponse) return baseData;
 
         const events = apiResponse;
@@ -563,7 +551,7 @@ export default function DashboardPage() {
             const dinnerEvent = dayEvents.find((e: any) => e.mealType === 'DINNER');
 
             const getMealState = (event: any, date: Date): MealState => {
-                const available = isDateAvailable(date, currentTime);
+                const available = isDateAvailable(date, currentTime, cutoffValue);
                 const isTodayDate = isToday(date, currentTime);
 
                 const registration = event?.registrations?.[0];
@@ -652,8 +640,9 @@ export default function DashboardPage() {
             date: dayData.date,
             meal,
             isRegistered,
-            currentLocationId
-        });
+            currentLocationId,
+            cutoffValue // Add this to passing props
+        } as any);
     };
 
     const handleConfirmRegistration = async (locationId: string) => {
@@ -779,6 +768,7 @@ export default function DashboardPage() {
                                 now={currentTime}
                                 onToggle={handleToggle}
                                 onShowMenu={handleShowMenu}
+                                cutoffValue={cutoffValue}
                             />
                         ))}
                     </div>
@@ -793,6 +783,7 @@ export default function DashboardPage() {
                                     now={currentTime}
                                     onToggle={handleToggle}
                                     onShowMenu={handleShowMenu}
+                                    cutoffValue={cutoffValue}
                                 />
                             );
                         })}
@@ -831,7 +822,7 @@ export default function DashboardPage() {
                         locations={locations}
                         isRegistered={editingRegistration.isRegistered}
                         currentLocationId={editingRegistration.currentLocationId}
-                        cutoffHour={cutoffHour}
+                        cutoffValue={cutoffValue}
                         userRole={userRole}
                         onConfirm={handleConfirmRegistration}
                         onUpdate={handleUpdateLocation}
