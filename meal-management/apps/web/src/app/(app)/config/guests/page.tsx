@@ -6,7 +6,7 @@ import { useGuestDirectories, useCreateGuestDirectory, useUpdateGuestDirectory, 
 import { Edit, Trash2, ChevronLeft, ChevronRight, User as UserIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useUser } from '@/features/auth/hooks';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils/cn';
 
 export default function GuestDirectoryPage() {
     const { user } = useUser();
