@@ -1,7 +1,11 @@
 import { APIError, NetworkError, UnauthorizedError } from './errors';
 import type { APIResponse } from './types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6000/api/v1';
+let API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6000/api/v1';
+// Auto-append /v1 if the environment variable only points to /api
+if (API_URL.endsWith('/api')) {
+    API_URL += '/v1';
+}
 
 type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 

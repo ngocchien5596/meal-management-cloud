@@ -256,7 +256,8 @@ export const useMealSocket = (mealEventId: string) => {
     useEffect(() => {
         if (!mealEventId) return;
 
-        const url = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:6000';
+        const envUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:6000/api';
+        const url = envUrl.replace('/api/v1', '').replace('/api', '');
         const socket = io(url);
 
         socket.on('connect', () => {

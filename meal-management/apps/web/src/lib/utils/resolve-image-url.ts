@@ -1,13 +1,14 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
-// Remove trailing slash if exists, then remove /api from the end
 const resolveBaseUrl = () => {
     let base = API_URL.trim();
     if (base.endsWith('/')) {
         base = base.slice(0, -1);
     }
-    if (base.endsWith('/api')) {
-        base = base.slice(0, -4);
+    if (base.endsWith('/api/v1')) {
+        base = base.slice(0, -7); // Remove /api/v1
+    } else if (base.endsWith('/api')) {
+        base = base.slice(0, -4); // Remove /api
     }
     return base;
 };

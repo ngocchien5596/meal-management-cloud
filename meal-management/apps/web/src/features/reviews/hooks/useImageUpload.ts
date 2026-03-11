@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import imageCompression from 'browser-image-compression';
 import { toast } from 'react-hot-toast';
-import axios from 'axios';
+import { apiClient } from '@/lib/api/client';
 
 interface UseImageUploadResult {
     uploadImage: (file: File) => Promise<string | null>;
@@ -31,14 +31,11 @@ export const useImageUpload = (): UseImageUploadResult => {
             const formData = new FormData();
             formData.append('image', compressedFile);
 
-            // Access API URL from environment or default
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
-
-            const response = await axios.post(`${API_URL}/upload/image`, formData);
+            const response = await apiClient.post<{ url: string }>('/upload/image', formData);
 
             setIsUploading(false);
 
-            if (response.data.success) {
+            if (response.success && response.data?.url) {
                 // Return relative path from backend (e.g., /static/uploads/...)
                 return response.data.url;
             } else {
