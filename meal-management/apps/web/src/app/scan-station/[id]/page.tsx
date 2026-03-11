@@ -37,7 +37,7 @@ const ErrorIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
 interface ScanResult {
     id: string;
     type: 'SUCCESS' | 'ERROR';
-    message: string;
+    method: 'QR' | 'MANUAL';
     employee?: {
         fullName: string;
         employeeCode: string;
@@ -127,8 +127,8 @@ export default function ScanStationPage() {
                 scanObj = {
                     id: Math.random().toString(36).substr(2, 9),
                     type: 'SUCCESS',
-                    message: `Khách: ${result.data.guest.fullName} check-in thành công`,
                     guest: result.data.guest,
+                    method: 'QR',
                     timestamp: new Date()
                 };
             } else {
@@ -140,8 +140,8 @@ export default function ScanStationPage() {
                 scanObj = {
                     id: Math.random().toString(36).substr(2, 9),
                     type: 'SUCCESS',
-                    message: `NV: ${result.data.employee.fullName} check-in thành công`,
                     employee: result.data.employee,
+                    method: 'QR',
                     timestamp: new Date()
                 };
             }
@@ -179,7 +179,7 @@ export default function ScanStationPage() {
             const scanObj: ScanResult = {
                 id: Math.random().toString(36).substr(2, 9),
                 type: 'SUCCESS',
-                message: `NV: ${result.data.employee.fullName} check-in thủ công`,
+                method: 'MANUAL',
                 employee: result.data.employee,
                 timestamp: new Date()
             };
@@ -276,20 +276,20 @@ export default function ScanStationPage() {
                         <div className="flex items-center gap-3 shrink-0 self-start md:self-auto w-full md:w-auto text-white">
                             <div>
                                 <h3 className="text-sm font-black uppercase tracking-wider">NHẬP MÃ THỦ CÔNG</h3>
-                                <p className="text-[10px] text-slate-400">Dành cho thiết bị hỏng camera</p>
+                                {/* <p className="text-[10px] text-slate-400">Dành cho thiết bị hỏng camera</p> */}
                             </div>
                         </div>
                         <div className="flex-1 flex gap-3 w-full md:max-w-xl">
                             <input
                                 type="text"
-                                placeholder="Mã NV..."
+                                placeholder="Mã nhân viên"
                                 value={manualCode}
                                 onChange={(e) => setManualCode(e.target.value)}
                                 className="flex-1 min-w-0 h-10 md:h-12 px-4 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#EE0033]/50 focus:border-[#EE0033] uppercase font-mono transition-all text-sm shadow-inner"
                             />
                             <input
                                 type="password"
-                                placeholder="Mật mã..."
+                                placeholder="Mã bí mật"
                                 value={manualSecret}
                                 onChange={(e) => setManualSecret(e.target.value)}
                                 className="flex-1 min-w-0 h-10 md:h-12 px-4 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#EE0033]/50 focus:border-[#EE0033] font-mono transition-all text-sm shadow-inner"
@@ -332,50 +332,60 @@ export default function ScanStationPage() {
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-4">
-                        {recentScans.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-center py-20 grayscale opacity-40">
-                                <HistoryIcon className="w-16 h-16 text-slate-300 mb-4" />
-                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Sẵn sàng chờ quét...</p>
-                            </div>
-                        ) : (
-                            recentScans.map((scan) => (
-                                <div
-                                    key={scan.id}
-                                    className={cn(
-                                        "p-4 rounded-xl border-2 transition-all animate-in slide-in-from-right-4 duration-300",
-                                        scan.type === 'SUCCESS'
-                                            ? "bg-slate-50 border-emerald-100"
-                                            : "bg-slate-50 border-rose-100"
-                                    )}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className={cn(
-                                            "w-12 h-12 rounded-lg flex items-center justify-center shrink-0 shadow-sm",
-                                            scan.type === 'SUCCESS' ? "bg-emerald-500 text-white" : "bg-[#EE0033] text-white"
-                                        )}>
-                                            {scan.type === 'SUCCESS' ? <SuccessIcon className="w-6 h-6" /> : <ErrorIcon className="w-6 h-6" />}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between mb-0.5">
-                                                <h3 className="text-[16px] font-black text-slate-900 truncate uppercase tracking-tight">
-                                                    {scan.employee?.fullName || scan.guest?.fullName || '---'}
-                                                </h3>
-                                                <span className="text-[10px] font-bold text-slate-400 tabular-nums">
-                                                    {format(scan.timestamp, 'HH:mm:ss')}
+                    <div className="flex-1 overflow-auto bg-white">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="sticky top-0 bg-slate-100 z-10 shadow-sm">
+                                <tr>
+                                    <th className="px-3 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200 w-12 text-center">STT</th>
+                                    <th className="px-3 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200">Nhân viên / Khách</th>
+                                    <th className="px-3 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200 w-24 text-center">Loại</th>
+                                    <th className="px-3 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200 w-20 text-right">Giờ</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {recentScans.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={4} className="py-20 text-center grayscale opacity-40">
+                                            <HistoryIcon className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sẵn sàng chờ quét...</p>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    recentScans.map((scan, index) => (
+                                        <tr key={scan.id} className="hover:bg-slate-50 transition-colors group">
+                                            <td className="px-3 py-1.5 text-[11px] font-bold text-slate-400 text-center tabular-nums">
+                                                {recentScans.length - index}
+                                            </td>
+                                            <td className="px-3 py-1.5 min-w-0">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[12px] font-black text-slate-900 leading-tight uppercase truncate">
+                                                        {scan.employee?.fullName || scan.guest?.fullName || '---'}
+                                                    </span>
+                                                    {scan.employee?.employeeCode && (
+                                                        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase leading-none mt-0.5">
+                                                            ID: {scan.employee.employeeCode}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-1.5 text-center">
+                                                <span className={cn(
+                                                    "inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter",
+                                                    scan.method === 'QR'
+                                                        ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                                                        : "bg-blue-50 text-blue-600 border border-blue-100"
+                                                )}>
+                                                    {scan.method === 'QR' ? 'QR NV' : 'Thủ công'}
                                                 </span>
-                                            </div>
-                                            <p className={cn(
-                                                "text-[11px] font-bold uppercase",
-                                                scan.type === 'SUCCESS' ? "text-emerald-600" : "text-[#EE0033]"
-                                            )}>
-                                                {scan.message}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
+                                            </td>
+                                            <td className="px-3 py-1.5 text-right tabular-nums text-[11px] font-bold text-slate-500">
+                                                {format(scan.timestamp, 'HH:mm:ss')}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </main>
