@@ -312,6 +312,10 @@ export default function AccountManagementContent() {
                                                     <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase tracking-wider">
                                                         HR Manager
                                                     </span>
+                                                ) : account.role === 'CLERK' ? (
+                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black bg-sky-50 text-sky-600 border border-sky-100 uppercase tracking-wider">
+                                                        Văn thư
+                                                    </span>
                                                 ) : (
                                                     <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black bg-slate-100 text-slate-500 border border-slate-200 uppercase tracking-wider">
                                                         Employee

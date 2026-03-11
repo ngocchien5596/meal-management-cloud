@@ -336,49 +336,48 @@ export default function ScanStationPage() {
                         <table className="w-full text-left border-collapse">
                             <thead className="sticky top-0 bg-slate-100 z-10 shadow-sm">
                                 <tr>
-                                    <th className="px-3 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200 w-12 text-center">STT</th>
-                                    <th className="px-3 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200">Nhân viên / Khách</th>
-                                    <th className="px-3 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200 w-24 text-center">Loại</th>
-                                    <th className="px-3 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200 w-20 text-right">Giờ</th>
+                                    <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 w-16 text-center">STT</th>
+                                    <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 overflow-hidden text-ellipsis whitespace-nowrap">Họ Tên</th>
+                                    <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 w-36">MNV/Khách</th>
+                                    <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 w-28 text-center">Loại</th>
+                                    <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 w-24 text-right">Giờ</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {recentScans.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4} className="py-20 text-center grayscale opacity-40">
-                                            <HistoryIcon className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sẵn sàng chờ quét...</p>
+                                        <td colSpan={5} className="py-24 text-center grayscale opacity-40">
+                                            <HistoryIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                                            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Sẵn sàng chờ quét...</p>
                                         </td>
                                     </tr>
                                 ) : (
                                     recentScans.map((scan, index) => (
                                         <tr key={scan.id} className="hover:bg-slate-50 transition-colors group">
-                                            <td className="px-3 py-1.5 text-[11px] font-bold text-slate-400 text-center tabular-nums">
+                                            <td className="px-4 py-4 text-base font-bold text-slate-400 text-center tabular-nums">
                                                 {recentScans.length - index}
                                             </td>
-                                            <td className="px-3 py-1.5 min-w-0">
-                                                <div className="flex flex-col">
-                                                    <span className="text-[12px] font-black text-slate-900 leading-tight uppercase truncate">
-                                                        {scan.employee?.fullName || scan.guest?.fullName || '---'}
-                                                    </span>
-                                                    {scan.employee?.employeeCode && (
-                                                        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase leading-none mt-0.5">
-                                                            ID: {scan.employee.employeeCode}
-                                                        </span>
-                                                    )}
-                                                </div>
+                                            <td className="px-4 py-4 min-w-0">
+                                                <span className="text-xl font-bold text-slate-900 leading-tight uppercase truncate block max-w-full">
+                                                    {scan.employee?.fullName || scan.guest?.fullName || '---'}
+                                                </span>
                                             </td>
-                                            <td className="px-3 py-1.5 text-center">
+                                            <td className="px-4 py-4">
+                                                <span className="text-lg font-bold text-slate-500 uppercase tabular-nums">
+                                                    {scan.employee?.employeeCode || (scan.guest ? 'KHÁCH' : '---')}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-4 text-center">
                                                 <span className={cn(
-                                                    "inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter",
+                                                    "inline-flex px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tight",
                                                     scan.method === 'QR'
                                                         ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
                                                         : "bg-blue-50 text-blue-600 border border-blue-100"
                                                 )}>
-                                                    {scan.method === 'QR' ? 'QR NV' : 'Thủ công'}
+                                                    {scan.method === 'QR' ? 'QR' : 'Thủ công'}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-1.5 text-right tabular-nums text-[11px] font-bold text-slate-500">
+                                            <td className="px-4 py-4 text-right tabular-nums text-base font-bold text-slate-500">
                                                 {format(scan.timestamp, 'HH:mm:ss')}
                                             </td>
                                         </tr>

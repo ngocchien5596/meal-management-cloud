@@ -2,6 +2,7 @@ export interface Account {
     id: string;
     employeeCode: string;
     fullName: string;
+    phoneNumber?: string;
     email: string | null;
     department: string;
     position: string;
@@ -14,6 +15,7 @@ export interface Account {
 export interface CreateAccountRequest {
     employeeCode: string;
     fullName: string;
+    phoneNumber?: string;
     email?: string;
     departmentId: string;
     positionId: string;

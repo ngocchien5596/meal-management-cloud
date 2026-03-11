@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
+import prisma from '../lib/prisma.js';
 
 const router: Router = Router();
-const prisma = new PrismaClient();
 
 // Get all directories (with search)
-router.get('/', async (req, res) => {
+router.get('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'HR', 'CLERK'), async (req, res) => {
     try {
         const { search } = req.query;
 
@@ -16,7 +16,12 @@ router.get('/', async (req, res) => {
 
         const directories = await prisma.guestDirectory.findMany({
             where,
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+            include: {
+                creator: {
+                    select: { fullName: true }
+                }
+            }
         });
 
         res.json({
@@ -30,9 +35,9 @@ router.get('/', async (req, res) => {
 });
 
 // Create new directory
-router.post('/', async (req, res) => {
+router.post('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'HR', 'CLERK'), async (req: AuthRequest, res) => {
     try {
-        const { fullName, note, isActive } = req.body;
+        const { fullName, note, isActive, phoneNumber } = req.body;
         if (!fullName) {
             return res.status(400).json({ error: 'Full name is required' });
         }
@@ -41,7 +46,9 @@ router.post('/', async (req, res) => {
             data: {
                 fullName,
                 note,
-                isActive: isActive ?? true
+                phoneNumber,
+                isActive: isActive ?? true,
+                createdBy: req.user?.employeeId
             }
         });
 
@@ -53,17 +60,33 @@ router.post('/', async (req, res) => {
 });
 
 // Update directory
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'HR', 'CLERK'), async (req: AuthRequest, res) => {
     try {
         const { id } = req.params;
-        const { fullName, note, isActive } = req.body;
+        const { fullName, note, isActive, phoneNumber } = req.body;
+
+        // Ownership check for CLERK
+        if (req.user?.role === 'CLERK') {
+            const current = await prisma.guestDirectory.findUnique({
+                where: { id },
+                select: { createdBy: true }
+            });
+
+            if (!current || current.createdBy !== req.user.employeeId) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Bạn không có quyền chỉnh sửa mục danh bạ này (chỉ được sửa mục do mình tạo).'
+                });
+            }
+        }
 
         const updated = await prisma.guestDirectory.update({
             where: { id },
             data: {
                 fullName,
                 note,
-                isActive
+                isActive,
+                phoneNumber
             }
         });
 
@@ -75,9 +98,25 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete directory
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'HR', 'CLERK'), async (req: AuthRequest, res) => {
     try {
         const { id } = req.params;
+
+        // Ownership check for CLERK
+        if (req.user?.role === 'CLERK') {
+            const current = await prisma.guestDirectory.findUnique({
+                where: { id },
+                select: { createdBy: true }
+            });
+
+            if (!current || current.createdBy !== req.user.employeeId) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Bạn không có quyền xóa mục danh bạ này (chỉ được xóa mục do mình tạo).'
+                });
+            }
+        }
+
         await prisma.guestDirectory.delete({ where: { id } });
         res.json({ success: true, message: 'Deleted successfully' });
     } catch (error) {

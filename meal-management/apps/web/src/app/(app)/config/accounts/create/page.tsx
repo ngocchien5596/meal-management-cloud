@@ -37,6 +37,7 @@ export default function CreateAccountContent() {
         positionId: '',
         role: 'EMPLOYEE',
         password: '',
+        phoneNumber: '',
     });
 
     const [error, setError] = useState<string | null>(null);
@@ -162,7 +163,7 @@ export default function CreateAccountContent() {
                                     </div>
 
                                     {/* Email */}
-                                    <div className="space-y-2 md:col-span-2">
+                                    <div className="space-y-2">
                                         <label className="text-[13px] font-black text-slate-700 uppercase tracking-wider ml-1">Địa chỉ Email</label>
                                         <div className="relative group">
                                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand transition-colors">
@@ -175,6 +176,24 @@ export default function CreateAccountContent() {
                                                 onChange={handleChange}
                                                 className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all"
                                                 placeholder="example@company.com"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Phone Number */}
+                                    <div className="space-y-2">
+                                        <label className="text-[13px] font-black text-slate-700 uppercase tracking-wider ml-1">Số điện thoại</label>
+                                        <div className="relative group">
+                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand transition-colors">
+                                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.27-2.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                name="phoneNumber"
+                                                value={formData.phoneNumber}
+                                                onChange={handleChange}
+                                                className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all"
+                                                placeholder="Nhập số điện thoại"
                                             />
                                         </div>
                                     </div>
@@ -276,6 +295,7 @@ export default function CreateAccountContent() {
                                                 <option value="ADMIN_SYSTEM">ADMIN HỆ THỐNG</option>
                                                 <option value="ADMIN_KITCHEN">ADMIN NHÀ ĂN</option>
                                                 <option value="HR">NHÂN SỰ (HR)</option>
+                                                <option value="CLERK">VĂN THƯ</option>
                                             </select>
                                             <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
                                                 <ChevronLeft className="w-4 h-4 -rotate-90" />

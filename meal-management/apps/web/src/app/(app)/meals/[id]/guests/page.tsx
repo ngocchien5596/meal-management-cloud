@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Modal, Input, Button, CreateButton, ConfirmDialog } from '@/components/ui';
+import { format } from 'date-fns';
 import { useMealDetail, useDeleteGuest, useAddGuest, useUpdateGuest } from '@/features/meals/hooks';
 import { MealDetail, Guest } from '@/features/meals/api';
 import * as QRCode from 'qrcode';
@@ -9,6 +10,7 @@ import toast from 'react-hot-toast';
 import { GuestImportExport } from '@/features/meals/components/GuestImportExport';
 import { Edit, Search, PlusCircle, Users } from 'lucide-react';
 import { useGuestDirectories } from '@/features/guest-directory/api';
+import { useUser } from '@/features/auth/hooks';
 
 const PlusIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
@@ -34,6 +36,7 @@ function GuestForm({ mealId, guest, onSuccess }: GuestFormProps) {
     const isEditing = !!guest;
 
     const [fullName, setFullName] = useState(guest?.fullName || '');
+    const [phoneNumber, setPhoneNumber] = useState(guest?.phoneNumber || '');
     const [note, setNote] = useState(guest?.note || '');
     const [directoryId, setDirectoryId] = useState<string | undefined>(guest?.id); // Actually, we don't have directoryId in Guest interface yet on frontend API, but we'll send it if selected
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -55,6 +58,7 @@ function GuestForm({ mealId, guest, onSuccess }: GuestFormProps) {
 
         const data = {
             fullName,
+            phoneNumber,
             note,
             directoryId
         };
@@ -77,6 +81,7 @@ function GuestForm({ mealId, guest, onSuccess }: GuestFormProps) {
 
     const selectSuggestion = (suggestion: any) => {
         setFullName(suggestion.fullName);
+        setPhoneNumber(suggestion.phoneNumber || '');
         setNote(suggestion.note || '');
         setDirectoryId(suggestion.id);
         setShowSuggestions(false);
@@ -139,6 +144,16 @@ function GuestForm({ mealId, guest, onSuccess }: GuestFormProps) {
             </div>
 
             <div className="space-y-2">
+                <label className="text-sm font-black text-slate-700 ml-1">Số điện thoại</label>
+                <Input
+                    name="phoneNumber"
+                    placeholder="Nhập số điện thoại (nếu có)..."
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                />
+            </div>
+
+            <div className="space-y-2">
                 <label className="text-sm font-black text-slate-700 ml-1">Ghi chú</label>
                 <Input
                     name="note"
@@ -161,6 +176,7 @@ function GuestForm({ mealId, guest, onSuccess }: GuestFormProps) {
 
 export default function GuestsPage({ params }: { params: { id: string } }) {
     const { id } = params;
+    const { user } = useUser();
     const { data: response, isLoading } = useMealDetail(id);
     const meal = response as MealDetail | undefined;
     const deleteMutation = useDeleteGuest();
@@ -252,6 +268,9 @@ export default function GuestsPage({ params }: { params: { id: string } }) {
                             <tr className="bg-gray-50 border-b border-gray-200">
                                 <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider w-20 text-center">STT</th>
                                 <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">Họ và tên</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">SĐT</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">Giờ tạo</th>
+                                <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">Người tạo</th>
                                 <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider">Ghi chú</th>
                                 <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider text-center">QR Token</th>
                                 <th className="py-4 px-6 text-xs font-bold text-gray-900 uppercase tracking-wider text-right">Thao tác</th>
@@ -260,7 +279,7 @@ export default function GuestsPage({ params }: { params: { id: string } }) {
                         <tbody className="bg-white">
                             {guests.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="py-12 text-center text-gray-500 italic text-[15px]">
+                                    <td colSpan={8} className="py-12 text-center text-gray-500 italic text-[15px]">
                                         Chưa có khách mời nào được đăng ký.
                                     </td>
                                 </tr>
@@ -274,6 +293,15 @@ export default function GuestsPage({ params }: { params: { id: string } }) {
                                         </td>
                                         <td className="py-4 px-6 text-[15px] font-medium text-gray-900 uppercase tracking-tight">
                                             {guest.fullName}
+                                        </td>
+                                        <td className="py-4 px-6 text-[15px] font-medium text-slate-700">
+                                            {guest.phoneNumber || '-'}
+                                        </td>
+                                        <td className="py-4 px-6 text-[14px] text-slate-600">
+                                            {guest.createdAt ? format(new Date(guest.createdAt), 'HH:mm dd/MM/yyyy') : '-'}
+                                        </td>
+                                        <td className="py-4 px-6 text-[14px] font-bold text-blue-600">
+                                            {guest.creator?.fullName || '-'}
                                         </td>
                                         <td className="py-4 px-6 text-[15px] text-gray-500 italic">
                                             {guest.note || 'Không có ghi chú'}
@@ -291,20 +319,27 @@ export default function GuestsPage({ params }: { params: { id: string } }) {
                                             <div className="flex items-center justify-end gap-3">
                                                 {meal?.status !== 'COMPLETED' ? (
                                                     <>
-                                                        <button
-                                                            onClick={() => handleOpenEdit(guest)}
-                                                            className="p-2 hover:bg-brand-soft rounded-xl text-vttext-muted hover:text-brand transition-colors"
-                                                            title="Sửa"
-                                                        >
-                                                            <Edit className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setDeleteId(guest.id)}
-                                                            className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50"
-                                                            title="Xóa"
-                                                        >
-                                                            <TrashIcon />
-                                                        </button>
+                                                        {/* Ownership check: Admin/Kitchen can edit everything. Clerk can only edit own guest. */}
+                                                        {(user?.role === 'ADMIN_SYSTEM' || user?.role === 'ADMIN_KITCHEN' || guest.createdBy === user?.id || guest.createdBy === (user as any)?.employeeId) ? (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => handleOpenEdit(guest)}
+                                                                    className="p-2 hover:bg-brand-soft rounded-xl text-vttext-muted hover:text-brand transition-colors"
+                                                                    title="Sửa"
+                                                                >
+                                                                    <Edit className="w-4 h-4" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setDeleteId(guest.id)}
+                                                                    className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50"
+                                                                    title="Xóa"
+                                                                >
+                                                                    <TrashIcon />
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-[13px] text-slate-300 italic">Chỉ xem</span>
+                                                        )}
                                                     </>
                                                 ) : (
                                                     <span className="text-xs text-gray-400 italic">Đã khóa</span>

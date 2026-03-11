@@ -5,7 +5,7 @@ import prisma from '../lib/prisma.js';
 const router: Router = Router();
 
 // GET /api/meals - List all meal events with optional date filtering
-router.get('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
+router.get('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'CLERK'), async (req, res) => {
     try {
         const { startDate, endDate, search, status } = req.query;
 
@@ -131,7 +131,7 @@ router.post('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async
 });
 
 // GET /api/v1/meals/active - Get current active meal for display board
-router.get('/active', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
+router.get('/active', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'CLERK'), async (req, res) => {
     try {
         const today = new Date();
         const startOfDay = new Date(today);
@@ -233,7 +233,7 @@ router.get('/active', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), 
 });
 
 // GET /api/meals/:id - Get detailed meal event information
-router.get('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
+router.get('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'CLERK'), async (req, res) => {
     try {
         const { id } = req.params;
         console.log(`[DEBUG] GET /api/meals/${id} requested`);
@@ -243,7 +243,14 @@ router.get('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), asy
             include: {
                 ingredients: { include: { catalog: true } },
                 menuItems: { include: { catalog: true } },
-                guests: true,
+                guests: {
+                    include: {
+                        creator: {
+                            select: { fullName: true }
+                        }
+                    }
+                },
+
                 _count: {
                     select: {
                         reviews: true
@@ -266,13 +273,16 @@ router.get('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), asy
                     include: {
                         employee: {
                             select: {
+                                id: true,
                                 fullName: true,
                                 employeeCode: true
                             }
                         },
                         guest: {
                             select: {
-                                fullName: true
+                                id: true,
+                                fullName: true,
+                                phoneNumber: true
                             }
                         },
                         registration: { include: { location: true } }
@@ -308,6 +318,69 @@ router.get('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), asy
         res.json({ success: true, data: meal });
     } catch (error) {
         console.error('Fetch meal detail error:', error);
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+});
+
+// GET /api/meals/:id/summary - Get summary information for kitchen
+router.get('/:id/summary', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'CLERK'), async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const meal = await prisma.mealEvent.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                mealDate: true,
+                mealType: true,
+                guests: {
+                    select: { id: true }
+                },
+                registrations: {
+                    where: { isCancelled: false },
+                    select: {
+                        id: true,
+                        location: {
+                            select: { id: true, name: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!meal) {
+            return res.status(404).json({ success: false, error: 'Meal not found' });
+        }
+
+        const totalRegistrations = meal.registrations.length;
+        const totalGuests = meal.guests.length;
+        const totalServings = totalRegistrations + totalGuests;
+
+        const locationBreakdown: Record<string, { name: string; count: number }> = {};
+
+        meal.registrations.forEach(reg => {
+            const locId = reg.location?.id || 'unknown';
+            const locName = reg.location?.name || 'Chưa xác định';
+
+            if (!locationBreakdown[locId]) {
+                locationBreakdown[locId] = { name: locName, count: 0 };
+            }
+            locationBreakdown[locId].count++;
+        });
+
+        res.json({
+            success: true,
+            data: {
+                mealDate: meal.mealDate,
+                mealType: meal.mealType,
+                totalRegistrations,
+                totalGuests,
+                totalServings,
+                locations: Object.values(locationBreakdown).sort((a, b) => b.count - a.count)
+            }
+        });
+    } catch (error) {
+        console.error('Fetch meal summary error:', error);
         res.status(500).json({ success: false, error: 'Internal Server Error' });
     }
 });
@@ -564,10 +637,10 @@ router.patch('/menu-items/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_
 
 // --- Guests Management ---
 
-router.post('/:id/guests', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
+router.post('/:id/guests', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'CLERK'), async (req, res) => {
     try {
         const { id } = req.params;
-        const { fullName, note, directoryId } = req.body;
+        const { fullName, note, directoryId, phoneNumber } = req.body;
 
         if (!fullName || fullName.trim() === '') {
             return res.status(400).json({ success: false, error: 'Tên khách mời không được để trống' });
@@ -588,7 +661,9 @@ router.post('/:id/guests', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTE
                 const newDir = await prisma.guestDirectory.create({
                     data: {
                         fullName: trimmedName,
-                        note: note || ''
+                        note: note || '',
+                        phoneNumber: phoneNumber || null,
+                        createdBy: (req as any).user?.employeeId
                     }
                 });
                 finalDirectoryId = newDir.id;
@@ -600,7 +675,9 @@ router.post('/:id/guests', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTE
                 mealEventId: id,
                 fullName: trimmedName,
                 note,
+                phoneNumber: phoneNumber || null,
                 directoryId: finalDirectoryId,
+                createdBy: (req as any).user?.employeeId,
                 qrToken: `GUEST-${id}-${Date.now()}` // Basic generator, can be improved
             },
             include: { directory: true }
@@ -615,15 +692,33 @@ router.post('/:id/guests', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTE
     }
 });
 
-router.patch('/guests/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
+router.patch('/guests/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'CLERK'), async (req, res) => {
     try {
         const { id } = req.params;
-        const { fullName, note, directoryId } = req.body;
+        const authReq = req as any;
+
+        // Ownership check for CLERK
+        if (authReq.user?.role === 'CLERK') {
+            const currentGuest = await prisma.guest.findUnique({
+                where: { id },
+                select: { createdBy: true }
+            });
+
+            if (!currentGuest || currentGuest.createdBy !== authReq.user.employeeId) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Bạn không có quyền chỉnh sửa thông tin khách này (chỉ được sửa khách do mình tạo).'
+                });
+            }
+        }
+
+        const { fullName, note, directoryId, phoneNumber } = req.body;
 
         const updateData: any = {};
         if (fullName) updateData.fullName = fullName.trim();
         if (note !== undefined) updateData.note = note;
         if (directoryId !== undefined) updateData.directoryId = directoryId;
+        if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
 
         const guest = await prisma.guest.update({
             where: { id },
@@ -637,9 +732,26 @@ router.patch('/guests/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYST
     }
 });
 
-router.delete('/guests/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
+router.delete('/guests/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'CLERK'), async (req, res) => {
     try {
         const { id } = req.params;
+        const authReq = req as any;
+
+        // Ownership check for CLERK
+        if (authReq.user?.role === 'CLERK') {
+            const currentGuest = await prisma.guest.findUnique({
+                where: { id },
+                select: { createdBy: true }
+            });
+
+            if (!currentGuest || currentGuest.createdBy !== authReq.user.employeeId) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Bạn không có quyền xóa khách này (chỉ được xóa khách do mình tạo).'
+                });
+            }
+        }
+
         await prisma.guest.delete({ where: { id } });
         res.json({ success: true, message: 'Guest deleted' });
     } catch (error) {

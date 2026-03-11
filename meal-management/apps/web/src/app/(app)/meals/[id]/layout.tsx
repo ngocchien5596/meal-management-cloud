@@ -113,12 +113,13 @@ export default function MealDetailLayout({
 
     const { user } = useAuthStore();
     const isAdmin = user?.role === 'ADMIN_KITCHEN' || user?.role === 'ADMIN_SYSTEM';
+    const canAccessMeals = isAdmin || user?.role === 'CLERK';
 
     React.useEffect(() => {
-        if (user && !isAdmin) {
+        if (user && !canAccessMeals) {
             router.replace('/dashboard');
         }
-    }, [user, isAdmin, router]);
+    }, [user, canAccessMeals, router]);
 
     const { data: meal, isLoading } = useMealDetail(id) as { data: MealDetail | undefined, isLoading: boolean };
 
@@ -132,11 +133,6 @@ export default function MealDetailLayout({
     const scanGuest = useScanGuest();
 
     // Checkin State
-    const [manualCode, setManualCode] = useState('');
-    const [manualSecret, setManualSecret] = useState('');
-    const [isMealQrOpen, setIsMealQrOpen] = useState(false);
-    const [mealQrUrl, setMealQrUrl] = useState('');
-
     const [isStartConfirmOpen, setIsStartConfirmOpen] = useState(false);
     const [isEndConfirmOpen, setIsEndConfirmOpen] = useState(false);
 
@@ -162,42 +158,7 @@ export default function MealDetailLayout({
         }
     };
 
-    const handleManualCheckin = async () => {
-        if (!manualCode || !manualSecret) {
-            toast.error('Vui lòng nhập đầy đủ Mã NV và Mã bí mật');
-            return;
-        }
-        try {
-            await manualCheckin.mutateAsync({
-                mealEventId: id,
-                employeeCode: manualCode,
-                secretCode: manualSecret
-            });
-            playCheckinSuccess();
-            setManualCode('');
-            setManualSecret('');
-        } catch (error) {
-            playCheckinError();
-        }
-    };
 
-    const handleOpenMealQr = async () => {
-        if (!meal?.qrToken) {
-            toast.error('Bữa ăn chưa có mã QR');
-            return;
-        }
-        setIsMealQrOpen(true);
-        try {
-            const url = await QRCode.toDataURL(meal.qrToken, {
-                width: 400,
-                color: { dark: '#1e73d8', light: '#ffffff' }
-            });
-            setMealQrUrl(url);
-        } catch (err) {
-            console.error(err);
-            toast.error('Không thể tạo mã QR bữa ăn');
-        }
-    };
 
     const isActive = (path: string) => {
         if (path === baseUrl) {
@@ -213,11 +174,27 @@ export default function MealDetailLayout({
         </svg>
     );
 
+    const UncheckinIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <line x1="17" x2="22" y1="8" y2="13" />
+            <line x1="22" x2="17" y1="8" y2="13" />
+        </svg>
+    );
+
     const tabs = [
         { key: 'ingredients', label: 'Nguyên liệu', href: `${baseUrl}/ingredients`, icon: IngredientsIcon, badge: 0 },
         { key: 'menu', label: 'Thực đơn', href: `${baseUrl}/menu`, icon: MenuIcon, badge: 0 },
         { key: 'staff', label: 'DS nhân viên', href: `${baseUrl}/staff`, icon: UsersIcon, badge: (meal as MealDetail)?.registrations?.filter((r: any) => !r.isCancelled).length || 0 },
         { key: 'guests', label: 'Khách', href: `${baseUrl}/guests`, icon: GuestIcon, badge: (meal as MealDetail)?.guests?.length || 0 },
+        {
+            key: 'un-checkin',
+            label: 'Chưa checkin',
+            href: `${baseUrl}/un-checkin`,
+            icon: UncheckinIcon,
+            badge: Math.max(0, ((meal as MealDetail)?.registrations?.filter((r: any) => !r.isCancelled).length || 0) + ((meal as MealDetail)?.guests?.length || 0) - ((meal as MealDetail)?.checkins?.length || 0))
+        },
         { key: 'checkins', label: 'Đã checkin', href: `${baseUrl}/checkins`, icon: CheckedInIcon, badge: (meal as MealDetail)?.checkins?.length || 0 },
         { key: 'reviews', label: 'Đánh giá', href: `${baseUrl}/reviews`, icon: StarIcon, badge: (meal as any)?.['_count']?.reviews || 0 },
     ];
@@ -244,22 +221,32 @@ export default function MealDetailLayout({
     return (
         <div className="w-full min-h-screen bg-[#f8fafc] px-7 py-6 animate-in fade-in duration-500">
 
-            {/* Header Area */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-                <div className="flex items-center gap-3 w-full md:w-auto">
+            {/* Optimized Header Area */}
+            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-6">
+                <div className="flex items-center gap-3 w-full xl:w-auto">
                     <Link
                         href="/meals"
-                        className="w-9 h-9 bg-white rounded-lg flex items-center justify-center border border-vtborder text-vttext-muted hover:text-brand hover:border-brand-soft2 transition-all shadow-sm"
+                        className="w-9 h-9 bg-white rounded-lg flex items-center justify-center border border-vtborder text-vttext-muted hover:text-brand hover:border-brand-soft2 transition-all shadow-sm shrink-0"
                     >
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
                     </Link>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-xl font-bold text-gray-900 leading-tight">
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <h1 className="text-xl font-bold text-gray-900 leading-tight truncate">
                                 Chi tiết bữa ăn
                             </h1>
+                            <span className="text-gray-300 hidden sm:inline">•</span>
+                            <div className="flex items-center gap-2 overflow-hidden">
+                                <span className="text-[15px] font-bold text-blue-600 whitespace-nowrap">
+                                    {format(new Date(meal.mealDate), 'dd/MM/yyyy')}
+                                </span>
+                                <span className="text-gray-300">•</span>
+                                <span className="text-[15px] font-bold text-orange-600 whitespace-nowrap">
+                                    {meal.mealType === 'LUNCH' ? 'Bữa Trưa' : 'Bữa Tối'}
+                                </span>
+                            </div>
                             <span className={cn(
-                                "text-[11px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border",
+                                "text-[11px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border whitespace-nowrap",
                                 meal.status === 'IN_PROGRESS' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
                                     meal.status === 'COMPLETED' ? "bg-gray-100 text-gray-500 border-gray-200" :
                                         "bg-orange-50 text-orange-600 border-orange-100"
@@ -267,124 +254,56 @@ export default function MealDetailLayout({
                                 {meal.status === 'IN_PROGRESS' ? "Đang diễn ra" : meal.status === 'COMPLETED' ? "Đã kết thúc" : "Nháp"}
                             </span>
                         </div>
-
-                        {/* <p className="text-sm text-gray-500 mt-0.5">
-                            {format(new Date(meal.mealDate), "EEEE, 'ngày' dd 'tháng' MM 'năm' yyyy", { locale: vi })} • {meal.mealType === 'LUNCH' ? 'Bữa Trưa' : 'Bữa Tối'}
-                        </p> */}
                     </div>
                 </div>
 
-                {/* Right Actions */}
-                {isAdmin && (
-                    <div className="flex gap-3 w-full md:w-auto justify-end">
-                        <button
-                            onClick={() => window.open(`/display/${id}`, '_blank')}
-                            className="h-9 px-4 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-all"
-                        >
-                            <MonitorIcon className="w-3.5 h-3.5" /> Màn hình TV
-                        </button>
-
-                        {meal.status === 'DRAFT' && (
-                            <button
-                                onClick={() => setIsStartConfirmOpen(true)}
-                                disabled={startMutation.isPending}
-                                className="h-9 px-4 bg-brand hover:bg-brand-hover text-white rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-all disabled:opacity-50"
-                            >
-                                {startMutation.isPending ? "Đang xử lý..." : <><PlayIcon className="w-3.5 h-3.5 fill-current" /> Bắt đầu phục vụ</>}
-                            </button>
-                        )}
-
-                        {meal.status === 'IN_PROGRESS' && (
-                            <button
-                                onClick={() => setIsEndConfirmOpen(true)}
-                                disabled={endMutation.isPending}
-                                className="h-9 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-all disabled:opacity-50"
-                            >
-                                {endMutation.isPending ? "Đang xử lý..." : <><SquareIcon className="w-3.5 h-3.5 fill-current" /> Kết thúc buổi ăn</>}
-                            </button>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            {/* INFO & ACTION BAR */}
-            <div className="bg-white rounded-xl p-4 border border-[#eef2f7] shadow-sm mb-6 flex flex-col xl:flex-row items-center justify-between gap-4">
-
-                {/* Left: Meal Metadata */}
-                <div className="flex items-center gap-8 w-full xl:w-auto">
-                    <div className="flex flex-wrap items-center gap-6">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-brand-soft text-brand rounded-lg flex items-center justify-center">
-                                <CalendarIcon className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold text-vttext-muted uppercase tracking-wider mb-0.5">Thời gian</p>
-                                <p className="text-base font-bold text-vttext-primary">{format(new Date(meal.mealDate), 'dd/MM/yyyy')}</p>
-                            </div>
-                        </div>
-
-                        <div className="w-px h-8 bg-gray-100 hidden sm:block" />
-
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center">
-                                <MealIcon className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Loại bữa</p>
-                                <p className="text-base font-bold text-gray-900">{meal.mealType === 'LUNCH' ? 'Bữa Trưa' : 'Bữa Tối'}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Right: Check-in Actions (Only if IN_PROGRESS and for Admins) */}
-                {meal.status === 'IN_PROGRESS' && isAdmin && (
-                    <div className="w-full xl:w-auto flex flex-col md:flex-row items-center gap-4 pt-4 xl:pt-0 border-t xl:border-t-0 border-gray-100">
-                        {/* Manual Checkin Compact */}
-                        <div className="flex items-center gap-2 w-full md:w-auto">
-                            <input
-                                className="h-9 border border-vtborder rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-focus w-full md:w-32 placeholder:text-vttext-muted"
-                                placeholder="Mã NV"
-                                value={manualCode}
-                                onChange={(e) => setManualCode(e.target.value)}
-                            />
-                            <input
-                                type="password"
-                                className="h-9 border border-vtborder rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-focus w-full md:w-32 placeholder:text-vttext-muted"
-                                placeholder="Mã bí mật"
-                                value={manualSecret}
-                                onChange={(e) => setManualSecret(e.target.value)}
-                            />
-                            <button
-                                onClick={handleManualCheckin}
-                                disabled={manualCheckin.isPending}
-                                className="h-9 px-3 bg-brand text-white hover:bg-brand-hover font-medium rounded-lg text-sm transition-all shadow-sm disabled:opacity-50"
-                            >
-                                {manualCheckin.isPending ? "..." : "Check"}
-                            </button>
-                        </div>
-
-                        <div className="w-px h-6 bg-gray-200 hidden md:block" />
-
-                        {/* Quick Actions */}
-                        <div className="flex items-center gap-2 w-full md:w-auto">
+                {/* Single-Line Action Row */}
+                <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-start xl:justify-end">
+                    {/* Primary Actions */}
+                    <div className="flex items-center gap-2">
+                        {meal.status === 'IN_PROGRESS' && isAdmin && (
                             <button
                                 onClick={() => window.open(`/scan-station/${id}`, '_blank')}
-                                className="flex-1 md:flex-none h-9 px-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
+                                className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs flex items-center gap-2 shadow-md shadow-blue-200 transition-all border border-blue-500"
                             >
-                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" /><rect width="7" height="7" x="7" y="7" rx="1" /></svg>
-                                <span>Quét NV</span>
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" /><rect width="7" height="7" x="7" y="7" rx="1" /></svg>
+                                <span>ĐIỂM DANH</span>
                             </button>
-                            <button
-                                onClick={handleOpenMealQr}
-                                className="flex-1 md:flex-none h-9 px-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
-                            >
-                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" /><path d="M2 2h20v20H2z" opacity="0.1" /><path d="M16 16h.01" /><path d="M12 12h.01" /><path d="M8 8h.01" /></svg>
-                                <span>Mã QR bữa ăn</span>
-                            </button>
-                        </div>
+                        )}
+
+                        <button
+                            onClick={() => window.open(`/display/${id}`, '_blank')}
+                            className="h-9 px-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
+                        >
+                            <MonitorIcon className="w-3.5 h-3.5 text-slate-500" /> <span className="hidden sm:inline uppercase">Màn hình TV</span>
+                        </button>
                     </div>
-                )}
+
+                    {/* Primary Control */}
+                    {isAdmin && (
+                        <div className="flex gap-2">
+                            {meal.status === 'DRAFT' && (
+                                <button
+                                    onClick={() => setIsStartConfirmOpen(true)}
+                                    disabled={startMutation.isPending}
+                                    className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm transition-all uppercase"
+                                >
+                                    <PlayIcon className="w-3.5 h-3.5 fill-current" /> Bắt đầu
+                                </button>
+                            )}
+
+                            {meal.status === 'IN_PROGRESS' && (
+                                <button
+                                    onClick={() => setIsEndConfirmOpen(true)}
+                                    disabled={endMutation.isPending}
+                                    className="h-9 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm transition-all uppercase"
+                                >
+                                    <SquareIcon className="w-3.5 h-3.5 fill-current" /> Kết thúc
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* TABBED CONTENT */}
@@ -430,29 +349,6 @@ export default function MealDetailLayout({
             </main>
 
             {/* Modals */}
-            <Modal
-                isOpen={isMealQrOpen}
-                onClose={() => setIsMealQrOpen(false)}
-                title="Mã QR Bữa ăn"
-            >
-                <div className="flex flex-col items-center py-6">
-                    <div className="w-[300px] h-[300px] bg-white border-2 border-dashed border-gray-100 rounded-3xl flex items-center justify-center p-6 mb-6 shadow-sm">
-                        {mealQrUrl ? (
-                            <img src={mealQrUrl} alt="Meal QR" className="w-full h-full object-contain" />
-                        ) : (
-                            <div className="w-8 h-8 border-4 border-brand/10 border-t-brand rounded-full animate-spin"></div>
-                        )}
-                    </div>
-                    <div className="text-center">
-                        <p className="text-xl font-bold text-gray-900 uppercase tracking-tight">
-                            {meal.mealType === 'LUNCH' ? 'Bữa Trưa' : 'Bữa Tối'}
-                        </p>
-                        <p className="text-sm font-medium text-gray-500 mt-1">
-                            {format(new Date(meal.mealDate), 'dd/MM/yyyy')}
-                        </p>
-                    </div>
-                </div>
-            </Modal>
 
 
             <ConfirmDialog

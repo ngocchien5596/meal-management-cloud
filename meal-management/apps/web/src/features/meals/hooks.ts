@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
-import { mealsApi, MealDetail } from './api';
+import { mealsApi, MealDetail, MealSummary } from './api';
 
 export const useMeals = (startDate?: string, endDate?: string, search?: string, status?: string) => {
     return useQuery({
@@ -35,6 +35,15 @@ export const useMealDetail = (id: string, options?: any) => {
     return useQuery<MealDetail>({
         queryKey: ['meal', id],
         queryFn: () => mealsApi.getMealDetail(id),
+        enabled: !!id,
+        ...options
+    });
+};
+
+export const useMealSummary = (id: string, options?: any) => {
+    return useQuery<MealSummary>({
+        queryKey: ['meal', id, 'summary'],
+        queryFn: () => mealsApi.getMealSummary(id),
         enabled: !!id,
         ...options
     });

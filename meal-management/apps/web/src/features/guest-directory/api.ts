@@ -5,10 +5,15 @@ import toast from 'react-hot-toast';
 export interface GuestDirectory {
     id: string;
     fullName: string;
+    phoneNumber?: string;
     note?: string;
     isActive: boolean;
+    createdBy?: string;
     createdAt: string;
     updatedAt: string;
+    creator?: {
+        fullName: string;
+    };
 }
 
 export const guestDirectoryApi = {
@@ -16,11 +21,11 @@ export const guestDirectoryApi = {
         api.get<GuestDirectory[]>('/guest-directory', { params: { search } })
             .then(res => res.data),
 
-    createDirectory: (data: { fullName: string; note?: string; isActive?: boolean }) =>
+    createDirectory: (data: { fullName: string; phoneNumber?: string; note?: string; isActive?: boolean }) =>
         api.post<GuestDirectory>('/guest-directory', data)
             .then(res => res.data),
 
-    updateDirectory: (id: string, data: { fullName?: string; note?: string; isActive?: boolean }) =>
+    updateDirectory: (id: string, data: { fullName?: string; phoneNumber?: string; note?: string; isActive?: boolean }) =>
         api.put<GuestDirectory>(`/guest-directory/${id}`, data)
             .then(res => res.data),
 

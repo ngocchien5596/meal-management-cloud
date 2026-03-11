@@ -33,8 +33,8 @@ router.get('/template', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (re
             dataSheet.getCell(`B${i + 1}`).value = p.name;
         });
 
-        // Fill Roles (Col C) - defined in enum or static list
-        const roles = ['EMPLOYEE', 'ADMIN_SYSTEM', 'ADMIN_KITCHEN', 'HR'];
+        // Fill Roles (Col C) - Vietnamese labels for user-friendly dropdown
+        const roles = ['Nhân viên', 'Admin hệ thống', 'Admin nhà ăn', 'Nhân sự (HR)', 'Văn thư'];
         roles.forEach((r, i) => {
             dataSheet.getCell(`C${i + 1}`).value = r;
         });
@@ -50,7 +50,8 @@ router.get('/template', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (re
             { header: 'Email', key: 'email', width: 25 },
             { header: 'Phòng ban (*)', key: 'department', width: 20 },
             { header: 'Chức vụ (*)', key: 'position', width: 20 },
-            { header: 'Vai trò (ADMIN/EMPLOYEE)', key: 'role', width: 25 },
+            { header: 'Vai trò', key: 'role', width: 25 },
+            { header: 'Số điện thoại', key: 'phoneNumber', width: 20 },
         ];
 
         // Style Header
@@ -135,9 +136,10 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM', 'HR'), upload.sin
             const departmentName = row.getCell(4).text?.toString().trim();
             const positionName = row.getCell(5).text?.toString().trim();
             const roleStr = row.getCell(6).text?.toString().trim().toUpperCase();
+            const phoneNumber = row.getCell(7).text?.toString().trim();
 
             // Check if row is completely empty
-            const isEmpty = !employeeCode && !fullName && !email && !departmentName && !positionName;
+            const isEmpty = !employeeCode && !fullName && !email && !departmentName && !positionName && !phoneNumber;
             if (isEmpty) return;
 
             results.total++;
@@ -150,7 +152,8 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM', 'HR'), upload.sin
                     email,
                     departmentName,
                     positionName,
-                    roleStr
+                    roleStr,
+                    phoneNumber
                 });
             } else {
                 results.failed++;
@@ -191,6 +194,7 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM', 'HR'), upload.sin
                                 email: row.email || null,
                                 departmentId: dept.id,
                                 positionId: pos.id,
+                                phoneNumber: row.phoneNumber || null,
                             }
                         });
                     } else {
@@ -201,18 +205,35 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM', 'HR'), upload.sin
                                 fullName: row.fullName,
                                 departmentId: dept.id,
                                 positionId: pos.id,
+                                phoneNumber: row.phoneNumber || undefined,
                             }
                         });
                     }
 
-                    // 4. Upsert Account
-                    const rawRole = row.roleStr?.trim().toUpperCase() || '';
+                    // 4. Upsert Account - Support both Vietnamese labels and English enum values
+                    const rawRole = row.roleStr?.trim() || '';
                     console.log(`[Import] Row ${row.rowNumber}: Raw role string: "${rawRole}"`);
 
+                    const viToEnumMap: Record<string, Role> = {
+                        'nhân viên': Role.EMPLOYEE,
+                        'admin hệ thống': Role.ADMIN_SYSTEM,
+                        'admin nhà ăn': Role.ADMIN_KITCHEN,
+                        'nhân sự (hr)': Role.HR,
+                        'nhân sự': Role.HR,
+                        'văn thư': Role.CLERK,
+                    };
+
                     let role: Role = Role.EMPLOYEE;
-                    if (Object.values(Role).includes(rawRole as any)) {
-                        role = rawRole as Role;
-                    } else if (rawRole === 'ADMIN') {
+                    const rawUpper = rawRole.toUpperCase();
+                    const rawLower = rawRole.toLowerCase();
+
+                    if (Object.values(Role).includes(rawUpper as any)) {
+                        // Direct enum match (e.g. EMPLOYEE, ADMIN_SYSTEM)
+                        role = rawUpper as Role;
+                    } else if (viToEnumMap[rawLower]) {
+                        // Vietnamese label match
+                        role = viToEnumMap[rawLower];
+                    } else if (rawUpper === 'ADMIN') {
                         role = Role.ADMIN_SYSTEM;
                     }
 
@@ -282,6 +303,7 @@ const createAccountSchema = z.object({
     email: z.string().email('Email không hợp lệ').optional().or(z.literal('')),
     departmentId: z.string().min(1, 'Phòng ban là bắt buộc'),
     positionId: z.string().min(1, 'Chức vụ là bắt buộc'),
+    phoneNumber: z.string().optional().or(z.literal('')),
     password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự').optional(),
     role: z.nativeEnum(Role).optional().default(Role.EMPLOYEE),
 });
@@ -303,6 +325,7 @@ router.get('/', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req, res, 
             employeeCode: emp.employeeCode,
             fullName: emp.fullName,
             email: emp.email,
+            phoneNumber: emp.phoneNumber,
             department: emp.department.name,
             position: emp.position.name,
             role: emp.account?.role || null,
@@ -345,6 +368,7 @@ router.get('/:id', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req, re
             employeeCode: employee.employeeCode,
             fullName: employee.fullName,
             email: employee.email,
+            phoneNumber: employee.phoneNumber,
             department: employee.department.name,
             position: employee.position.name,
             departmentId: employee.departmentId,
@@ -375,7 +399,7 @@ router.post('/', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req: Auth
             });
         }
 
-        const { employeeCode, fullName, email, departmentId, positionId, password, role } = validation.data;
+        const { employeeCode, fullName, email, departmentId, positionId, password, role, phoneNumber } = validation.data;
 
         // Check duplicate
         const existing = await prisma.employee.findUnique({
@@ -407,6 +431,7 @@ router.post('/', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req: Auth
                     employeeCode,
                     fullName,
                     email: email || null,
+                    phoneNumber: phoneNumber || null,
                     departmentId,
                     positionId,
                 },
@@ -490,6 +515,7 @@ router.put('/:id', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req, re
                     employeeCode: data.employeeCode,
                     fullName: data.fullName,
                     email: data.email,
+                    phoneNumber: data.phoneNumber,
                     departmentId: data.departmentId,
                     positionId: data.positionId,
                 },

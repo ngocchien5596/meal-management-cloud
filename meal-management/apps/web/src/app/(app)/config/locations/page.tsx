@@ -7,6 +7,7 @@ import { MapPin, Plus, Edit, Trash2, X, Loader2, Search } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils/cn';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface MealLocation {
     id: string;
@@ -22,6 +23,9 @@ export default function MealLocationsPage() {
     const [name, setName] = useState('');
     const [isDefault, setIsDefault] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [locationToDelete, setLocationToDelete] = useState<MealLocation | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Fetch locations
     const { data, isLoading } = useQuery({
@@ -110,8 +114,22 @@ export default function MealLocationsPage() {
             return;
         }
 
-        if (window.confirm(`Bạn có chắc chắn muốn xóa địa điểm: ${loc.name}?`)) {
-            deleteMutation.mutate(loc.id);
+        setLocationToDelete(loc);
+        setIsDeleteOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!locationToDelete) return;
+
+        setIsDeleting(true);
+        try {
+            await deleteMutation.mutateAsync(locationToDelete.id);
+            setIsDeleteOpen(false);
+            setLocationToDelete(null);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -319,6 +337,18 @@ export default function MealLocationsPage() {
                     </Dialog.Content>
                 </Dialog.Portal>
             </Dialog.Root>
+
+            <ConfirmDialog
+                isOpen={isDeleteOpen}
+                onClose={() => setIsDeleteOpen(false)}
+                onConfirm={handleConfirmDelete}
+                isLoading={isDeleting}
+                title="Xác nhận xóa"
+                description={`Bạn có chắc chắn muốn xóa địa điểm "${locationToDelete?.name}"? Hành động này không thể hoàn tác.`}
+                confirmText="Xác nhận xóa"
+                cancelText="Hủy"
+                type="danger"
+            />
         </div>
     );
 }

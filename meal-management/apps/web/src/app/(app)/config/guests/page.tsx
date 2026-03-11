@@ -3,10 +3,13 @@
 import React, { useState } from 'react';
 import { Card, CreateButton, Modal, Input, Button, ConfirmDialog } from '@/components/ui';
 import { useGuestDirectories, useCreateGuestDirectory, useUpdateGuestDirectory, useDeleteGuestDirectory, GuestDirectory } from '@/features/guest-directory/api';
-import { Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Trash2, ChevronLeft, ChevronRight, User as UserIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useUser } from '@/features/auth/hooks';
+import { cn } from '@/lib/utils';
 
 export default function GuestDirectoryPage() {
+    const { user } = useUser();
     const [search, setSearch] = useState('');
     const { data: directories = [], isLoading } = useGuestDirectories(search);
 
@@ -38,6 +41,7 @@ export default function GuestDirectoryPage() {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const fullName = formData.get('fullName') as string;
+        const phoneNumber = formData.get('phoneNumber') as string;
         const note = formData.get('note') as string;
 
         if (!fullName.trim()) {
@@ -48,10 +52,10 @@ export default function GuestDirectoryPage() {
         if (editingItem) {
             await updateMutation.mutateAsync({
                 id: editingItem.id,
-                data: { fullName, note }
+                data: { fullName, phoneNumber, note }
             });
         } else {
-            await createMutation.mutateAsync({ fullName, note });
+            await createMutation.mutateAsync({ fullName, phoneNumber, note });
         }
         setIsModalOpen(false);
     };
@@ -91,6 +95,8 @@ export default function GuestDirectoryPage() {
                             <tr className="bg-slate-50 border-b border-slate-200">
                                 <th className="py-4 px-6 text-xs font-bold text-slate-700 uppercase tracking-wider w-20 text-center">STT</th>
                                 <th className="py-4 px-6 text-xs font-bold text-slate-700 uppercase tracking-wider">Họ và tên</th>
+                                <th className="py-4 px-6 text-xs font-bold text-slate-700 uppercase tracking-wider">Số điện thoại</th>
+                                <th className="py-4 px-6 text-xs font-bold text-slate-700 uppercase tracking-wider">Người tạo</th>
                                 <th className="py-4 px-6 text-xs font-bold text-slate-700 uppercase tracking-wider">Ghi chú</th>
                                 <th className="py-4 px-6 text-xs font-bold text-slate-700 uppercase tracking-wider text-right">Thao tác</th>
                             </tr>
@@ -119,25 +125,47 @@ export default function GuestDirectoryPage() {
                                         <td className="py-4 px-6 text-[15px] font-bold text-slate-800 uppercase tracking-tight">
                                             {item.fullName}
                                         </td>
+                                        <td className="py-4 px-6 text-[15px] text-slate-600 font-medium">
+                                            {item.phoneNumber || '-'}
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            {item.creator ? (
+                                                <div className="flex items-center gap-1.5 text-[14px] text-slate-600">
+                                                    <UserIcon className="w-3.5 h-3.5 text-slate-400" />
+                                                    <span className="font-medium truncate max-w-[120px]" title={item.creator.fullName}>
+                                                        {item.creator.fullName}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-slate-400 italic text-xs">Hệ thống</span>
+                                            )}
+                                        </td>
                                         <td className="py-4 px-6 text-[15px] text-slate-500">
                                             {item.note || '-'}
                                         </td>
                                         <td className="py-4 px-6">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleEdit(item)}
-                                                    className="p-2 hover:bg-blue-50 rounded-xl text-slate-400 hover:text-blue-600 transition-colors"
-                                                    title="Sửa"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => setDeleteId(item.id)}
-                                                    className="p-2 hover:bg-red-50 rounded-xl text-slate-400 hover:text-red-500 transition-colors"
-                                                    title="Xóa"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                {/* Ownership logic: Admins/HR can edit everything. Clerk can only edit their own. */}
+                                                {(user?.role === 'ADMIN_SYSTEM' || user?.role === 'ADMIN_KITCHEN' || user?.role === 'HR' || item.createdBy === user?.id || item.createdBy === (user as any)?.employeeId) ? (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleEdit(item)}
+                                                            className="p-2 hover:bg-blue-50 rounded-xl text-slate-400 hover:text-blue-600 transition-colors"
+                                                            title="Sửa"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setDeleteId(item.id)}
+                                                            className="p-2 hover:bg-red-50 rounded-xl text-slate-400 hover:text-red-500 transition-colors"
+                                                            title="Xóa"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-slate-300 italic text-[13px]">Chỉ xem</span>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -161,6 +189,14 @@ export default function GuestDirectoryPage() {
                             placeholder="Ví dụ: Nguyễn Văn A"
                             defaultValue={editingItem?.fullName || ''}
                             required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold text-slate-700">Số điện thoại</label>
+                        <Input
+                            name="phoneNumber"
+                            placeholder="Ví dụ: 0987654321"
+                            defaultValue={editingItem?.phoneNumber || ''}
                         />
                     </div>
                     <div className="space-y-2">

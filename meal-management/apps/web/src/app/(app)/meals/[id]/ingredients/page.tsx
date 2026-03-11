@@ -5,6 +5,7 @@ import { Modal, Input, Button, ConfirmDialog, CreateButton, CurrencyInput } from
 import { useMealDetail, useDeleteIngredient, useAddIngredient, useUpdateIngredient, useCatalog } from '@/features/meals/hooks';
 import { MealDetail, Ingredient, IngredientCatalogItem } from '@/features/meals/api';
 import { Edit, Search, PlusCircle } from 'lucide-react';
+import { useAuthStore } from '@/features/auth';
 
 const PlusIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
@@ -176,6 +177,8 @@ export default function IngredientsPage({ params }: { params: { id: string } }) 
     const { data: response, isLoading } = useMealDetail(id) as { data: MealDetail | undefined, isLoading: boolean };
     const meal = response;
     const deleteMutation = useDeleteIngredient();
+    const { user } = useAuthStore();
+    const isAdmin = user?.role === 'ADMIN_KITCHEN' || user?.role === 'ADMIN_SYSTEM';
 
     // Modal States
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -218,7 +221,7 @@ export default function IngredientsPage({ params }: { params: { id: string } }) 
                             {totalCost.toLocaleString('vi-VN')} <span className="text-xs text-gray-400 font-bold ml-0.5">VNĐ</span>
                         </p>
                     </div>
-                    {meal?.status === 'DRAFT' && (
+                    {meal?.status === 'DRAFT' && isAdmin && (
                         <CreateButton onClick={handleOpenAdd}>
                             THÊM MỚI
                         </CreateButton>
@@ -267,7 +270,7 @@ export default function IngredientsPage({ params }: { params: { id: string } }) 
                                             {item.totalPrice.toLocaleString('vi-VN')}
                                         </td>
                                         <td className="py-4 px-6">
-                                            {meal?.status === 'DRAFT' && (
+                                            {meal?.status === 'DRAFT' && isAdmin && (
                                                 <div className="flex items-center justify-end gap-3">
                                                     <button
                                                         onClick={() => handleOpenEdit(item)}

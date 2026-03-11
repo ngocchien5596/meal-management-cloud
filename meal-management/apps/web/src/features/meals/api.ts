@@ -61,8 +61,14 @@ export interface MenuItem {
 export interface Guest {
     id: string;
     fullName: string;
+    phoneNumber?: string;
     note?: string;
     qrToken: string;
+    createdBy?: string;
+    createdAt: string;
+    creator?: {
+        fullName: string;
+    };
 }
 
 export interface Registration {
@@ -73,6 +79,7 @@ export interface Registration {
         id: string;
         fullName: string;
         employeeCode: string;
+        phoneNumber?: string;
         department: { name: string };
         position: { name: string };
     };
@@ -86,12 +93,24 @@ export interface CheckinLog {
         location?: { id: string, name: string } | null;
     } | null;
     employee?: {
+        id: string;
         fullName: string;
         employeeCode: string;
     };
     guest?: {
+        id: string;
         fullName: string;
+        phoneNumber?: string;
     };
+}
+
+export interface MealSummary {
+    mealDate: string;
+    mealType: 'LUNCH' | 'DINNER';
+    totalRegistrations: number;
+    totalGuests: number;
+    totalServings: number;
+    locations: { name: string; count: number }[];
 }
 
 export interface MealDetail extends MealEvent {
@@ -110,6 +129,10 @@ export const mealsApi = {
 
     getMealDetail: (id: string) =>
         api.get<MealDetail>(`/meals/${id}`)
+            .then(res => res.data),
+
+    getMealSummary: (id: string) =>
+        api.get<MealSummary>(`/meals/${id}/summary`)
             .then(res => res.data),
 
     getCurrentMeal: () =>
@@ -193,7 +216,7 @@ export const mealsApi = {
             .then(res => res.data),
 
     // Guests
-    addGuest: (mealId: string, data: { fullName: string; note?: string }) =>
+    addGuest: (mealId: string, data: { fullName: string; phoneNumber?: string; note?: string }) =>
         api.post<Guest>(`/meals/${mealId}/guests`, data)
             .then(res => res.data),
 
@@ -201,7 +224,7 @@ export const mealsApi = {
         api.delete<{ message: string }>(`/meals/guests/${id}`)
             .then(res => res.data),
 
-    updateGuest: (id: string, data: { fullName?: string; note?: string }) =>
+    updateGuest: (id: string, data: { fullName?: string; phoneNumber?: string; note?: string }) =>
         api.patch<Guest>(`/meals/guests/${id}`, data)
             .then(res => res.data),
 

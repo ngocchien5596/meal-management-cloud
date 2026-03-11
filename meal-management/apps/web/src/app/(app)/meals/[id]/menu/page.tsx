@@ -5,6 +5,7 @@ import { Modal, Input, Button, CreateButton, ConfirmDialog } from '@/components/
 import { useMealDetail, useDeleteMenuItem, useAddMenuItem, useUpdateMenuItem, useMenuCatalog } from '@/features/meals/hooks';
 import { MealDetail, MenuItem, MenuItemCatalogItem } from '@/features/meals/api';
 import { Edit, Search, PlusCircle, Utensils } from 'lucide-react';
+import { useAuthStore } from '@/features/auth';
 
 const TrashIcon = () => (
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
@@ -135,6 +136,8 @@ export default function MenuPage({ params }: { params: { id: string } }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<MenuItem | undefined>(undefined);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const { user } = useAuthStore();
+    const isAdmin = user?.role === 'ADMIN_KITCHEN' || user?.role === 'ADMIN_SYSTEM';
 
     const handleDelete = () => {
         if (deleteId) {
@@ -163,7 +166,7 @@ export default function MenuPage({ params }: { params: { id: string } }) {
                     <h3 className="text-xl font-bold text-gray-900">Thực đơn bữa ăn</h3>
                     <p className="text-[15px] text-gray-500 mt-1">Các món ăn phục vụ trong khung giờ này (Tổng số món: {items.length})</p>
                 </div>
-                {meal?.status === 'DRAFT' && (
+                {meal?.status === 'DRAFT' && isAdmin && (
                     <CreateButton onClick={handleAdd}>
                         THÊM MỚI
                     </CreateButton>
@@ -204,7 +207,7 @@ export default function MenuPage({ params }: { params: { id: string } }) {
                                         </td>
                                         <td className="py-4 px-6">
                                             <div className="flex items-center justify-end gap-2">
-                                                {meal?.status === 'DRAFT' ? (
+                                                {meal?.status === 'DRAFT' && isAdmin ? (
                                                     <>
                                                         <button
                                                             onClick={() => handleEdit(item)}

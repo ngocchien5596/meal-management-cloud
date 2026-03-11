@@ -6,6 +6,7 @@ import { useMealDetail, useToggleRegistration } from '@/features/meals/hooks';
 import { MealDetail, Registration } from '@/features/meals/api';
 import { useLocations } from '@/features/system/hooks';
 import { MealLocation } from '@/features/system/types';
+import { useAuthStore } from '@/features/auth';
 
 const SearchIcon = () => (
     <svg className="w-4 h-4 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
@@ -41,7 +42,9 @@ export default function StaffPage({ params }: { params: { id: string } }) {
         return matchesSearch && matchesLocation;
     });
 
-    const isEditable = meal?.status === 'IN_PROGRESS';
+    const { user } = useAuthStore();
+    const isAdmin = user?.role === 'ADMIN_KITCHEN' || user?.role === 'ADMIN_SYSTEM';
+    const isEditable = meal?.status === 'IN_PROGRESS' && isAdmin;
 
     if (isLoading) return <div className="py-20 text-center text-slate-400 font-bold">Đang tải...</div>;
 
