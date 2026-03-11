@@ -5,7 +5,7 @@ import prisma from '../lib/prisma.js';
 const router: Router = Router();
 
 // Get all directories (with search)
-router.get('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'HR', 'CLERK'), async (req, res) => {
+router.get('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'CLERK'), async (req, res) => {
     try {
         const { search } = req.query;
 
@@ -35,7 +35,7 @@ router.get('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'HR', '
 });
 
 // Create new directory
-router.post('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'HR', 'CLERK'), async (req: AuthRequest, res) => {
+router.post('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'CLERK'), async (req: AuthRequest, res) => {
     try {
         const { fullName, note, isActive, phoneNumber } = req.body;
         if (!fullName) {
@@ -60,7 +60,7 @@ router.post('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'HR', 
 });
 
 // Update directory
-router.put('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'HR', 'CLERK'), async (req: AuthRequest, res) => {
+router.put('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'CLERK'), async (req: AuthRequest, res) => {
     try {
         const { id } = req.params;
         const { fullName, note, isActive, phoneNumber } = req.body;
@@ -98,7 +98,7 @@ router.put('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'HR'
 });
 
 // Delete directory
-router.delete('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'HR', 'CLERK'), async (req: AuthRequest, res) => {
+router.delete('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'CLERK'), async (req: AuthRequest, res) => {
     try {
         const { id } = req.params;
 

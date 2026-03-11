@@ -200,8 +200,8 @@ export const menuItems: MenuItem[] = [
         roles: ['ADMIN_KITCHEN', 'HR', 'ADMIN_SYSTEM'],
         children: [
             { key: 'reports-summary', label: 'Báo cáo tiền ăn', href: '/reports/summary', icon: ReportIcon },
-            { key: 'reports-costs', label: 'Báo cáo chi phí', href: '/reports/costs', icon: CreditCardIcon },
-            { key: 'reports-reviews', label: 'Báo cáo đánh giá', href: '/reports/reviews', icon: StarIcon },
+            { key: 'reports-costs', label: 'Báo cáo chi phí', href: '/reports/costs', icon: CreditCardIcon, roles: ['ADMIN_KITCHEN', 'ADMIN_SYSTEM'] },
+            { key: 'reports-reviews', label: 'Báo cáo đánh giá', href: '/reports/reviews', icon: StarIcon, roles: ['ADMIN_KITCHEN', 'ADMIN_SYSTEM'] },
         ]
     },
     { key: 'review', label: 'Đánh giá bữa ăn', href: '/reviews', icon: StarIcon },

@@ -10,7 +10,7 @@ import prisma from '../lib/prisma.js';
 const router: Router = Router();
 
 // GET /api/accounts/template - Download Excel Template
-router.get('/template', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req, res, next) => {
+router.get('/template', authenticate, authorize('ADMIN_SYSTEM'), async (req, res, next) => {
     try {
         const departments = await prisma.department.findMany({ select: { name: true } });
         const positions = await prisma.position.findMany({ select: { name: true } });
@@ -101,7 +101,7 @@ router.get('/template', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (re
 });
 
 // POST /api/accounts/import - Import from Excel
-router.post('/import', authenticate, authorize('ADMIN_SYSTEM', 'HR'), upload.single('file'), async (req: any, res: any, next: any) => {
+router.post('/import', authenticate, authorize('ADMIN_SYSTEM'), upload.single('file'), async (req: any, res: any, next: any) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, error: { message: 'Vui lòng tải lên file Excel' } });
@@ -309,7 +309,7 @@ const createAccountSchema = z.object({
 });
 
 // GET /api/accounts - List all accounts
-router.get('/', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req, res, next) => {
+router.get('/', authenticate, authorize('ADMIN_SYSTEM'), async (req, res, next) => {
     try {
         const employees = await prisma.employee.findMany({
             include: {
@@ -344,7 +344,7 @@ router.get('/', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req, res, 
 });
 
 // GET /api/accounts/:id - Get single account detail
-router.get('/:id', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req, res, next) => {
+router.get('/:id', authenticate, authorize('ADMIN_SYSTEM'), async (req, res, next) => {
     try {
         const { id } = req.params;
         const employee = await prisma.employee.findUnique({
@@ -389,7 +389,7 @@ router.get('/:id', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req, re
 });
 
 // POST /api/accounts - Create new account
-router.post('/', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req: AuthRequest, res, next) => {
+router.post('/', authenticate, authorize('ADMIN_SYSTEM'), async (req: AuthRequest, res, next) => {
     try {
         const validation = createAccountSchema.safeParse(req.body);
         if (!validation.success) {
@@ -466,7 +466,7 @@ const updateAccountSchema = createAccountSchema.partial().extend({
     isActive: z.boolean().optional(),
 });
 
-router.put('/:id', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req, res, next) => {
+router.put('/:id', authenticate, authorize('ADMIN_SYSTEM'), async (req, res, next) => {
     try {
         const { id } = req.params;
         const validation = updateAccountSchema.safeParse(req.body);
@@ -596,7 +596,7 @@ router.put('/:id', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req, re
 });
 
 // DELETE /api/accounts/:id - Delete account
-router.delete('/:id', authenticate, authorize('ADMIN_SYSTEM', 'HR'), async (req, res, next) => {
+router.delete('/:id', authenticate, authorize('ADMIN_SYSTEM'), async (req, res, next) => {
     try {
         const { id } = req.params;
 
