@@ -165,8 +165,8 @@ async function main() {
             },
         });
     }
-    // Clerk User
-    const clerk = await prisma.employee.upsert({
+    // Clerk Users
+    const clerk1 = await prisma.employee.upsert({
         where: { employeeCode: 'CLERK001' },
         update: {},
         create: {
@@ -178,18 +178,40 @@ async function main() {
         },
     });
     await prisma.account.upsert({
-        where: { employeeId: clerk.id },
+        where: { employeeId: clerk1.id },
         update: {},
         create: {
-            employeeId: clerk.id,
+            employeeId: clerk1.id,
             passwordHash: empPasswordHash,
             secretCode: '111111',
             role: Role.CLERK,
         },
     });
 
+    const clerk2 = await prisma.employee.upsert({
+        where: { employeeCode: 'CLERK002' },
+        update: {},
+        create: {
+            employeeCode: 'CLERK002',
+            fullName: 'Văn Thư 02',
+            phoneNumber: '0988000222',
+            departmentId: departments[14].id, // Văn phòng
+            positionId: positions[5].id, // Nhân viên
+        },
+    });
+    await prisma.account.upsert({
+        where: { employeeId: clerk2.id },
+        update: {},
+        create: {
+            employeeId: clerk2.id,
+            passwordHash: empPasswordHash,
+            secretCode: '222222',
+            role: Role.CLERK,
+        },
+    });
+
     console.log(`✅ ${sampleEmployeesData.length} Sample employees created`);
-    console.log('✅ Clerk user created');
+    console.log('✅ Clerk users created (CLERK001, CLERK002)');
 
     // 8. Guest Directory
     const guestsData = [
