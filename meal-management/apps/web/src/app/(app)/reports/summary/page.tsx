@@ -295,6 +295,7 @@ export default function ReportPage() {
                                 placeholder="Tìm kiếm nhân viên..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
+                                maxLength={50}
                                 className="block w-full h-10 pl-10 pr-3 border border-slate-200 rounded-xl bg-slate-50/50 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
                             />
                         </div>

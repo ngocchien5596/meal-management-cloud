@@ -11,6 +11,7 @@ export interface CurrencyInputProps {
     placeholder?: string;
     required?: boolean;
     autoFocus?: boolean;
+    maxLength?: number;
     className?: string;
     label?: string;
     error?: string;
@@ -28,7 +29,7 @@ function parseRaw(val: string): string {
 }
 
 const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
-    ({ name, value, defaultValue, onChange, placeholder = '0', required, autoFocus, className, label, error, disabled }, ref) => {
+    ({ name, value, defaultValue, onChange, placeholder = '0', required, autoFocus, maxLength, className, label, error, disabled }, ref) => {
         const initialRaw = parseRaw(String(value ?? defaultValue ?? ''));
         const [rawValue, setRawValue] = React.useState(initialRaw);
         const [displayValue, setDisplayValue] = React.useState(formatCurrency(initialRaw));
@@ -43,6 +44,9 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
 
         const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             const raw = parseRaw(e.target.value);
+            // If maxLength is set, don't allow typing beyond it
+            if (maxLength && raw.length > maxLength) return;
+
             const formatted = formatCurrency(raw);
 
             setRawValue(raw);
@@ -67,6 +71,7 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
                         placeholder={placeholder}
                         required={required}
                         autoFocus={autoFocus}
+                        maxLength={maxLength}
                         disabled={disabled}
                         className={cn(
                             'flex h-10 w-full rounded-xl border border-vtborder bg-white px-3 py-2 pr-10 text-sm font-bold ring-offset-white placeholder:text-vttext-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 tabular-nums tracking-wide',

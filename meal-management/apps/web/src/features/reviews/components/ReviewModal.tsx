@@ -123,6 +123,7 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
                                 value={date}
                                 onChange={(e) => setDate(e.target.value)}
                                 className="w-full h-10 px-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand text-sm transition-all"
+                                maxLength={10}
                             />
                             <div
                                 className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-brand"
@@ -167,6 +168,7 @@ export function ReviewModal({ isOpen, onClose }: ReviewModalProps) {
                         onChange={(e) => setComment(e.target.value)}
                         placeholder="Hãy chia sẻ cảm nhận của bạn về chất lượng bữa ăn, thái độ phục vụ..."
                         className="w-full min-h-[120px] p-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand text-sm resize-none transition-all placeholder:text-gray-400"
+                        maxLength={500}
                     />
                 </div>
 

@@ -25,7 +25,7 @@ router.get('/', authenticate, async (req, res, next) => {
 router.post('/', authenticate, authorize('ADMIN_SYSTEM'), async (req, res, next) => {
     try {
         const { name } = req.body;
-        if (!name) return res.status(400).json({ success: false, error: { message: 'Tên chức vụ là bắt buộc' } });
+        if (!name || name.trim().length > 50) return res.status(400).json({ success: false, error: { message: 'Tên chức vụ tối đa 50 ký tự và không được để trống' } });
 
         const existing = await prisma.position.findUnique({ where: { name } });
         if (existing) return res.status(400).json({ success: false, error: { message: 'Tên chức vụ đã tồn tại' } });
@@ -42,7 +42,7 @@ router.put('/:id', authenticate, authorize('ADMIN_SYSTEM'), async (req, res, nex
     try {
         const { id } = req.params;
         const { name } = req.body;
-        if (!name) return res.status(400).json({ success: false, error: { message: 'Tên chức vụ là bắt buộc' } });
+        if (!name || name.trim().length > 50) return res.status(400).json({ success: false, error: { message: 'Tên chức vụ tối đa 50 ký tự và không được để trống' } });
 
         const existing = await prisma.position.findFirst({ where: { name, NOT: { id } } });
         if (existing) return res.status(400).json({ success: false, error: { message: 'Tên chức vụ đã tồn tại' } });

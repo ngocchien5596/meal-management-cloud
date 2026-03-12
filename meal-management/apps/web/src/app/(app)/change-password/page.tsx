@@ -113,6 +113,7 @@ export default function ChangePasswordContent() {
                                             required
                                             placeholder="Nhập mật khẩu cũ"
                                             className="block w-full h-12 pl-12 pr-12 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all"
+                                            maxLength={12}
                                         />
                                         <button
                                             type="button"
@@ -145,6 +146,7 @@ export default function ChangePasswordContent() {
                                             required
                                             placeholder="Tạo mật khẩu mạnh"
                                             className="block w-full h-12 pl-12 pr-12 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all"
+                                            maxLength={12}
                                         />
                                         <button
                                             type="button"
@@ -194,6 +196,7 @@ export default function ChangePasswordContent() {
                                                 "block w-full h-12 pl-12 pr-12 bg-slate-50 border rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 transition-all",
                                                 formData.confirmPassword && !checks.match ? "border-red-300 focus:ring-red-500/10 focus:border-red-500" : "border-slate-200 focus:ring-brand/10 focus:border-brand focus:bg-white"
                                             )}
+                                            maxLength={12}
                                         />
                                         <button
                                             type="button"

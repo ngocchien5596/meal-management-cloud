@@ -107,6 +107,7 @@ function GuestForm({ mealId, guest, onSuccess }: GuestFormProps) {
                         required
                         autoComplete="off"
                         autoFocus
+                        maxLength={100}
                     />
                 </div>
 
@@ -150,6 +151,7 @@ function GuestForm({ mealId, guest, onSuccess }: GuestFormProps) {
                     placeholder="Nhập số điện thoại (nếu có)..."
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
+                    maxLength={20}
                 />
             </div>
 
@@ -160,6 +162,7 @@ function GuestForm({ mealId, guest, onSuccess }: GuestFormProps) {
                     placeholder="Ví dụ: Khách hàng dự án..."
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
+                    maxLength={255}
                 />
             </div>
             <Button

@@ -38,15 +38,20 @@ router.get('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'CLERK'
 router.post('/', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'CLERK'), async (req: AuthRequest, res) => {
     try {
         const { fullName, note, isActive, phoneNumber } = req.body;
-        if (!fullName) {
-            return res.status(400).json({ error: 'Full name is required' });
+        if (!fullName || fullName.trim().length > 100) {
+            return res.status(400).json({ error: 'Họ tên không được để trống và tối đa 100 ký tự' });
         }
-
+        if (phoneNumber && phoneNumber.trim().length > 20) {
+            return res.status(400).json({ error: 'Số điện thoại tối đa 20 ký tự' });
+        }
+        if (note && note.trim().length > 255) {
+            return res.status(400).json({ error: 'Ghi chú tối đa 255 ký tự' });
+        }
         const newDirectory = await prisma.guestDirectory.create({
             data: {
-                fullName,
-                note,
-                phoneNumber,
+                fullName: fullName.trim(),
+                note: note?.trim().substring(0, 255),
+                phoneNumber: phoneNumber?.trim().substring(0, 20),
                 isActive: isActive ?? true,
                 createdBy: req.user?.employeeId
             }
@@ -80,15 +85,26 @@ router.put('/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM', 'CLE
             }
         }
 
+        if (fullName && fullName.trim().length > 100) {
+            return res.status(400).json({ error: 'Họ tên tối đa 100 ký tự' });
+        }
+        if (phoneNumber && phoneNumber.trim().length > 20) {
+            return res.status(400).json({ error: 'Số điện thoại tối đa 20 ký tự' });
+        }
+        if (note && note.trim().length > 255) {
+            return res.status(400).json({ error: 'Ghi chú tối đa 255 ký tự' });
+        }
+
         const updated = await prisma.guestDirectory.update({
             where: { id },
             data: {
-                fullName,
-                note,
-                isActive,
-                phoneNumber
+                ...(fullName && { fullName: fullName.trim() }),
+                ...(note !== undefined && { note: note?.trim() }),
+                ...(isActive !== undefined && { isActive }),
+                ...(phoneNumber !== undefined && { phoneNumber: phoneNumber?.trim() })
             }
         });
+
 
         res.json({ success: true, data: updated });
     } catch (error) {

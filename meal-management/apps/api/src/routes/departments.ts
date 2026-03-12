@@ -26,6 +26,7 @@ router.post('/', authenticate, authorize('ADMIN_SYSTEM'), async (req, res, next)
     try {
         const { name } = req.body;
         if (!name) return res.status(400).json({ success: false, error: { message: 'Tên phòng ban là bắt buộc' } });
+        if (name.length > 50) return res.status(400).json({ success: false, error: { message: 'Tên phòng ban không được quá 50 ký tự' } });
 
         const existing = await prisma.department.findUnique({ where: { name } });
         if (existing) return res.status(400).json({ success: false, error: { message: 'Tên phòng ban đã tồn tại' } });
@@ -44,6 +45,7 @@ router.put('/:id', authenticate, authorize('ADMIN_SYSTEM'), async (req, res, nex
         const { id } = req.params;
         const { name } = req.body;
         if (!name) return res.status(400).json({ success: false, error: { message: 'Tên phòng ban là bắt buộc' } });
+        if (name.length > 50) return res.status(400).json({ success: false, error: { message: 'Tên phòng ban không được quá 50 ký tự' } });
 
         // Check if name exists for other dept
         const existing = await prisma.department.findFirst({ where: { name, NOT: { id } } });

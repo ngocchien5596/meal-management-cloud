@@ -476,6 +476,7 @@ router.post('/:id/ingredients', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_
 
         // "Quick Add" logic or auto-linking
         if (!finalCatalogId && name) {
+            if (name.length > 100) return res.status(400).json({ success: false, error: 'Tên nguyên liệu không được quá 100 ký tự' });
             const catalogItem = await prisma.ingredientCatalog.upsert({
                 where: { name },
                 update: {},
@@ -515,7 +516,10 @@ router.patch('/ingredients/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN
 
         const updateData: any = {};
         if (quantity !== undefined) updateData.quantity = parseFloat(quantity);
-        if (unit) updateData.unit = unit;
+        if (unit) {
+            if (unit.length > 20) return res.status(400).json({ success: false, error: 'Đơn vị không được quá 20 ký tự' });
+            updateData.unit = unit;
+        }
         if (unitPrice !== undefined) updateData.unitPrice = parseFloat(unitPrice);
         if (catalogId) updateData.catalogId = catalogId;
 
@@ -565,6 +569,9 @@ router.post('/:id/menu-items', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_S
 
         if (!name || name.trim() === '') {
             return res.status(400).json({ success: false, error: 'Tên món ăn không được để trống' });
+        }
+        if (name.trim().length > 100) {
+            return res.status(400).json({ success: false, error: 'Tên món ăn không được quá 100 ký tự' });
         }
 
         const trimmedName = name.trim();
@@ -645,6 +652,15 @@ router.post('/:id/guests', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTE
         if (!fullName || fullName.trim() === '') {
             return res.status(400).json({ success: false, error: 'Tên khách mời không được để trống' });
         }
+        if (fullName.trim().length > 100) {
+            return res.status(400).json({ success: false, error: 'Tên khách mời không được quá 100 ký tự' });
+        }
+        if (phoneNumber && phoneNumber.length > 20) {
+            return res.status(400).json({ success: false, error: 'Số điện thoại không được quá 20 ký tự' });
+        }
+        if (note && note.length > 255) {
+            return res.status(400).json({ success: false, error: 'Ghi chú không được quá 255 ký tự' });
+        }
 
         const trimmedName = fullName.trim();
         let finalDirectoryId = directoryId;
@@ -715,10 +731,19 @@ router.patch('/guests/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYST
         const { fullName, note, directoryId, phoneNumber } = req.body;
 
         const updateData: any = {};
-        if (fullName) updateData.fullName = fullName.trim();
-        if (note !== undefined) updateData.note = note;
+        if (fullName) {
+            if (fullName.trim().length > 100) return res.status(400).json({ success: false, error: 'Tên khách mời không được quá 100 ký tự' });
+            updateData.fullName = fullName.trim();
+        }
+        if (note !== undefined) {
+            if (note && note.length > 255) return res.status(400).json({ success: false, error: 'Ghi chú không được quá 255 ký tự' });
+            updateData.note = note;
+        }
         if (directoryId !== undefined) updateData.directoryId = directoryId;
-        if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
+        if (phoneNumber !== undefined) {
+            if (phoneNumber && phoneNumber.length > 20) return res.status(400).json({ success: false, error: 'Số điện thoại không được quá 20 ký tự' });
+            updateData.phoneNumber = phoneNumber;
+        }
 
         const guest = await prisma.guest.update({
             where: { id },

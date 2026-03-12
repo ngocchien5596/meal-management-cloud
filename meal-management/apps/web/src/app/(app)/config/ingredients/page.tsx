@@ -51,7 +51,7 @@ function CatalogForm({ onSuccess, initialData }: CatalogFormProps) {
         <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
                 <label className="text-sm font-black text-slate-700 ml-1">Tên Nguyên liệu</label>
-                <Input name="name" defaultValue={initialData?.name} placeholder="Ví dụ: Thịt bò, Gạo Thơm..." required />
+                <Input name="name" defaultValue={initialData?.name} placeholder="Ví dụ: Thịt bò, Gạo Thơm..." required maxLength={100} />
             </div>
             <div className="space-y-2">
                 <label className="text-sm font-black text-slate-700 ml-1">Đơn vị mặc định</label>

@@ -360,6 +360,7 @@ export default function MealManagementPage() {
                             placeholder="Tìm kiếm..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            maxLength={50}
                             className="w-full h-10 pl-10 pr-4 bg-white border border-vtborder rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-focus focus:border-brand transition-all"
                         />
                     </div>

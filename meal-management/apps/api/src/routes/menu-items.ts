@@ -26,6 +26,9 @@ router.get('/catalog', authenticate, async (req, res) => {
 router.post('/catalog', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
     try {
         const { name } = req.body;
+        if (!name || name.trim().length > 100) {
+            return res.status(400).json({ success: false, error: 'Tên món ăn không được để trống và tối đa 100 ký tự' });
+        }
 
         // Check if exists
         const existing = await prisma.menuItemCatalog.findUnique({ where: { name } });
@@ -48,6 +51,9 @@ router.patch('/catalog/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYS
     try {
         const { id } = req.params;
         const { name } = req.body;
+        if (name && name.trim().length > 100) {
+            return res.status(400).json({ success: false, error: 'Tên món ăn tối đa 100 ký tự' });
+        }
 
         const item = await prisma.menuItemCatalog.update({
             where: { id },

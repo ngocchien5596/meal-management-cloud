@@ -39,8 +39,12 @@ router.patch('/:key', authenticate, authorize('ADMIN_SYSTEM'), async (req: AuthR
         // Map kebab-case from URL to UPPER_SNAKE_CASE for DB
         if (key === 'cut-off-hour') {
             key = 'CUT_OFF_HOUR';
-        } else if (key === 'meal-price') { // Example if there are others
+            if (value.toString().length > 5) return res.status(400).json({ success: false, error: 'Giờ chốt không được quá 5 ký tự' });
+        } else if (key === 'meal-price') {
             key = 'MEAL_PRICE';
+            if (value.toString().length > 12) return res.status(400).json({ success: false, error: 'Giá suất ăn không được quá 12 ký tự' });
+        } else {
+            if (value.toString().length > 100) return res.status(400).json({ success: false, error: 'Giá trị không được quá 100 ký tự' });
         }
 
         const config = await prisma.systemConfig.upsert({

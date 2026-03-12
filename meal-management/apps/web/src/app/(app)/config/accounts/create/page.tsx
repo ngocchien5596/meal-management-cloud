@@ -139,6 +139,7 @@ export default function CreateAccountContent() {
                                                 onChange={handleChange}
                                                 className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all"
                                                 placeholder="Nhập họ tên nhân viên"
+                                                maxLength={50}
                                             />
                                         </div>
                                     </div>
@@ -158,6 +159,7 @@ export default function CreateAccountContent() {
                                                 onChange={handleChange}
                                                 className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-bold font-mono tracking-wider text-slate-900 placeholder:font-sans placeholder:tracking-normal placeholder:font-medium placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all"
                                                 placeholder="VD: NV001"
+                                                maxLength={6}
                                             />
                                         </div>
                                     </div>
@@ -176,6 +178,7 @@ export default function CreateAccountContent() {
                                                 onChange={handleChange}
                                                 className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all"
                                                 placeholder="example@company.com"
+                                                maxLength={100}
                                             />
                                         </div>
                                     </div>
@@ -194,6 +197,7 @@ export default function CreateAccountContent() {
                                                 onChange={handleChange}
                                                 className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all"
                                                 placeholder="Nhập số điện thoại"
+                                                maxLength={20}
                                             />
                                         </div>
                                     </div>
@@ -317,6 +321,7 @@ export default function CreateAccountContent() {
                                                 onChange={handleChange}
                                                 className="block w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand/10 focus:border-brand focus:bg-white transition-all"
                                                 placeholder="Để trống dùng: 123456"
+                                                maxLength={12}
                                             />
                                         </div>
                                         <p className="text-[11px] font-medium text-slate-400 mt-1.5 ml-1 italic">* Mặc định hệ thống sử dụng 123456 làm mật khẩu ban đầu.</p>

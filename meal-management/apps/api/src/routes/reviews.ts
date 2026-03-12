@@ -11,6 +11,10 @@ const router: Router = Router();
 router.post('/', authenticate, async (req: AuthRequest, res) => {
     try {
         const { date, mealType, comment, images, isAnonymous, rating } = req.body;
+
+        if (comment && comment.length > 500) {
+            return res.status(400).json({ success: false, error: 'Bình luận tối đa 500 ký tự' });
+        }
         const employeeId = req.user!.employeeId;
 
         console.log('[REVIEWS] Creating review with rating:', rating, typeof rating);

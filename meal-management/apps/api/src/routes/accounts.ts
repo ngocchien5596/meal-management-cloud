@@ -161,7 +161,7 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM'), upload.single('f
                     row: rowNumber,
                     code: employeeCode,
                     name: fullName,
-                    message: 'Thiếu thông tin bắt buộc (Mã NV, Tên, Phòng, Chức vụ)'
+                    message: 'Thiếu thông tin bắt buộc (Mã NV, Tên, Phòng, Chức vụ). Lưu ý: Mã NV tối đa 6 ký tự, Tên tối đa 50 ký tự.'
                 });
             }
         });
@@ -184,6 +184,9 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM'), upload.single('f
                     }
 
                     // 3. Upsert Employee
+                    if (row.employeeCode.length > 6) throw new Error('Mã nhân viên không được quá 6 ký tự');
+                    if (row.fullName.length > 50) throw new Error('Họ tên không được quá 50 ký tự');
+
                     let employee = await tx.employee.findUnique({ where: { employeeCode: row.employeeCode } });
                     if (!employee) {
                         status = 'CREATED';
@@ -298,13 +301,13 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM'), upload.single('f
 
 // Schemas
 const createAccountSchema = z.object({
-    employeeCode: z.string().min(1, 'Mã nhân viên là bắt buộc'),
-    fullName: z.string().min(1, 'Họ tên là bắt buộc'),
-    email: z.string().email('Email không hợp lệ').optional().or(z.literal('')),
+    employeeCode: z.string().min(1, 'Mã nhân viên là bắt buộc').max(6, 'Mã nhân viên tối đa 6 ký tự'),
+    fullName: z.string().min(1, 'Họ tên là bắt buộc').max(50, 'Họ tên tối đa 50 ký tự'),
+    email: z.string().email('Email không hợp lệ').max(254, 'Email tối đa 254 ký tự').optional().or(z.literal('')),
     departmentId: z.string().min(1, 'Phòng ban là bắt buộc'),
     positionId: z.string().min(1, 'Chức vụ là bắt buộc'),
-    phoneNumber: z.string().optional().or(z.literal('')),
-    password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự').optional(),
+    phoneNumber: z.string().max(20, 'Số điện thoại tối đa 20 ký tự').optional().or(z.literal('')),
+    password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự').max(12, 'Mật khẩu tối đa 12 ký tự').optional(),
     role: z.nativeEnum(Role).optional().default(Role.EMPLOYEE),
 });
 

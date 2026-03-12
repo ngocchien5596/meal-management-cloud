@@ -83,6 +83,7 @@ function IngredientForm({ mealId, onSuccess, initialData }: IngredientFormProps)
                         required
                         className="pl-10"
                         autoComplete="off"
+                        maxLength={100}
                     />
                 </div>
 
@@ -158,7 +159,7 @@ function IngredientForm({ mealId, onSuccess, initialData }: IngredientFormProps)
             </div>
             <div className="space-y-2">
                 <label className="text-sm font-black text-slate-700 ml-1">Đơn giá (VNĐ)</label>
-                <CurrencyInput name="unitPrice" defaultValue={initialData?.unitPrice} placeholder="25.000" required />
+                <CurrencyInput name="unitPrice" defaultValue={initialData?.unitPrice} placeholder="25.000" required maxLength={12} />
             </div>
             <Button
                 type="submit"

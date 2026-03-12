@@ -79,6 +79,7 @@ export default function DeadlinePage() {
                                     type="text"
                                     value={cutOffHour}
                                     onChange={(e) => setCutOffHour(e.target.value)}
+                                    maxLength={5}
                                     className="w-full h-12 px-5 pr-12 bg-white border border-vtborder rounded-xl text-lg font-bold text-vttext-primary focus:outline-none focus:ring-4 focus:ring-focus/30 focus:border-brand transition-all shadow-sm"
                                     placeholder="VD: 16 hoặc 15:30"
                                 />

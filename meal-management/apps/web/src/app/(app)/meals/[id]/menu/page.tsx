@@ -83,6 +83,7 @@ function MenuItemForm({ mealId, item, onSuccess }: MenuItemFormProps) {
                         required
                         autoComplete="off"
                         autoFocus
+                        maxLength={100}
                     />
                 </div>
 

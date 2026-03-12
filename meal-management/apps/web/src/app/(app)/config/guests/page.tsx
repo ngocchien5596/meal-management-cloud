@@ -189,6 +189,7 @@ export default function GuestDirectoryPage() {
                             placeholder="Ví dụ: Nguyễn Văn A"
                             defaultValue={editingItem?.fullName || ''}
                             required
+                            maxLength={100}
                         />
                     </div>
                     <div className="space-y-2">
@@ -197,6 +198,7 @@ export default function GuestDirectoryPage() {
                             name="phoneNumber"
                             placeholder="Ví dụ: 0987654321"
                             defaultValue={editingItem?.phoneNumber || ''}
+                            maxLength={20}
                         />
                     </div>
                     <div className="space-y-2">
@@ -205,6 +207,7 @@ export default function GuestDirectoryPage() {
                             name="note"
                             placeholder="Ví dụ: Công ty đối tác ABC"
                             defaultValue={editingItem?.note || ''}
+                            maxLength={255}
                         />
                     </div>
                     <Button

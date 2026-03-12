@@ -253,11 +253,11 @@ export default function PriceHistoryPage() {
                                 <>
                                     <div className="p-6 space-y-6">
                                         <div className="space-y-2">
-                                            <label className="block text-sm font-bold text-vttext-primary">Giá (VNĐ)</label>
                                             <CurrencyInput
                                                 value={newPriceValue}
                                                 onChange={(raw) => setNewPriceValue(raw)}
                                                 autoFocus
+                                                maxLength={12}
                                                 className="h-11 text-lg"
                                                 placeholder="25.000"
                                             />

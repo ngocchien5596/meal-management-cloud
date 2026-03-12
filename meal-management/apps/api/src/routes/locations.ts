@@ -28,15 +28,15 @@ router.post('/', authenticate, async (req: any, res: any, next: any) => {
     try {
         const userRole = req.user?.role;
         if (userRole !== Role.ADMIN_SYSTEM && userRole !== Role.ADMIN_KITCHEN) {
-             return res.status(403).json({ success: false, error: 'Access denied' });
+            return res.status(403).json({ success: false, error: 'Access denied' });
         }
         const { name } = req.body;
-        if (!name || name.trim() === '') {
-            return res.status(400).json({ success: false, error: 'Name is required' });
+        if (!name || name.trim() === '' || name.trim().length > 50) {
+            return res.status(400).json({ success: false, error: 'Tên địa điểm không được để trống và tối đa 50 ký tự' });
         }
 
         const location = await prisma.mealLocation.create({
-            data: { name: name.trim() }
+            data: { name: name.trim().substring(0, 50) }
         });
 
         res.status(201).json({ success: true, data: location });
@@ -54,26 +54,26 @@ router.put('/:id', authenticate, async (req: any, res: any, next: any) => {
     try {
         const userRole = req.user?.role;
         if (userRole !== Role.ADMIN_SYSTEM && userRole !== Role.ADMIN_KITCHEN) {
-             return res.status(403).json({ success: false, error: 'Access denied' });
+            return res.status(403).json({ success: false, error: 'Access denied' });
         }
         const { id } = req.params;
         const { name, isDefault } = req.body;
 
-        if (!name || name.trim() === '') {
-            return res.status(400).json({ success: false, error: 'Name is required' });
+        if (!name || name.trim() === '' || name.trim().length > 50) {
+            return res.status(400).json({ success: false, error: 'Tên địa điểm không được để trống và tối đa 50 ký tự' });
         }
 
         // If setting this to default, unset others first
         if (isDefault) {
-             await prisma.mealLocation.updateMany({
-                 where: { isDefault: true, id: { not: id } },
-                 data: { isDefault: false }
-             });
+            await prisma.mealLocation.updateMany({
+                where: { isDefault: true, id: { not: id } },
+                data: { isDefault: false }
+            });
         }
 
         const location = await prisma.mealLocation.update({
             where: { id },
-            data: { 
+            data: {
                 name: name.trim(),
                 ...(isDefault !== undefined && { isDefault })
             }
@@ -97,7 +97,7 @@ router.delete('/:id', authenticate, async (req: any, res: any, next: any) => {
     try {
         const userRole = req.user?.role;
         if (userRole !== Role.ADMIN_SYSTEM && userRole !== Role.ADMIN_KITCHEN) {
-             return res.status(403).json({ success: false, error: 'Access denied' });
+            return res.status(403).json({ success: false, error: 'Access denied' });
         }
         const { id } = req.params;
 
@@ -107,30 +107,30 @@ router.delete('/:id', authenticate, async (req: any, res: any, next: any) => {
         });
 
         if (inUseCount > 0) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Cannot delete location because it is being used in meal registrations' 
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot delete location because it is being used in meal registrations'
             });
         }
-        
+
         // Also check presets
         const inUsePresetCount = await prisma.registrationPreset.count({
             where: { locationId: id }
         });
 
         if (inUsePresetCount > 0) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Cannot delete location because it is being used in registration presets' 
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot delete location because it is being used in registration presets'
             });
         }
 
         // Prevent deleting the default location
         const location = await prisma.mealLocation.findUnique({ where: { id } });
         if (location?.isDefault) {
-             return res.status(400).json({ 
-                success: false, 
-                error: 'Cannot delete the default location. Please set another location as default first.' 
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot delete the default location. Please set another location as default first.'
             });
         }
 

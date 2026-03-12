@@ -27,8 +27,11 @@ router.post('/catalog', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM')
     try {
         const { name, defaultUnit } = req.body;
 
-        if (!name || !defaultUnit) {
-            return res.status(400).json({ success: false, error: 'Name and default unit are required' });
+        if (!name || name.trim().length > 100) {
+            return res.status(400).json({ success: false, error: 'Tên nguyên liệu không được để trống và tối đa 100 ký tự' });
+        }
+        if (!defaultUnit || defaultUnit.trim().length > 50) {
+            return res.status(400).json({ success: false, error: 'Đơn vị tính không được để trống và tối đa 50 ký tự' });
         }
 
         const existing = await prisma.ingredientCatalog.findUnique({ where: { name } });
@@ -51,11 +54,19 @@ router.post('/catalog', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM')
 router.patch('/catalog/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, defaultUnit } = req.body;
+        if (name && name.trim().length > 100) {
+            return res.status(400).json({ success: false, error: 'Tên nguyên liệu tối đa 100 ký tự' });
+        }
+        if (defaultUnit && defaultUnit.trim().length > 50) {
+            return res.status(400).json({ success: false, error: 'Đơn vị tính tối đa 50 ký tự' });
+        }
 
         const item = await prisma.ingredientCatalog.update({
             where: { id },
-            data: { name, defaultUnit }
+            data: {
+                ...(name && { name: name.trim() }),
+                ...(defaultUnit && { defaultUnit: defaultUnit.trim() })
+            }
         });
 
         res.json({ success: true, data: item });

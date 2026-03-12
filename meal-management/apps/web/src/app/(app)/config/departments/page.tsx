@@ -111,6 +111,7 @@ export default function DepartmentsPage() {
                                 placeholder="Tìm tên phòng ban..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
+                                maxLength={50}
                                 className="w-full h-10 pl-10 pr-4 bg-surface-2 border border-vtborder rounded-xl text-sm font-medium text-vttext-primary focus:outline-none focus:ring-2 focus:ring-focus focus:border-brand transition-all"
                             />
                         </div>
@@ -198,6 +199,7 @@ export default function DepartmentsPage() {
                                     type="text"
                                     value={newItemName}
                                     onChange={(e) => setNewItemName(e.target.value)}
+                                    maxLength={50}
                                     className="w-full h-11 px-4 bg-surface-2 border border-vtborder rounded-xl focus:outline-none focus:ring-2 focus:ring-focus focus:border-brand font-medium transition-all"
                                     placeholder="Nhập tên phòng ban..."
                                     onKeyDown={(e) => {

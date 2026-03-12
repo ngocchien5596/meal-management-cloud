@@ -173,6 +173,7 @@ export default function MealLocationsPage() {
                                 placeholder="Tìm tên địa điểm..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
+                                maxLength={50}
                                 className="w-full h-10 pl-10 pr-4 bg-surface-2 border border-vtborder rounded-xl text-sm font-medium text-vttext-primary focus:outline-none focus:ring-2 focus:ring-focus focus:border-brand transition-all"
                             />
                         </div>
@@ -291,7 +292,7 @@ export default function MealLocationsPage() {
                                     placeholder="VD: Nhà ăn, Văn phòng, Trạm B..."
                                     value={name}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-                                    autoFocus
+                                    maxLength={50}
                                 />
                             </div>
 
