@@ -215,6 +215,11 @@ export const mealsApi = {
         api.patch<MenuItem>(`/meals/menu-items/${id}`, { catalogId })
             .then(res => res.data),
 
+    // Ingredient Price History
+    getIngredientPriceHistory: (id: string, startDate?: string, endDate?: string) =>
+        api.get<any[]>(`/ingredients/catalog/${id}/price-history`, { params: { startDate, endDate } })
+            .then(res => res.data),
+
     // Guests
     addGuest: (mealId: string, data: { fullName: string; phoneNumber?: string; note?: string }) =>
         api.post<Guest>(`/meals/${mealId}/guests`, data)

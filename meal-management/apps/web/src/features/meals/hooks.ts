@@ -221,6 +221,14 @@ export const useDeleteCatalogItem = () => {
     });
 };
 
+export const useIngredientPriceHistory = (id: string, startDate?: string, endDate?: string) => {
+    return useQuery({
+        queryKey: ['ingredient-price-history', id, startDate, endDate],
+        queryFn: () => mealsApi.getIngredientPriceHistory(id, startDate, endDate),
+        enabled: !!id,
+    });
+};
+
 // Menu Item Catalog
 export const useMenuCatalog = (search?: string) => {
     return useQuery({

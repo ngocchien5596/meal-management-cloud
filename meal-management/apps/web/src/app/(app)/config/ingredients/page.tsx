@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     useCatalog,
     useCreateCatalogItem,
@@ -9,7 +10,7 @@ import {
 } from '@/features/meals/hooks';
 import { IngredientCatalogItem } from '@/features/meals/api';
 import { Modal, Input, Button, ConfirmDialog, CreateButton } from '@/components/ui';
-import { Edit, Trash2, Book, Search, Package } from 'lucide-react';
+import { Edit, Trash2, Book, Search, Package, TrendingUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface CatalogFormProps {
@@ -88,6 +89,7 @@ function CatalogForm({ onSuccess, initialData }: CatalogFormProps) {
 }
 
 export default function IngredientCatalogPage() {
+    const router = useRouter();
     const [search, setSearch] = useState('');
     const { data: catalog, isLoading } = useCatalog(search);
     const deleteMutation = useDeleteCatalogItem();
@@ -202,6 +204,13 @@ export default function IngredientCatalogPage() {
                                         </td>
                                         <td className="py-4 px-6">
                                             <div className="flex items-center justify-end gap-2 outline-none">
+                                                <button
+                                                    onClick={() => router.push(`/config/ingredients/${item.id}`)}
+                                                    className="p-2 hover:bg-blue-50 rounded-xl text-slate-400 hover:text-blue-500 transition-all"
+                                                    title="Xem biến động giá"
+                                                >
+                                                    <TrendingUp className="w-4 h-4" />
+                                                </button>
                                                 <button
                                                     onClick={() => handleOpenEdit(item)}
                                                     className="p-2 hover:bg-brand-soft rounded-xl text-slate-400 hover:text-brand transition-all"

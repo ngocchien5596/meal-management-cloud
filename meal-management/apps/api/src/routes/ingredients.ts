@@ -87,4 +87,54 @@ router.delete('/catalog/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SY
     }
 });
 
+// GET /api/ingredients/catalog/:id/price-history - Fetch price history for a specific ingredient
+router.get('/catalog/:id/price-history', authenticate, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { startDate, endDate } = req.query;
+
+        const where: any = { catalogId: id };
+
+        if (startDate || endDate) {
+            where.mealEvent = {
+                mealDate: {}
+            };
+            if (startDate) where.mealEvent.mealDate.gte = new Date(startDate as string);
+            if (endDate) where.mealEvent.mealDate.lte = new Date(endDate as string);
+        }
+
+        const history = await prisma.ingredient.findMany({
+            where,
+            include: {
+                mealEvent: {
+                    select: {
+                        mealDate: true,
+                        mealType: true
+                    }
+                }
+            },
+            orderBy: {
+                mealEvent: {
+                    mealDate: 'asc'
+                }
+            }
+        });
+
+        // Map data for chart
+        const data = history.map(item => ({
+            id: item.id,
+            date: item.mealEvent.mealDate,
+            mealType: item.mealEvent.mealType,
+            unitPrice: item.unitPrice,
+            quantity: item.quantity,
+            unit: item.unit
+        }));
+
+        res.json({ success: true, data });
+    } catch (error) {
+        console.error('Fetch price history error:', error);
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+});
+
 export default router;
