@@ -102,10 +102,10 @@ async function main() {
 
     // Admin System
     const sysAdmin = await prisma.employee.upsert({
-        where: { employeeCode: 'ADMIN001' },
+        where: { employeeCode: 'ADM001' },
         update: {},
         create: {
-            employeeCode: 'ADMIN001',
+            employeeCode: 'ADM001',
             fullName: 'Admin Hệ Thống',
             phoneNumber: '0901234567',
             email: 'admin@company.com',
@@ -167,10 +167,10 @@ async function main() {
     }
     // Clerk Users
     const clerk1 = await prisma.employee.upsert({
-        where: { employeeCode: 'CLERK001' },
+        where: { employeeCode: 'CLK001' },
         update: {},
         create: {
-            employeeCode: 'CLERK001',
+            employeeCode: 'CLK001',
             fullName: 'Văn Thư 01',
             phoneNumber: '0988000111',
             departmentId: departments[14].id, // Văn phòng
@@ -189,10 +189,10 @@ async function main() {
     });
 
     const clerk2 = await prisma.employee.upsert({
-        where: { employeeCode: 'CLERK002' },
+        where: { employeeCode: 'CLK002' },
         update: {},
         create: {
-            employeeCode: 'CLERK002',
+            employeeCode: 'CLK002',
             fullName: 'Văn Thư 02',
             phoneNumber: '0988000222',
             departmentId: departments[14].id, // Văn phòng
@@ -245,8 +245,8 @@ async function main() {
     console.log('\n🎉 Seeding completed successfully!');
     console.log('\n📋 Quick Access:');
     console.log('--------------------------------------------------');
-    console.log('System Admin  : ADMIN001 / Admin@123');
-    console.log('Clerk (Văn thư): CLERK001 / 123456');
+    console.log('System Admin  : ADM001 / Admin@123');
+    console.log('Clerk (Văn thư): CLK001 / 123456');
     console.log('Employee (All): [Dùng Mã NV thực tế] / 123456');
     console.log('--------------------------------------------------\n');
 }

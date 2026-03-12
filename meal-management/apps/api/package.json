@@ -8,7 +8,9 @@
         "start": "node dist/index.js",
         "lint": "eslint src --ext .ts",
         "test": "vitest",
-        "clean": "rimraf dist"
+        "clean": "rimraf dist",
+        "db:check:limits": "tsx prisma/scripts/check-data-limits.ts",
+        "db:push:force": "prisma db push --accept-data-loss"
     },
     "prisma": {
         "seed": "tsx prisma/seed.ts"

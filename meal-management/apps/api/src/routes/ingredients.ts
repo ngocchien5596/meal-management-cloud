@@ -54,6 +54,8 @@ router.post('/catalog', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM')
 router.patch('/catalog/:id', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), async (req, res) => {
     try {
         const { id } = req.params;
+        const { name, defaultUnit } = req.body;
+
         if (name && name.trim().length > 100) {
             return res.status(400).json({ success: false, error: 'Tên nguyên liệu tối đa 100 ký tự' });
         }
