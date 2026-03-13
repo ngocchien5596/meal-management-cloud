@@ -145,6 +145,48 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM'), upload.single('f
             results.total++;
 
             if (employeeCode && fullName && departmentName && positionName) {
+                // Additional length checks before processing
+                if (employeeCode.length > 6) {
+                    results.failed++;
+                    results.errors.push({
+                        row: rowNumber,
+                        code: employeeCode,
+                        name: fullName,
+                        message: 'Mã nhân viên tối đa 6 ký tự'
+                    });
+                    return;
+                }
+                if (fullName.length > 50) {
+                    results.failed++;
+                    results.errors.push({
+                        row: rowNumber,
+                        code: employeeCode,
+                        name: fullName,
+                        message: 'Họ tên tối đa 50 ký tự'
+                    });
+                    return;
+                }
+                if (email && email.length > 100) {
+                    results.failed++;
+                    results.errors.push({
+                        row: rowNumber,
+                        code: employeeCode,
+                        name: fullName,
+                        message: 'Email tối đa 100 ký tự'
+                    });
+                    return;
+                }
+                if (phoneNumber && phoneNumber.length > 20) {
+                    results.failed++;
+                    results.errors.push({
+                        row: rowNumber,
+                        code: employeeCode,
+                        name: fullName,
+                        message: 'Số điện thoại tối đa 20 ký tự'
+                    });
+                    return;
+                }
+
                 rows.push({
                     rowNumber,
                     employeeCode,
@@ -161,7 +203,7 @@ router.post('/import', authenticate, authorize('ADMIN_SYSTEM'), upload.single('f
                     row: rowNumber,
                     code: employeeCode,
                     name: fullName,
-                    message: 'Thiếu thông tin bắt buộc (Mã NV, Tên, Phòng, Chức vụ). Lưu ý: Mã NV tối đa 6 ký tự, Tên tối đa 50 ký tự.'
+                    message: 'Thiếu thông tin bắt buộc (Mã NV, Tên, Phòng, Chức vụ).'
                 });
             }
         });

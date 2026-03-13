@@ -9,12 +9,15 @@ import {
     DollarSign,
     Activity,
     TrendingDown,
+    TrendingUp,
     Package,
     Utensils,
-    ChevronDown as ChevronDownIcon
+    ChevronDown as ChevronDownIcon,
+    X
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
-import { reportsApi } from '@/features/reports/api';
+import { reportsApi, MealCostChart } from '@/features/reports';
+import { Modal } from '@/components/ui';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -77,6 +80,33 @@ export default function CostsPage() {
     const [meals, setMeals] = useState<any[]>([]);
     const [summary, setSummary] = useState<any>({ totalCost: 0, avgCostPerMeal: 0, totalMeals: 0, topIngredient: 'N/A' });
     const [expandedMeals, setExpandedMeals] = useState<string[]>([]);
+    const [isChartOpen, setIsChartOpen] = useState(false);
+
+    const chartData = useMemo(() => {
+        return meals.map(m => {
+            const totalCost = m.ingredients?.reduce((acc: number, ing: any) => acc + ing.totalPrice, 0) || 0;
+            const regEmpIds = new Set(m.registrations?.map((r: any) => r.employeeId) || []);
+            const guestsCount = m.guests?.length || 0;
+            const regCount = m.registrations?.length || 0;
+
+            // Checkins from employees NOT in registration (vãng lai)
+            const extraCheckins = m.checkins?.filter((c: any) => c.employeeId && !regEmpIds.has(c.employeeId)).length || 0;
+
+            const totalServings = regCount + guestsCount + extraCheckins;
+            const avgCost = totalServings > 0 ? Math.round(totalCost / totalServings) : 0;
+
+            return {
+                date: m.mealDate,
+                mealType: m.mealType,
+                totalCost,
+                avgCost
+            };
+        }).sort((a, b) => {
+            const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
+            if (dateCompare !== 0) return dateCompare;
+            return a.mealType === 'LUNCH' ? -1 : 1;
+        });
+    }, [meals]);
 
     const groupedMeals = useMemo(() => {
         const groups: Record<string, {
@@ -201,6 +231,15 @@ export default function CostsPage() {
                             <div className="w-px h-6 bg-slate-100 mx-1" />
 
                             <button
+                                onClick={() => setIsChartOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold rounded-xl border border-slate-200 transition-all active:scale-95 shadow-sm"
+                                title="Xem biểu đồ xu hướng"
+                            >
+                                <TrendingUp className="w-4 h-4 text-brand" />
+                                <span className="hidden sm:inline">Biểu đồ xu hướng</span>
+                            </button>
+
+                            <button
                                 onClick={handleExport}
                                 disabled={isExporting}
                                 className="flex items-center gap-2 px-4 py-2 bg-brand hover:bg-brand-dark text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-brand-200 active:scale-95 disabled:opacity-50"
@@ -210,6 +249,31 @@ export default function CostsPage() {
                             </button>
                         </div>
                     </div>
+
+                    <Modal
+                        isOpen={isChartOpen}
+                        onClose={() => setIsChartOpen(false)}
+                        title="Biểu đồ biến động chi phí"
+                        size="xl"
+                    >
+                        <div className="p-4">
+                            <div className="mb-6 flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-900">Xu hướng chi tiết</h3>
+                                    <p className="text-xs text-slate-500 font-medium">Theo dõi tổng chi phí nguyên liệu qua từng bữa ăn</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Thời gian</p>
+                                    <p className="text-xs font-bold text-slate-700">
+                                        {format(new Date(dateRange.start), 'dd/MM/yyyy')} - {format(new Date(dateRange.end), 'dd/MM/yyyy')}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="h-[450px]">
+                                <MealCostChart data={chartData} />
+                            </div>
+                        </div>
+                    </Modal>
 
                     {/* KPI Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

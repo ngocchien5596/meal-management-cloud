@@ -21,6 +21,8 @@ router.get('/summary', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYS
 
         const start = startOfDay(parseISO(startDate as string));
         const end = endOfDay(parseISO(endDate as string));
+        const adjustedStart = new Date(start.getTime() + 12 * 60 * 60 * 1000);
+        const adjustedEnd = new Date(end.getTime());
         const searchTerm = search ? (search as string).toLowerCase() : undefined;
 
         // Fetch employees with their registrations and checkins within the range
@@ -54,8 +56,8 @@ router.get('/summary', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYS
                         isCancelled: false,
                         mealEvent: {
                             mealDate: {
-                                gte: start,
-                                lte: end
+                                gte: adjustedStart,
+                                lte: adjustedEnd
                             }
                         }
                     },
@@ -67,8 +69,8 @@ router.get('/summary', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYS
                     where: {
                         mealEvent: {
                             mealDate: {
-                                gte: start,
-                                lte: end
+                                gte: adjustedStart,
+                                lte: adjustedEnd
                             }
                         }
                     },
@@ -97,8 +99,8 @@ router.get('/summary', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYS
             where: {
                 status: 'COMPLETED',
                 mealDate: {
-                    gte: start,
-                    lte: end
+                    gte: adjustedStart,
+                    lte: adjustedEnd
                 }
             },
             include: {
@@ -137,7 +139,7 @@ router.get('/summary', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYS
         // 4. Calculate Guest Statistics
         const visitorMeals = await prisma.mealEvent.findMany({
             where: {
-                mealDate: { gte: start, lte: end }
+                mealDate: { gte: adjustedStart, lte: adjustedEnd }
             },
             include: {
                 guests: true,
@@ -204,6 +206,8 @@ router.get('/export', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYST
 
         const start = startOfDay(parseISO(startDate as string));
         const end = endOfDay(parseISO(endDate as string));
+        const adjustedStart = new Date(start.getTime() + 12 * 60 * 60 * 1000);
+        const adjustedEnd = new Date(end.getTime());
         const searchTerm = search ? (search as string).toLowerCase() : undefined;
 
         const whereEmployee: any = {
@@ -227,7 +231,7 @@ router.get('/export', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYST
                     where: {
                         isCancelled: false,
                         mealEvent: {
-                            mealDate: { gte: start, lte: end }
+                            mealDate: { gte: adjustedStart, lte: adjustedEnd }
                         }
                     },
                     include: { mealEvent: true }
@@ -235,7 +239,7 @@ router.get('/export', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYST
                 checkins: {
                     where: {
                         mealEvent: {
-                            mealDate: { gte: start, lte: end }
+                            mealDate: { gte: adjustedStart, lte: adjustedEnd }
                         }
                     },
                     include: { mealEvent: true }
@@ -258,7 +262,7 @@ router.get('/export', authenticate, authorize('ADMIN_KITCHEN', 'HR', 'ADMIN_SYST
 
         if (includeGuests) {
             const visitorMeals = await prisma.mealEvent.findMany({
-                where: { mealDate: { gte: start, lte: end } },
+                where: { mealDate: { gte: adjustedStart, lte: adjustedEnd } },
                 include: {
                     guests: true,
                     checkins: { where: { guestId: { not: null } } }
@@ -366,10 +370,12 @@ router.get('/costs', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYSTEM'), a
         const { startDate, endDate, search } = req.query;
         const start = startOfDay(parseISO(startDate as string));
         const end = endOfDay(parseISO(endDate as string));
+        const adjustedStart = new Date(start.getTime() + 12 * 60 * 60 * 1000);
+        const adjustedEnd = new Date(end.getTime());
 
         const meals = await prisma.mealEvent.findMany({
             where: {
-                mealDate: { gte: start, lte: end },
+                mealDate: { gte: adjustedStart, lte: adjustedEnd },
                 ingredients: { some: {} }
             },
             include: {
@@ -442,9 +448,11 @@ router.get('/costs/export', authenticate, authorize('ADMIN_KITCHEN', 'ADMIN_SYST
         const { startDate, endDate } = req.query;
         const start = startOfDay(parseISO(startDate as string));
         const end = endOfDay(parseISO(endDate as string));
+        const adjustedStart = new Date(start.getTime() + 12 * 60 * 60 * 1000);
+        const adjustedEnd = new Date(end.getTime());
 
         const meals = await prisma.mealEvent.findMany({
-            where: { mealDate: { gte: start, lte: end }, ingredients: { some: {} } },
+            where: { mealDate: { gte: adjustedStart, lte: adjustedEnd }, ingredients: { some: {} } },
             include: { ingredients: { include: { catalog: true } } },
             orderBy: { mealDate: 'asc' }
         });

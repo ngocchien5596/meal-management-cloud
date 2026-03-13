@@ -9,7 +9,7 @@ datasource db {
 
 model Department {
   id        String     @id @default(cuid())
-  name      String     @unique @db.VarChar(50)
+  name      String     @unique
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   employees Employee[]
@@ -17,30 +17,30 @@ model Department {
 
 model Position {
   id        String     @id @default(cuid())
-  name      String     @unique @db.VarChar(50)
+  name      String     @unique
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   employees Employee[]
 }
 
 model Employee {
-  id            String         @id @default(cuid())
-  employeeCode  String         @unique @db.VarChar(6)
-  fullName      String         @db.VarChar(50)
-  email         String?        @unique @db.VarChar(100)
-  phoneNumber   String?        @db.VarChar(20)
-  departmentId  String
-  positionId    String
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  account       Account?
-  checkins      CheckinLog[]
-  department    Department     @relation(fields: [departmentId], references: [id])
-  position      Position       @relation(fields: [positionId], references: [id])
-  reviews       MealReview[]
-  registrations Registration[]
-  createdGuests Guest[]        @relation("GuestCreator")
+  id                 String           @id @default(cuid())
+  employeeCode       String           @unique
+  fullName           String
+  email              String?          @unique
+  departmentId       String
+  positionId         String
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  phoneNumber        String?
+  account            Account?
+  checkins           CheckinLog[]
+  department         Department       @relation(fields: [departmentId], references: [id])
+  position           Position         @relation(fields: [positionId], references: [id])
+  createdGuests      Guest[]          @relation("GuestCreator")
   createdDirectories GuestDirectory[] @relation("GuestDirectoryCreator")
+  reviews            MealReview[]
+  registrations      Registration[]
 }
 
 model Account {
@@ -84,16 +84,16 @@ model Registration {
   id          String        @id @default(cuid())
   mealEventId String
   employeeId  String
-  locationId  String?
   isCancelled Boolean       @default(false)
   cancelledBy String?
   cancelledAt DateTime?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
-  employee    Employee      @relation(fields: [employeeId], references: [id])
-  mealEvent   MealEvent     @relation(fields: [mealEventId], references: [id])
-  location    MealLocation? @relation(fields: [locationId], references: [id])
+  locationId  String?
   checkin     CheckinLog?
+  employee    Employee      @relation(fields: [employeeId], references: [id])
+  location    MealLocation? @relation(fields: [locationId], references: [id])
+  mealEvent   MealEvent     @relation(fields: [mealEventId], references: [id])
 
   @@unique([mealEventId, employeeId])
 }
@@ -107,8 +107,8 @@ model CheckinLog {
   method       CheckinMethod
   employee     Employee?     @relation(fields: [employeeId], references: [id])
   guest        Guest?        @relation(fields: [guestId], references: [id])
-  mealEvent    MealEvent     @relation(fields: [mealEventId], references: [id])
   registration Registration? @relation(fields: [mealEventId, employeeId], references: [mealEventId, employeeId])
+  mealEvent    MealEvent     @relation(fields: [mealEventId], references: [id])
 
   @@unique([mealEventId, employeeId])
   @@unique([mealEventId, guestId])
@@ -117,30 +117,30 @@ model CheckinLog {
 model Guest {
   id          String          @id @default(cuid())
   mealEventId String
-  fullName    String          @db.VarChar(100)
-  note        String?         @db.VarChar(255)
+  fullName    String
+  note        String?
   qrToken     String          @unique
-  phoneNumber String?         @db.VarChar(20)
-  directoryId String?
-  createdBy   String?
   createdAt   DateTime        @default(now())
+  createdBy   String?
+  directoryId String?
+  phoneNumber String?
   checkins    CheckinLog[]
-  mealEvent   MealEvent       @relation(fields: [mealEventId], references: [id])
-  directory   GuestDirectory? @relation(fields: [directoryId], references: [id])
   creator     Employee?       @relation("GuestCreator", fields: [createdBy], references: [id])
+  directory   GuestDirectory? @relation(fields: [directoryId], references: [id])
+  mealEvent   MealEvent       @relation(fields: [mealEventId], references: [id])
 }
 
 model GuestDirectory {
-  id        String   @id @default(cuid())
-  fullName  String   @db.VarChar(100)
-  phoneNumber String? @db.VarChar(20)
-  note      String?  @db.VarChar(255)
-  isActive  Boolean  @default(true)
-  createdBy String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  guests    Guest[]
-  creator   Employee? @relation("GuestDirectoryCreator", fields: [createdBy], references: [id])
+  id          String    @id @default(cuid())
+  fullName    String
+  phoneNumber String?
+  note        String?
+  isActive    Boolean   @default(true)
+  createdBy   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  guests      Guest[]
+  creator     Employee? @relation("GuestDirectoryCreator", fields: [createdBy], references: [id])
 
   @@unique([fullName, phoneNumber])
 }
@@ -148,21 +148,21 @@ model GuestDirectory {
 model Ingredient {
   id          String            @id @default(cuid())
   mealEventId String
-  catalogId   String
   quantity    Float
-  unit        String           @db.VarChar(20)
+  unit        String
   unitPrice   Float
   totalPrice  Float
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
+  catalogId   String
   catalog     IngredientCatalog @relation(fields: [catalogId], references: [id])
   mealEvent   MealEvent         @relation(fields: [mealEventId], references: [id])
 }
 
 model IngredientCatalog {
   id          String       @id @default(cuid())
-  name        String       @unique @db.VarChar(100)
-  defaultUnit String       @db.VarChar(20)
+  name        String       @unique
+  defaultUnit String
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   ingredients Ingredient[]
@@ -171,15 +171,15 @@ model IngredientCatalog {
 model MenuItem {
   id          String          @id @default(cuid())
   mealEventId String
-  catalogId   String
   createdAt   DateTime        @default(now())
+  catalogId   String
   catalog     MenuItemCatalog @relation(fields: [catalogId], references: [id])
   mealEvent   MealEvent       @relation(fields: [mealEventId], references: [id])
 }
 
 model MenuItemCatalog {
   id        String     @id @default(cuid())
-  name      String     @unique @db.VarChar(100)
+  name      String     @unique
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   menuItems MenuItem[]
@@ -205,7 +205,7 @@ model RegistrationPreset {
 
 model MealLocation {
   id                  String               @id @default(cuid())
-  name                String               @unique @db.VarChar(50)
+  name                String               @unique
   isDefault           Boolean              @default(false)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
@@ -217,14 +217,14 @@ model MealReview {
   id           String    @id @default(cuid())
   mealEventId  String
   employeeId   String
-  comment      String    @db.Text
-  rating       Int       @default(5)
+  comment      String
   isAnonymous  Boolean   @default(true)
-  images       String[]
-  adminReply   String?   @db.Text
-  adminReplyAt DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @default(now()) @updatedAt
+  rating       Int       @default(5)
+  images       String[]
+  adminReply   String?
+  adminReplyAt DateTime?
   employee     Employee  @relation(fields: [employeeId], references: [id])
   mealEvent    MealEvent @relation(fields: [mealEventId], references: [id])
 }

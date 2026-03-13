@@ -10,9 +10,25 @@ interface ModalProps {
     children: React.ReactNode;
     className?: string;
     contentClassName?: string;
+    size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
 }
 
-export function Modal({ isOpen, onClose, title, children, className, contentClassName }: ModalProps) {
+export function Modal({
+    isOpen,
+    onClose,
+    title,
+    children,
+    className,
+    contentClassName,
+    size = 'md'
+}: ModalProps) {
+    const sizeClasses = {
+        sm: 'max-w-md',
+        md: 'max-w-lg',
+        lg: 'max-w-2xl',
+        xl: 'max-w-5xl',
+        full: 'max-w-[95vw]'
+    };
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose();
@@ -36,7 +52,8 @@ export function Modal({ isOpen, onClose, title, children, className, contentClas
                 onClick={onClose}
             />
             <div className={cn(
-                "relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl shadow-slate-900/20 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[calc(100dvh-2rem)]",
+                "relative w-full bg-white rounded-[40px] shadow-2xl shadow-slate-900/20 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[calc(100dvh-2rem)]",
+                sizeClasses[size],
                 className
             )}>
                 <div className="px-6 py-4 md:px-8 md:py-6 border-b border-slate-50 flex items-center justify-between shrink-0">
