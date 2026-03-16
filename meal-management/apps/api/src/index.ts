@@ -70,7 +70,7 @@ app.use('/static/uploads', express.static(uploadsPath));
 
 // Health check
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.status(200).json({ status: 'UP', timestamp: new Date().toISOString(), uptime: process.uptime() });
 });
 
 // API Routes
