@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "Account" ALTER COLUMN "secretCode" SET DATA TYPE VARCHAR(50);
