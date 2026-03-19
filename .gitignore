@@ -32,8 +32,30 @@ pnpm-debug.log*
 coverage/
 .nyc_output/
 
-# Prisma
-apps/api/prisma/migrations/*.sql
+# Prisma & Database Dumps
+# Chặn tất cả các file .sql rác (Ví dụ: backup.sql, dump.sql)
+*.sql
+# NHƯNG bỏ chặn (giữ lại) toàn bộ thư mục migrations của Prisma để VPS có thể tạo bảng
+!apps/api/prisma/migrations/**/*.sql
+*.sqlite
+*.sqlite-journal
+
+# Local Scripts
+run-project.ps1
+*.bat
+
+# Uploads & Docker Data
+apps/api/uploads/
+postgres_data/
+docker_data/
+apps/web/public/uploads/
+
+# Workspace & AI Junk
+.agent/
+*.py
+*.docx
+docker-compose*.yml
+!docker-compose.yml 
 
 # Misc
 *.tsbuildinfo
